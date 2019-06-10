@@ -1,0 +1,45 @@
+# Copyright 2019 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+resolver: ghc-8.8.0.20190613
+packages:
+- .
+- ghc-show-ast
+
+setup-info:
+  ghc:
+    macosx:
+        8.8.0.20190613:
+            url: "https://downloads.haskell.org/~ghc/8.8.1-alpha2/ghc-8.8.0.20190613-x86_64-apple-darwin.tar.xz"
+            content-length: 184846152
+            sha1: 116bdaadcde045f78adcf1ffce291c79fb1c3eb6
+            sha256: 04b5b4dc35db2bc26f5e4d46946409a5d21f47a7923bf69ee31b093b7e71e889
+
+allow-newer: true
+compiler: ghc-8.8.0.20190613
+
+extra-deps:
+- git: https://github.com/pcapriotti/optparse-applicative.git
+  commit: 83e096aa20cd4fd5328bf11c266115326d584e00
+# For compatibility with newer Cabal:
+- git: https://github.com/simonmar/ghc-paths.git
+  commit: 3c867c34b6f505a500cc63bba5161b97aa0a9177
+- ansi-wl-pprint-0.6.9@sha256:0b225cd1dc7afc3d73e428f7c0473a176adeeb8b9584a74379211832cd492689,2364
+- colour-2.3.5@sha256:b27db0a3ad40d70bdbd8510a104269f8707592e80757a1abc66a22ba25e5a42f,1801
+- hashable-1.3.0.0@sha256:7ad8edaa681e81162ddddb4d703a9cffe6a0c9ddcfede31cf6569507ed3f1ddb,5179
+- transformers-compat-0.6.5@sha256:50b00c57bf3fc379ec2477bfc261a2aebc983084488478adb29854f193af4696,5490
+- ansi-terminal-0.9.1@sha256:48f53532d0f365ffa568c8cf0adc84c66f800a7d80d3329e4f04fa75392f4af1,3225
+- async-2.2.2@sha256:ed46f0f5be36cf8a3e3aebc6827d015e1f3bf9615c245e057b9e9bd35faddd21,2895
+- call-stack-0.1.0@sha256:3453a0c5ed3a7a7de0cc0703907e05bd251c766cce8a38efe41b7188d228e3fa,1109
+- clock-0.8@sha256:b4ae207e2d3761450060a0d0feb873269233898039c76fceef9cc1a544067767,4113
+- tagged-0.8.6@sha256:7093ee39c9779beeacffa4b0035a0e8a25da16afcd1c1a876930207fb8e31d1c,2606
+- unbounded-delays-0.1.1.0@sha256:8e57c6ffb72ed605b85c69d3b3a7ebbbbb70bfb5e9b9816309f1f733240838f2,1184
+- wcwidth-0.0.2@sha256:77531eb6683c505c22ab3fa11bbc43d3ce1e7dac21401d4d5a19677d348bb5f3,1998
+- tasty-1.2.3@sha256:bba67074e5326d57e8f53fc1dabcb6841daa4dc51b053506eb7f40a6f49a0497,2517
+- tasty-hunit-0.10.0.2@sha256:8e8bd5807cec650f5aebc5ada07b57620c863e69145e65249651c1b48d97bd70,1515
+
+ghc-options:
+  "$locals": -Wall -Werror

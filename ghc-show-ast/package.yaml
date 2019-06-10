@@ -1,0 +1,16 @@
+# Copyright 2019 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+name: ghc-show-ast
+
+executables:
+  ghc-show-ast:
+    main: Main.hs
+    dependencies:
+    - base
+    - ghc
+    - ghc-exactprint
+    - pretty

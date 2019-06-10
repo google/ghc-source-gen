@@ -1,0 +1,58 @@
+# Copyright 2019 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+name:                ghc-source-gen
+version:             0.1.0.0
+github:              "google/ghc-source-gen"
+license:             BSD3
+author:              "Judah Jacobson"
+maintainer:          "judahjacobson@google.com"
+copyright:           "Google LLC"
+
+extra-source-files:
+- README.md
+- ChangeLog.md
+
+synopsis:            Constructs Haskell syntax trees for the GHC API.
+category:            Development
+description:         Please see the README on GitHub at <https://github.com/google/ghc-source-gen>
+
+dependencies:
+- base >= 4.7 && < 5
+- ghc >= 8.2 && < 8.9
+
+default-extensions:
+- DataKinds
+- FlexibleInstances
+- TypeSynonymInstances
+
+library:
+  source-dirs: src
+  other-modules:
+  - GHC.SourceGen.Binds.Internal
+  - GHC.SourceGen.Expr.Internal
+  - GHC.SourceGen.Lit.Internal
+  - GHC.SourceGen.Name.Internal
+  - GHC.SourceGen.Syntax.Internal
+  - GHC.SourceGen.Type.Internal
+
+tests:
+  pprint_examples:
+    main: pprint_examples.hs
+    source-dirs: tests
+    dependencies:
+    - ghc-source-gen
+    - ghc-paths == 0.1.*
+
+  # TODO: Fill out this test, and use it to replace pprint_examples.
+  pprint_test:
+    main: pprint_test.hs
+    source-dirs: tests
+    dependencies:
+    - ghc-source-gen
+    - ghc-paths == 0.1.*
+    - tasty
+    - tasty-hunit
