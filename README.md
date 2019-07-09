@@ -1,6 +1,6 @@
 # ghc-source-gen
 
-`ghc-source-gen` is a Haskell library for constructing Haskell syntax trees using the GHC API.  This package is compatible with multiple versions of GHC: currently,= 8.2, 8.4, 8.6, and 8.8.
+`ghc-source-gen` is a Haskell library for constructing Haskell syntax trees using the GHC API.  This package is compatible with multiple versions of GHC: currently, 8.2, 8.4, 8.6, and 8.8.
 
 This is not an officially supported Google product.
 
