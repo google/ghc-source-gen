@@ -9,9 +9,12 @@
 # TODO: turn this into a CI script.
 
 set -ueo pipefail
+set -x
 
-for flag in --resolver={lts-11.22,lts-12.8,lts-13.23} --stack-yaml=stack-8.8.yaml
+#for flag in --resolver={lts-11.22,lts-12.8,lts-13.23} --stack-yaml=stack-8.8.yaml
+for flag in --stack-yaml=stack-8.8.yaml
 do
     echo ====== $flag ======
+    stack $flag setup
     stack test $flag ghc-source-gen
 done
