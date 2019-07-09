@@ -4,7 +4,7 @@ version: 2
 references:
     build-base: &build-base
       docker:
-        - image: debian/stretch
+        - image: ubuntu:16.04
       steps:
         - checkout
         - restore_cache:
