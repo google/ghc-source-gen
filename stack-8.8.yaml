@@ -17,6 +17,12 @@ setup-info:
             content-length: 184846152
             sha1: 116bdaadcde045f78adcf1ffce291c79fb1c3eb6
             sha256: 04b5b4dc35db2bc26f5e4d46946409a5d21f47a7923bf69ee31b093b7e71e889
+    linux64:
+        8.8.0.20190613:
+            url: "https://downloads.haskell.org/~ghc/8.8.1-alpha2/ghc-8.8.0.20190613-x86_64-deb9-linux.tar.xz"
+            content-length: 199898532
+            sha1: 11360a17f61da02c82d0f64f07e124479cedecc4
+            sha256: ff532d0b700fcd9c5343a942eab35450cd9d70ce5c5064ca4dfe7af94b05616e
 
 allow-newer: true
 compiler: ghc-8.8.0.20190613
