@@ -71,7 +71,7 @@ jobs:
     docker:
     - image: circle/rust:1.36-stretch
     steps:
-    - echo "Success"
+    - run: echo "Success!"
 
 workflows:
   version: 2
