@@ -1,35 +1,78 @@
 version: 2
 
-references:
-    build-base: &build-base
-      docker:
-        - image: circleci/rust:1.36-stretch
-      steps:
-        - checkout
-        - restore_cache:
-            keys:
-              - stack-cache-v1-{{ arch }}-{{ .Branch }}
-              - stack-cache-v1-{{ arch }}-master
-        - run:
-            command: |
-              mkdir -p $HOME/.local/bin
-              curl -L https://github.com/commercialhaskell/stack/releases/download/v2.1.1/stack-2.1.1-linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C "$HOME/.local/bin" '*/stack'
-              echo 'export PATH=$HOME/.local/bin:$PATH' >> $BASH_ENV
-
-        - run: ./check.sh
-
-        - save_cache:
-              key: stack-cache-v1-{{ arch }}-{{ .Branch }}-{{ epoch }}
-              paths:
-                  - ~/.stack
-                  - .stack-work
 jobs:
-  build:
-    <<: *build-base
+  build-11.22:
+    docker:
+    - image: circleci/rust:1.36-stretch
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+            - stack-cache-v2-11.22-{{ arch }}-{{ .Branch }}
+            - stack-cache-v2-11.22-{{ arch }}-master
+    - run: .circleci/install-stack.sh
+    - run: stack test --no-terminal --resolver=lts-11.22 ghc-source-gen
+    - save_cache:
+            key: stack-cache-v2-11.22-{{ arch }}-{{ .Branch }}-{{ epoch }}
+            paths:
+                - ~/.stack
+                - .stack-work
+  build-12.8:
+    docker:
+    - image: circleci/rust:1.36-stretch
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+            - stack-cache-v2-12.8-{{ arch }}-{{ .Branch }}
+            - stack-cache-v2-12.8-{{ arch }}-master
+    - run: .circleci/install-stack.sh
+    - run: stack test --no-terminal --resolver=lts-12.8 ghc-source-gen
+    - save_cache:
+            key: stack-cache-v2-12.8-{{ arch }}-{{ .Branch }}-{{ epoch }}
+            paths:
+                - ~/.stack
+                - .stack-work
+  build-13.23:
+    docker:
+    - image: circleci/rust:1.36-stretch
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+            - stack-cache-v2-13.23-{{ arch }}-{{ .Branch }}
+            - stack-cache-v2-13.23-{{ arch }}-master
+    - run: .circleci/install-stack.sh
+    - run: stack test --no-terminal --resolver=lts-13.23 ghc-source-gen
+    - save_cache:
+            key: stack-cache-v2-13.23-{{ arch }}-{{ .Branch }}-{{ epoch }}
+            paths:
+                - ~/.stack
+                - .stack-work
+
+  build-ghc-8.8:
+    docker:
+    - image: circleci/rust:1.36-stretch
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+            - stack-cache-v2-ghc-8.8-{{ arch }}-{{ .Branch }}
+            - stack-cache-v2-ghc-8.8-{{ arch }}-master
+    - run: .circleci/install-stack.sh
+    - run: stack test --no-terminal --stack-yaml=stack-8.8.yaml ghc-source-gen
+    - save_cache:
+            key: stack-cache-v2-ghc-8.8-{{ arch }}-{{ .Branch }}-{{ epoch }}
+            paths:
+                - ~/.stack
+                - .stack-work
 
 workflows:
   version: 2
   build-and-test:
       jobs:
-        - build
+        - build-11.22
+        - build-12.8
+        - build-13.23
+        - build-ghc-8.8
 
