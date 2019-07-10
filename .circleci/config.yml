@@ -67,6 +67,12 @@ jobs:
                 - ~/.stack
                 - .stack-work
 
+  build-success:
+    docker:
+    - image: circle/rust:1.36-stretch
+    steps:
+    - echo "Success"
+
 workflows:
   version: 2
   build-and-test:
@@ -75,4 +81,9 @@ workflows:
         - build-12.8
         - build-13.23
         - build-ghc-8.8
-
+        - build-success:
+            requires:
+            - build-11.22
+            - build-12.8
+            - build-13.23
+            - build-ghc-8.8
