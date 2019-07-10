@@ -69,7 +69,7 @@ jobs:
 
   build-success:
     docker:
-    - image: circle/rust:1.36-stretch
+    - image: circleci/rust:1.36-stretch
     steps:
     - run: echo "Success!"
 
