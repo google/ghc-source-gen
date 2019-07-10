@@ -13,5 +13,5 @@ set -ueo pipefail
 for flag in --resolver={lts-11.22,lts-12.8,lts-13.23} --stack-yaml=stack-8.8.yaml
 do
     echo ====== $flag ======
-    stack test $flag ghc-source-gen
+    stack test --no-terminal $flag ghc-source-gen
 done
