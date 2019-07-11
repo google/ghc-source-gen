@@ -27,13 +27,16 @@ testTypes = testCases
 testExprs :: DynFlags ->  String -> [TestCase HsExpr'] -> TestTree
 testExprs = testCases
 
+testDecls :: DynFlags ->  String -> [TestCase HsDecl'] -> TestTree
+testDecls = testCases
+
 main :: IO ()
 main = runGhc (Just libdir) $ do
     dflags <- getDynFlags
     liftIO $ defaultMain $ testGroup "Tests"
-        [typesTest dflags, exprsTest dflags]
+        [typesTest dflags, exprsTest dflags, declsTest dflags]
 
-typesTest, exprsTest :: DynFlags -> TestTree
+typesTest, exprsTest, declsTest :: DynFlags -> TestTree
 typesTest dflags = testGroup "Type"
     [ test "var"
         [ "A" :~ var "A"
@@ -133,3 +136,41 @@ exprsTest dflags = testGroup "Expr"
     ]
   where
     test = testExprs dflags
+
+declsTest dflags = testGroup "Decls"
+    [ test "patBind"
+        [ "x = x" :~ patBind (var "x") (rhs $ var "x")
+        , "(x, y) = (y, x)" :~ patBind (tuple [var "x", var "y"])
+                                    (rhs $ tuple [var "y", var "x"])
+        , "(x, y)\n  | test = (1, 2)\n  | otherwise = (2, 3)" :~
+            patBind (tuple [var "x", var "y"])
+                $ guarded
+                    [ var "test" `guard` tuple [int 1, int 2]
+                        , var "otherwise" `guard` tuple [int 2, int 3]
+                    ]
+        , "z | Just y <- x, y = ()" :~
+            patBind (var "z")
+                $ guarded
+                    [guards
+                        [ conP "Just" [var "y"] <-- var "x"
+                        , stmt (var "y")
+                        ]
+                        unit
+                    ]
+        ]
+    , test "funBind"
+        [ "not True = False\nnot False = True" :~
+             funBinds "not"
+                [ matchRhs [var "True"] (var "False")
+                , matchRhs [var "False"] (var "True")
+                ]
+        , "not x\n  | x = False\n  | otherwise = True" :~
+            funBind "not"
+                $ match [var "x"] $ guarded
+                    [ guard (var "x") (var "False")
+                    , guard (var "otherwise") (var "True")
+                    ]
+        ]
+    ]
+  where
+    test = testDecls dflags

@@ -17,17 +17,19 @@ module GHC.SourceGen.Binds
     , RawMatch
     , match
     , matchRhs
-    -- ** RawGRHS
-    , RawGRHS
+    , RawGRHSs
     , rhs
-    , guardedStmt
+    -- ** Guarded expressions
+    , GuardedExpr
     , guarded
-    -- ** Statements
-    , stmt
-    , (<--)
+    , guards
+    , guard
     -- ** Where clauses
     , where'
     , RawValBind
+    -- ** Statements
+    , stmt
+    , (<--)
     ) where
 
 import BasicTypes (LexicalFixity(..))
@@ -75,8 +77,8 @@ typeSig n = typeSigs [n]
 -- > not False = True
 -- > =====
 -- > funBinds "not"
--- >   [ matchRhs [var "True"] (var "False")
--- >   , matchRhs [var "False"] (var "True")
+-- >   [ matchRhs [conP "True" []] (var "False")
+-- >   , matchRhs [conP "False" []] (var "True")
 -- >   ]
 funBinds :: HasValBind t => RawRdrName -> [RawMatch] -> t
 funBinds name matches = bindB $ withPlaceHolder
@@ -87,7 +89,7 @@ funBinds name matches = bindB $ withPlaceHolder
     name' = valueRdrName name
     context = FunRhs name' Prefix NoSrcStrict
 
--- | Define a function that has a single case.
+-- | Defines a function that has a single case.
 --
 -- > f = x
 -- > =====
@@ -112,8 +114,8 @@ A function definition is made up of one or more 'RawMatch' terms.  Each
 We could using a list of two 'RawMatch'es:
 
 > funBinds "not"
->   [ matchRhs [var "True"] (var "False")
->   , matchRhs [var "False"] (var "True")
+>   [ matchRhs [conP "True" []] (var "False")
+>   , matchRhs [conP "False" [] (var "True")
 >   ]
 
 A match may consist of one or more guarded expressions.  For example, to
@@ -125,33 +127,64 @@ define the function as:
 
 We would say:
 
-> funBinds "not"
->   [ var "x" ==> match
->       [ guardedStmt (var "x") (rhs (var "False"))
->       , guardedStmt (var "otherwise") (rhs (var "True"))
->       ]
->   ]
+> funBind "not"
+>      $ match [var "x"] $ guarded
+>          [ guard (var "x") (var "False")
+>          , guard (var "otherwise") (var "True")
+>          ]
 -}
 
--- | Construct a function match consisting of multiple guards.
-match :: [Pat'] -> [RawGRHS] -> RawMatch
-match ps grhss = RawMatch ps grhss mempty
+-- | A function match consisting of multiple guards.
+match :: [Pat'] -> RawGRHSs -> RawMatch
+match = RawMatch
 
--- | Construct a function match with a single case.
+-- | A function match with a single case.
 matchRhs :: [Pat'] -> HsExpr' -> RawMatch
-matchRhs ps e = match ps [rhs e]
+matchRhs ps = match ps . rhs
 
-where' :: RawMatch -> [RawValBind] -> RawMatch
-where' r vbs = r { rawWhere = rawWhere r ++ vbs }
+-- | Adds a "where" clause to an existing 'RawGRHSs'.
+--
+-- > f x = y
+-- >   where y = x
+-- > =====
+-- > funBind "x"
+-- >   $ match [var "x"]
+-- >   $ rhs (var "y")
+-- >      `where` [patBind (var "y") $ rhs $ var "x']
+where' :: RawGRHSs -> [RawValBind] -> RawGRHSs
+where' r vbs = r { rawGRHSWhere = rawGRHSWhere r ++ vbs }
 
-rhs :: HsExpr' -> RawGRHS
-rhs = RawGRHS []
+-- | A right-hand side of a match, with no guards.
+rhs :: HsExpr' -> RawGRHSs
+rhs e = guarded [guards [] e]
 
-guarded :: [Stmt'] -> RawGRHS -> RawGRHS
-guarded ss (RawGRHS ss' e) = RawGRHS (ss ++ ss') e
+-- | A guarded right-hand side of a match.
+--
+-- >   | x = False
+-- >   | otherwise = True
+-- > =====
+-- > guarded
+-- >   [ guard (var "x") (var "False")
+-- >   , guard (var "otherwise") (var "True")
+-- >   ]
+guarded :: [GuardedExpr] -> RawGRHSs
+guarded ss = RawGRHSs ss []
 
-guardedStmt :: HsExpr' -> RawGRHS -> RawGRHS
-guardedStmt e = guarded [stmt e]
+-- | An expression guarded by a single boolean statement.
+--
+-- >   | otherwise = ()
+-- > =====
+-- > guard (var "otherwise") unit
+guard :: HsExpr' -> HsExpr' -> GuardedExpr
+guard s = guards [stmt s]
+
+-- | An expression guarded by multiple statements, using the @PatternGuards@ extension.
+--
+-- >   | Just y <- x, y = ()
+-- > =====
+-- > guards [conP "Just" (var "x") <-- var "y", var "x"] unit
+guards :: [Stmt'] -> HsExpr' -> GuardedExpr
+guards stmts e = noExt GRHS (map builtLoc stmts) (builtLoc e)
 
 -- | An expression statement.  May be used in a do expression (with 'do'') or in a
 -- match (with 'guarded').
