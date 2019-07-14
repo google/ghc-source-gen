@@ -144,13 +144,13 @@ declsTest dflags = testGroup "Decls"
                                     (rhs $ tuple [var "y", var "x"])
         , "(x, y)\n  | test = (1, 2)\n  | otherwise = (2, 3)" :~
             patBind (tuple [var "x", var "y"])
-                $ guarded
+                $ guardedRhs
                     [ var "test" `guard` tuple [int 1, int 2]
                         , var "otherwise" `guard` tuple [int 2, int 3]
                     ]
         , "z | Just y <- x, y = ()" :~
             patBind (var "z")
-                $ guarded
+                $ guardedRhs
                     [guards
                         [ conP "Just" [var "y"] <-- var "x"
                         , stmt (var "y")
@@ -166,7 +166,7 @@ declsTest dflags = testGroup "Decls"
                 ]
         , "not x\n  | x = False\n  | otherwise = True" :~
             funBind "not"
-                $ match [var "x"] $ guarded
+                $ match [var "x"] $ guardedRhs
                     [ guard (var "x") (var "False")
                     , guard (var "otherwise") (var "True")
                     ]

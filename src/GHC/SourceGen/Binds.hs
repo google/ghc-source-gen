@@ -12,22 +12,23 @@ module GHC.SourceGen.Binds
     , typeSigs
     , funBind
     , funBinds
-    -- * RawMatch
+    -- * Matches
     -- $rawMatch
     , RawMatch
     , match
     , matchRhs
+    -- * Right-hand sides
     , RawGRHSs
     , rhs
-    -- ** Guarded expressions
+    -- ** Guards
+    , guardedRhs
     , GuardedExpr
-    , guarded
     , guards
     , guard
     -- ** Where clauses
     , where'
     , RawValBind
-    -- ** Statements
+    -- * Statements
     , stmt
     , (<--)
     ) where
@@ -128,7 +129,7 @@ define the function as:
 We would say:
 
 > funBind "not"
->      $ match [var "x"] $ guarded
+>      $ match [var "x"] $ guardedRhs
 >          [ guard (var "x") (var "False")
 >          , guard (var "otherwise") (var "True")
 >          ]
@@ -156,19 +157,19 @@ where' r vbs = r { rawGRHSWhere = rawGRHSWhere r ++ vbs }
 
 -- | A right-hand side of a match, with no guards.
 rhs :: HsExpr' -> RawGRHSs
-rhs e = guarded [guards [] e]
+rhs e = guardedRhs [guards [] e]
 
 -- | A guarded right-hand side of a match.
 --
 -- >   | x = False
 -- >   | otherwise = True
 -- > =====
--- > guarded
+-- > guardedRhs
 -- >   [ guard (var "x") (var "False")
 -- >   , guard (var "otherwise") (var "True")
 -- >   ]
-guarded :: [GuardedExpr] -> RawGRHSs
-guarded ss = RawGRHSs ss []
+guardedRhs :: [GuardedExpr] -> RawGRHSs
+guardedRhs ss = RawGRHSs ss []
 
 -- | An expression guarded by a single boolean statement.
 --
@@ -187,7 +188,7 @@ guards :: [Stmt'] -> HsExpr' -> GuardedExpr
 guards stmts e = noExt GRHS (map builtLoc stmts) (builtLoc e)
 
 -- | An expression statement.  May be used in a do expression (with 'do'') or in a
--- match (with 'guarded').
+-- match (with 'guard').
 --
 -- TODO: also allow using statements in list comprehensions.
 stmt :: HsExpr' -> Stmt'
