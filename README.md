@@ -1,7 +1,7 @@
 # ghc-source-gen
 
 `ghc-source-gen` is a Haskell library for generating Haskell source files and
-code fragments.  It uses GHC's [library API] for the latest up-to-date syntax, and
+code fragments.  It uses GHC's [library API] to support the latest syntax, and
 provides a simple, consistent interface across several major versions of GHC.
 
 To get started, take a look at the [example](#example) below, or check out the
