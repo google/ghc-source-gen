@@ -108,3 +108,43 @@ output, which is `ghc-source-gen`'s main use case.
 
 Currently, `ghc-source-gen` gives to each node it generates a trivial location
 without an explicit line or column.
+
+### Parentheses
+GHC represents parentheses explicitly in its syntax tree, so that it can print code
+exactly as it was parsed.  Unfortunately, this means that its pretty-printing code
+expects those parentheses to be present, and outputs incorrect
+source code if they are missing.  `ghc-source-gen`
+adds parentheses automatically in the code that it generates.
+
+For example, consider a simplified expression syntax:
+
+```haskell
+data Expr
+    = VarE String      -- ^ Variables
+    | App Expr Expr    -- ^ Function application
+    | Paren Expr Expr  -- ^ Parentheses
+```
+
+Then GHC would pretty-print as `"f (g x)"` the tree
+
+```haskell
+App (VarE "f") $ Paren $ App (VarE "g") (VarE "h")
+```
+
+But without the explicit parenthesis, it would pretty-print as `"f g x"`:
+
+```haskell
+App (VarE "f") $ App (VarE "g") (VarE "h")
+```
+
+which misrepresents the precedence between the two function applications.
+
+`ghc-source-gen` resolves this issue by inserting parentheses automatically, and only when necessary.  In the expression
+
+```haskell
+var "f" @@ (var "g" @@ var "h")
+```
+
+it inserts a parenthesis automatically so that the result pretty-prints to `"f (g x)"` as expected.
+
+GHC uses a similar approach internally itself.  For more discussion, see tickets [14289](https://gitlab.haskell.org/ghc/ghc/issues/14289) and [15738](https://gitlab.haskell.org/ghc/ghc/issues/15738).
