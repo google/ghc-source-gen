@@ -1,12 +1,19 @@
 # ghc-source-gen
 
-`ghc-source-gen` is a Haskell library for constructing Haskell syntax trees using the GHC API.  This package is compatible with multiple versions of GHC: currently, 8.2, 8.4, 8.6, and 8.8.
+`ghc-source-gen` is a Haskell library for generating Haskell source files and
+code fragments.  It uses GHC's [library API] for the latest up-to-date syntax, and
+provides a simple, consistent interface across several major versions of GHC.
 
-This is not an officially supported Google product.
+To get started, take a look at the [example](#example) below, or check out the
+`GHC.SourceGen` module.
+
+This package is not an officially supported Google product.
+
+[library API]: https://hackage.haskell.org/package/ghc
 
 ## Example
 
-This example constructs and prints a module defining the
+The following example creates a module that defines the
 `const` function:
 
 ```haskell
@@ -29,7 +36,7 @@ constModule =
 main = runGhc (Just libdir) $ putPpr constModule
 ```
 
-Which will output:
+The output of that program is:
 
 ```
 module Const (
@@ -39,32 +46,65 @@ const :: a -> b -> a
 const _ x = x
 ```
 
-## Syntax Types
+## Comparison with the GHC API
 
-GHC represents Haskell syntax trees with several parametrized datatypes; for example: `HsExpr p` for expressions, `HsDecl p` for declarations, etc.  The parameter `p` determines which stage of compilation that data has last completed: parsing, renaming, or type-checking.
+The raw GHC API has several complexities that `ghc-source-gen` simplifies for the
+purpose of source code generation.
 
-`ghc-source-gen` constructs values as GHC would represent them
-immediately after the parsing step.  In ghc-8.6, that
-corresponds to `p` being `GhcPs`.  It defines several type
-synonyms, such as:
+### Backwards-compatibility
+`ghc-source-gen` provides the same API across several versions of GHC.  Code written
+with `ghc-source-gen` should compile unchanged on each of those versions.
+
+Currently, this library supports GHC versions 8.2, 8.4, 8.6 and 8.8.
+
+One caveat: in the future, `ghc-source-gen` will support some forms of syntax
+which are not implemented by all of those GHC versions.  For example, the
+`DerivingVia` extension is only implemented in `ghc >= 8.6`.  When built on
+older versions of GHC, `ghc-source-gen` will omit functions for constructing
+that syntax.  We will also tag any such function with a note in its Haddock
+documentation.
+
+### Less verbose types and construction functions
+
+The datatypes that GHC uses to represent Haskell syntax change their
+representation at different stages of the compilation: for example, parsing,
+renaming, or type-checking.  That data transformation provides type safety and
+a uniform structure across the phases.  However, it also adds unnecessary
+complexity to the task of source code generation.
+
+`ghc-source-gen` aims to provide a simple interface by creating data types as
+GHC would represent them immediately after its *parsing* step.  For example,
+`ghc >= 8.4` uses a type parameter `p` in its syntax types: `HsExpr p` for
+expressions, `HsDecl p` for declarations, etc.  `ghc-source-gen` defines type
+synonyms for them:
 
 ```haskell
 type HsExpr' = HsExpr GhcPs
-type HsType' = HsType GhcPs
 type HsDecl' = HsDecl GhcPs
-type HsModule' = HsModule GhcPs
+type HsType' = HsType GhcPs
 -- etc.
 ```
 
-GHC's datatypes generally contain location information in the
-form of [`SrcSpan`](http://hackage.haskell.org/package/ghc/docs/SrcLoc.html#t:SrcSpan) values which point to their original
-location in a source file.  `ghc-source-gen` constructs values
-at runtime, so it uses a dummy value for `SrcSpan` on using a
-dummy SrcSpan.  (GHC does something similar for code written at the interactive GHCi prompt.)
+Furthermore, most constructors take an extra "extension" field which can
+contain different information in different stages, influenced by the parameter
+`p`.  In almost all cases, after the parsing step that field is the
+trivial type `data NoExt = NoExt`.  (For more details, see the [Trees that
+Grow] paper. GHC versions earlier than 8.4 used a similar `PlaceHolder` type.).
+This extra data makes code generation more verbose.
 
-`ghc-source-gen` aims to be a low-level wrapper around GHC's
-types.  In particular, it does not explicitly help the user
-generate unique names like, for example, `template-haskell`'s
-[`newName`](http://hackage.haskell.org/package/template-haskell/docs/Language-Haskell-TH.html#v:newName)
-action.  However, we may add support for that in future
-versions of this library.
+`ghc-source-gen` automatically sets the `NoExt` value (or equivalent) for the
+terms that it generates, hiding that detail from its external API.  It also
+sets and hides other fields that are irrelevant to parsing or pretty-printing,
+such as simplifier ticks.
+
+[Trees that Grow]: https://gitlab.haskell.org/ghc/ghc/wikis/implementing-trees-that-grow
+
+### Source Locations
+GHC carefully tracks the source location of (nearly) every node in the AST.
+That information is very useful for error reporting.  However, it would be too
+verbose to set it explicitly for each individual node during code generation.
+Furthermore, GHC doesn't use the source location when pretty-printing its
+output, which is `ghc-source-gen`'s main use case.
+
+Currently, `ghc-source-gen` gives to each node it generates a trivial location
+without an explicit line or column.
