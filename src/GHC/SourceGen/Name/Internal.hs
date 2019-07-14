@@ -16,7 +16,7 @@ import SrcLoc (Located)
 
 import GHC.SourceGen.Syntax.Internal (builtLoc)
 
--- | A string identifier.  This definition is simililar to 'RdrName', but
+-- | A string identifier.  This definition is simililar to 'RdrNameStr', but
 -- independent of whether it's in the type or value namespace.
 data OccNameStr = OccNameStr !RawNameSpace !FastString
 
@@ -47,26 +47,26 @@ instance IsString ModuleNameStr where
 --
 -- For example:
 --
--- > fromString "A.b.c" == RawQual (fromString "A.b") (fromString "c")
--- > fromString "c" == RawUnqual (fromString "c")
+-- > fromString "A.B.c" == QualStr (fromString "A.B") (fromString "c")
+-- > fromString "c" == UnqualStr (fromString "c")
 --
 -- This definition is simililar to 'RdrName', but independent of whether it's
 -- in the type or value namespace.  Functions in this package that take
--- a 'RdrName' as input will internally convert it to the proper namespace.
-data RdrNameStr = RawUnqual OccNameStr | RawQual ModuleNameStr OccNameStr
+-- a 'RdrNameStr' as input will internally convert it to the proper namespace.
+data RdrNameStr = UnqualStr OccNameStr | QualStr ModuleNameStr OccNameStr
 
 -- GHC always wraps RdrName in a Located.  (Usually: 'Located (IdP pass)')
 -- So for convenience, these functions return a Located-wrapped value.
 valueRdrName, typeRdrName :: RdrNameStr -> Located RdrName
-valueRdrName (RawUnqual r) = builtLoc $ Unqual $ valueOccName r
-valueRdrName (RawQual (ModuleNameStr m) r) = builtLoc $ Qual m $ valueOccName r
-typeRdrName (RawUnqual r) = builtLoc $ Unqual $ typeOccName r
-typeRdrName (RawQual (ModuleNameStr m) r) = builtLoc $ Qual m $ typeOccName r
+valueRdrName (UnqualStr r) = builtLoc $ Unqual $ valueOccName r
+valueRdrName (QualStr (ModuleNameStr m) r) = builtLoc $ Qual m $ valueOccName r
+typeRdrName (UnqualStr r) = builtLoc $ Unqual $ typeOccName r
+typeRdrName (QualStr (ModuleNameStr m) r) = builtLoc $ Qual m $ typeOccName r
 
 -- TODO: operators
 instance IsString RdrNameStr where
     -- Split "Foo.Bar.baz" into ("Foo.Bar", "baz")
     fromString f = case span (/= '.') (reverse f) of
         (f', '.':f'') ->
-            RawQual (fromString $ reverse f'') (fromString $ reverse f')
-        _ -> RawUnqual (fromString f)
+            QualStr (fromString $ reverse f'') (fromString $ reverse f')
+        _ -> UnqualStr (fromString f)

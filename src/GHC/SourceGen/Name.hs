@@ -20,7 +20,7 @@ module GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
 
 unqual :: OccNameStr -> RdrNameStr
-unqual = RawUnqual
+unqual = UnqualStr
 
 qual :: ModuleNameStr -> OccNameStr -> RdrNameStr
-qual = RawQual
+qual = QualStr
