@@ -23,7 +23,7 @@ wildP = noExtOrPlaceHolder WildPat
 -- > a@B
 -- > =====
 -- > asP "a" (var "B")
-asP :: RawRdrName -> Pat' -> Pat'
+asP :: RdrNameStr -> Pat' -> Pat'
 v `asP` p = noExt AsPat (valueRdrName v) $ builtPat p
 
 -- | A pattern constructor.
@@ -31,7 +31,7 @@ v `asP` p = noExt AsPat (valueRdrName v) $ builtPat p
 -- > A b c
 -- > =====
 -- > conP "A" [var "b", var "c"]
-conP :: RawRdrName -> [Pat'] -> Pat'
+conP :: RdrNameStr -> [Pat'] -> Pat'
 conP c xs = ConPatIn (valueRdrName c) $ PrefixCon $ map builtPat xs
 
 -- | A bang-pattern.

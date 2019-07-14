@@ -14,7 +14,7 @@ import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name.Internal
 
-mkQTyVars :: [RawRdrName] -> LHsQTyVars'
+mkQTyVars :: [RdrNameStr] -> LHsQTyVars'
 mkQTyVars vars =  withPlaceHolder
                 $ noExt (withPlaceHolder HsQTvs)
                 $ map (builtLoc . noExt UserTyVar . typeRdrName)
