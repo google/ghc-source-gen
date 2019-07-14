@@ -57,8 +57,8 @@ if' x y z = noExt HsIf Nothing (builtLoc x) (builtLoc y) (builtLoc z)
 -- >     , guardedStmt (var "g" @@ var "x") $ rhs (string "g")
 -- >     , guardedStmt (var "otherwise") $ rhs (string "h")
 -- >     ]
-multiIf :: [RawGRHS] -> HsExpr'
-multiIf = noExtOrPlaceHolder HsMultiIf . map (builtLoc . mkGRHS)
+multiIf :: [GuardedExpr] -> HsExpr'
+multiIf = noExtOrPlaceHolder HsMultiIf . map builtLoc
 
 -- | A do-expression.
 --

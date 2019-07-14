@@ -10,7 +10,7 @@ module GHC.SourceGen.Binds.Internal where
 import BasicTypes (Origin(Generated))
 import Bag (listToBag)
 import HsBinds
-import HsExpr (MatchGroup(..), Match(..), GRHS(..), GRHSs(..))
+import HsExpr (MatchGroup(..), Match(..), GRHSs(..))
 import SrcLoc (Located)
 
 #if !MIN_VERSION_ghc(8,6,0)
@@ -53,10 +53,24 @@ valBinds vbs =
 -- >    z = ...
 data RawMatch = RawMatch
     { rawMatchPats :: [Pat']
-    , rawGRHSs :: [RawGRHS]
-    , rawWhere :: [RawValBind]
+    , rawMatchGRHSs :: RawGRHSs
     }
 
+-- | A set of match guards plus an optional "where" clause.
+--
+-- This type is used in matches and in multi-way if expressions.
+--
+-- For example:
+--
+-- >    | cond = y
+-- >    | otherwise = z
+-- >  where
+-- >    y = ...
+-- >    z = ...
+data RawGRHSs = RawGRHSs
+    { rawGRHSs :: [GuardedExpr]
+    , rawGRHSWhere :: [RawValBind]
+    }
 
 matchGroup :: HsMatchContext' -> [RawMatch] -> MatchGroup' (Located HsExpr')
 matchGroup context matches =
@@ -73,15 +87,17 @@ matchGroup context matches =
                     -- The parsing step produces 'Nothing' for this field.
                     Nothing
 #endif
-                    $ noExt GRHSs (map (builtLoc . mkGRHS) $ rawGRHSs r)
-                            (builtLoc $ valBinds $ rawWhere r)
+                    (mkGRHSs $ rawMatchGRHSs r)
 
--- | The "right-hand-side" of a function definition.  For example:
+mkGRHSs :: RawGRHSs -> GRHSs' (Located HsExpr')
+mkGRHSs g = noExt GRHSs
+                (map builtLoc $ rawGRHSs g)
+                (builtLoc $ valBinds $ rawGRHSWhere g)
+
+-- | An expression with a single guard.
 --
--- > f x | y = z
-data RawGRHS = RawGRHS [Stmt'] HsExpr'
-
-mkGRHS :: RawGRHS -> GRHS' (Located HsExpr')
-mkGRHS (RawGRHS stmts e) = noExt GRHS (map builtLoc stmts) (builtLoc e)
-
+-- For example:
+--
+-- > | otherwise = ()
+type GuardedExpr = GRHS' (Located HsExpr')
 

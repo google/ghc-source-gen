@@ -40,12 +40,15 @@ test2 :: IO ()
 test2 = pprint $ module' (Just "Foo") (Just [var "efg"]) []
     [ typeSigs ["efg", "h"] $ tuple [var "A", var "B"]
     , funBind "efg"
-        $ matchRhs [] (char 'a')
+        $ match []
+        $ rhs (char 'a')
             `where'` [ typeSig "q" $ var "Q"
-                     , funBind "q" $ match [] [guarded [stmt $ var "True"] $ rhs (char 'q')]
+                     , funBind "q" $ match []
+                        $ guarded [var "True" `guard` char 'q']
                      ]
     , funBind "f"
-        $ matchRhs [var "x", var "y"]
+        $ match [var "x", var "y"]
+        $ rhs
             (case' (var "y")
                         [matchRhs [wildP] $ var "x"])
             `where'` [funBind "q" $ matchRhs [] $ char 't']
@@ -57,15 +60,13 @@ test3 = pprint $ module' Nothing Nothing []
                     $ lambdaCase [matchRhs [var "z"] (char 'a')]
     , funBinds "ifs"
         [ matchRhs [var "x"] $ if' (var "b") (var "t") (var "f")
-        , matchRhs [var "y"] $ multiIf [guardedStmt (var "False")
-                                            $ rhs (char 'f')
-                                        , guardedStmt (var "True")
-                                            $ rhs (char 't')
-                                        ]
+        , matchRhs [var "y"] $ multiIf [guard (var "False") $ char 'f'
+                                       , guard (var "True") $ char 't'
+                                       ]
         , matchRhs [var "z"] $ multiIf
-            [ guardedStmt (var "f" @@ var "x") $ rhs (string "f")
-            , guardedStmt (var "g" @@ var "x") $ rhs (string "g")
-            , guardedStmt (var "otherwise") $ rhs (string "h")
+            [ guard (var "f" @@ var "x") $ string "f"
+            , guard (var "g" @@ var "x") $ string "g"
+            , guard (var "otherwise") $ string "h"
             ]
         ]
     , funBind "do'"
