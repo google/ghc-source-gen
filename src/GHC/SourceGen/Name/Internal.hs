@@ -18,7 +18,7 @@ import GHC.SourceGen.Syntax.Internal (builtLoc)
 
 -- | A string identifier.  This definition is simililar to 'RdrName', but
 -- independent of whether it's in the type or value namespace.
-data RawOccName = RawOccName !RawNameSpace !FastString
+data OccNameStr = OccNameStr !RawNameSpace !FastString
 
 data RawNameSpace = Constructor | Value
 -- TODO: symbols
@@ -28,14 +28,14 @@ rawNameSpace (c:_)
     | isUpper c = Constructor
 rawNameSpace _ = Value
 
-instance IsString RawOccName where
-    fromString s = RawOccName (rawNameSpace s) (fsLit s)
+instance IsString OccNameStr where
+    fromString s = OccNameStr (rawNameSpace s) (fsLit s)
 
-valueOccName, typeOccName :: RawOccName -> OccName
-valueOccName (RawOccName Constructor s) = mkDataOccFS s
-valueOccName (RawOccName Value s) = mkVarOccFS s
-typeOccName (RawOccName Constructor s) = mkTcOccFS s
-typeOccName (RawOccName Value s) = mkTyVarOccFS s
+valueOccName, typeOccName :: OccNameStr -> OccName
+valueOccName (OccNameStr Constructor s) = mkDataOccFS s
+valueOccName (OccNameStr Value s) = mkVarOccFS s
+typeOccName (OccNameStr Constructor s) = mkTcOccFS s
+typeOccName (OccNameStr Value s) = mkTyVarOccFS s
 
 -- | A newtype wrapper around 'ModuleName' which is an instance of 'IsString'.
 newtype ModuleNameStr = ModuleNameStr { unModuleNameStr :: ModuleName }
@@ -53,18 +53,18 @@ instance IsString ModuleNameStr where
 -- This definition is simililar to 'RdrName', but independent of whether it's
 -- in the type or value namespace.  Functions in this package that take
 -- a 'RdrName' as input will internally convert it to the proper namespace.
-data RawRdrName = RawUnqual RawOccName | RawQual ModuleNameStr RawOccName
+data RdrNameStr = RawUnqual OccNameStr | RawQual ModuleNameStr OccNameStr
 
 -- GHC always wraps RdrName in a Located.  (Usually: 'Located (IdP pass)')
 -- So for convenience, these functions return a Located-wrapped value.
-valueRdrName, typeRdrName :: RawRdrName -> Located RdrName
+valueRdrName, typeRdrName :: RdrNameStr -> Located RdrName
 valueRdrName (RawUnqual r) = builtLoc $ Unqual $ valueOccName r
 valueRdrName (RawQual (ModuleNameStr m) r) = builtLoc $ Qual m $ valueOccName r
 typeRdrName (RawUnqual r) = builtLoc $ Unqual $ typeOccName r
 typeRdrName (RawQual (ModuleNameStr m) r) = builtLoc $ Qual m $ typeOccName r
 
 -- TODO: operators
-instance IsString RawRdrName where
+instance IsString RdrNameStr where
     -- Split "Foo.Bar.baz" into ("Foo.Bar", "baz")
     fromString f = case span (/= '.') (reverse f) of
         (f', '.':f'') ->

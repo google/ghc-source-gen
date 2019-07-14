@@ -10,8 +10,8 @@
 -- These types are all instances of 'Data.String.IsString'.  For easier use,
 -- we recommend enabling the @OverloadedStrings@ extension.
 module GHC.SourceGen.Name
-    ( RawRdrName(..)
-    , RawOccName
+    ( RdrNameStr(..)
+    , OccNameStr
     , ModuleNameStr(..)
     , qual
     , unqual
@@ -19,8 +19,8 @@ module GHC.SourceGen.Name
 
 import GHC.SourceGen.Name.Internal
 
-unqual :: RawOccName -> RawRdrName
+unqual :: OccNameStr -> RdrNameStr
 unqual = RawUnqual
 
-qual :: ModuleNameStr -> RawOccName -> RawRdrName
+qual :: ModuleNameStr -> OccNameStr -> RdrNameStr
 qual = RawQual

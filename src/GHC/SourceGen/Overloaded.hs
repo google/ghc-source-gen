@@ -115,7 +115,7 @@ class App e where
     -- > f x `plus` g y
     -- > =====
     -- > op (var "f" @@ var "x") "plus" (var "g" @@ var "y")
-    op :: e -> RawRdrName -> e -> e
+    op :: e -> RdrNameStr -> e -> e
 infixl 2 @@
 
 instance App HsExpr' where
@@ -217,7 +217,7 @@ instance HasList Pat' where
 -- value, type variable, or pattern; and the latter could refer to either a type
 -- constructor or a  data constructor,
 class Var a where
-    var :: RawRdrName -> a
+    var :: RdrNameStr -> a
 
 instance Var Pat' where
     var = noExt VarPat . valueRdrName

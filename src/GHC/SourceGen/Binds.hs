@@ -51,7 +51,7 @@ import GHC.SourceGen.Type.Internal (sigWcType)
 -- > f, g :: A
 -- > =====
 -- > typeSigs ["f", "g"] (var "A")
-typeSigs :: HasValBind t => [RawRdrName] -> HsType' -> t
+typeSigs :: HasValBind t => [RdrNameStr] -> HsType' -> t
 typeSigs names t =
     sigB $ noExt TypeSig (map typeRdrName names)
         $ sigWcType t
@@ -61,7 +61,7 @@ typeSigs names t =
 -- > f :: A
 -- > =====
 -- > typeSig "f" (var "A")
-typeSig :: HasValBind t => RawRdrName -> HsType' -> t
+typeSig :: HasValBind t => RdrNameStr -> HsType' -> t
 typeSig n = typeSigs [n]
 
 -- | Define a function or value.
@@ -81,7 +81,7 @@ typeSig n = typeSigs [n]
 -- >   [ matchRhs [conP "True" []] (var "False")
 -- >   , matchRhs [conP "False" []] (var "True")
 -- >   ]
-funBinds :: HasValBind t => RawRdrName -> [RawMatch] -> t
+funBinds :: HasValBind t => RdrNameStr -> [RawMatch] -> t
 funBinds name matches = bindB $ withPlaceHolder
         (noExt FunBind name'
             (matchGroup context matches) WpHole)
@@ -100,7 +100,7 @@ funBinds name matches = bindB $ withPlaceHolder
 -- > =====
 -- > funBind "id" $ matchRhs [var "x"] (var "x")
 --
-funBind :: HasValBind t => RawRdrName -> RawMatch -> t
+funBind :: HasValBind t => RdrNameStr -> RawMatch -> t
 funBind name m = funBinds name [m]
 
 {- $rawMatch
