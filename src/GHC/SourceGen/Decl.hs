@@ -325,7 +325,7 @@ renderCon98Decl name details = noExt ConDeclH98 (typeRdrName name)
 -- >   | otherwise = (2, 3)
 -- > =====
 -- > patBind (tuple [var "x", var "y"])
--- >   $ guarded
+-- >   $ guardedRhs
 -- >       [ var "test" `guard` tuple [int 1, int 2]
 -- >       , var "otherwise" `guard` [int 2, int 3]
 -- >       ]

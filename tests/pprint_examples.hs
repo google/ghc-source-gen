@@ -44,7 +44,7 @@ test2 = pprint $ module' (Just "Foo") (Just [var "efg"]) []
         $ rhs (char 'a')
             `where'` [ typeSig "q" $ var "Q"
                      , funBind "q" $ match []
-                        $ guarded [var "True" `guard` char 'q']
+                        $ guardedRhs [var "True" `guard` char 'q']
                      ]
     , funBind "f"
         $ match [var "x", var "y"]
