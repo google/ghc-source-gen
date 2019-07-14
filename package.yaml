@@ -18,7 +18,15 @@ extra-source-files:
 
 synopsis:            Constructs Haskell syntax trees for the GHC API.
 category:            Development
-description:         Please see the README on GitHub at <https://github.com/google/ghc-source-gen>
+description: |
+    @ghc-source-gen@ is a library for generating Haskell source code.
+    It uses the <https://hackage.haskell.org/package/ghc ghc> library
+    to support recent language extensions, and provides a simple, consistent
+    interface across several major versions of GHC.
+    .
+    To get started, take a look at the "GHC.SourceGen" module.
+    .
+    For more information, please see the <https://github.com/google/ghc-source-gen README>.
 
 dependencies:
 - base >= 4.7 && < 5
