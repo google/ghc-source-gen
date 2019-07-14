@@ -8,15 +8,15 @@ jobs:
     - checkout
     - restore_cache:
         keys:
-            - stack-cache-v2-11.22-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-11.22-{{ arch }}-master
+            - stack-cache-v3-11.22-{{ arch }}-{{ .Branch }}
+            - stack-cache-v3-11.22-{{ arch }}-master
     - run: .circleci/install-stack.sh
     - run: stack test --no-terminal --resolver=lts-11.22 ghc-source-gen
     - save_cache:
-            key: stack-cache-v2-11.22-{{ arch }}-{{ .Branch }}-{{ epoch }}
+            key: stack-cache-v3-11.22-{{ arch }}-{{ .Branch }}-{{ epoch }}
             paths:
                 - ~/.stack
-                - .stack-work
+
   build-12.8:
     docker:
     - image: circleci/rust:1.36-stretch
@@ -24,15 +24,15 @@ jobs:
     - checkout
     - restore_cache:
         keys:
-            - stack-cache-v2-12.8-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-12.8-{{ arch }}-master
+            - stack-cache-v3-12.8-{{ arch }}-{{ .Branch }}
+            - stack-cache-v3-12.8-{{ arch }}-master
     - run: .circleci/install-stack.sh
     - run: stack test --no-terminal --resolver=lts-12.8 ghc-source-gen
     - save_cache:
-            key: stack-cache-v2-12.8-{{ arch }}-{{ .Branch }}-{{ epoch }}
+            key: stack-cache-v3-12.8-{{ arch }}-{{ .Branch }}-{{ epoch }}
             paths:
                 - ~/.stack
-                - .stack-work
+
   build-13.23:
     docker:
     - image: circleci/rust:1.36-stretch
@@ -40,15 +40,14 @@ jobs:
     - checkout
     - restore_cache:
         keys:
-            - stack-cache-v2-13.23-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-13.23-{{ arch }}-master
+            - stack-cache-v3-13.23-{{ arch }}-{{ .Branch }}
+            - stack-cache-v3-13.23-{{ arch }}-master
     - run: .circleci/install-stack.sh
     - run: stack test --no-terminal --resolver=lts-13.23 ghc-source-gen
     - save_cache:
-            key: stack-cache-v2-13.23-{{ arch }}-{{ .Branch }}-{{ epoch }}
+            key: stack-cache-v3-13.23-{{ arch }}-{{ .Branch }}-{{ epoch }}
             paths:
                 - ~/.stack
-                - .stack-work
 
   build-ghc-8.8:
     docker:
@@ -57,15 +56,14 @@ jobs:
     - checkout
     - restore_cache:
         keys:
-            - stack-cache-v2-ghc-8.8-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-ghc-8.8-{{ arch }}-master
+            - stack-cache-v3-ghc-8.8-{{ arch }}-{{ .Branch }}
+            - stack-cache-v3-ghc-8.8-{{ arch }}-master
     - run: .circleci/install-stack.sh
     - run: stack test --no-terminal --stack-yaml=stack-8.8.yaml ghc-source-gen
     - save_cache:
-            key: stack-cache-v2-ghc-8.8-{{ arch }}-{{ .Branch }}-{{ epoch }}
+            key: stack-cache-v3-ghc-8.8-{{ arch }}-{{ .Branch }}-{{ epoch }}
             paths:
                 - ~/.stack
-                - .stack-work
 
   build-success:
     docker:
