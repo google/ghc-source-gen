@@ -51,7 +51,7 @@ import HsExtension (NoExt(NoExt))
 import PlaceHolder (PlaceHolder(..))
 #endif
 
-import GHC.SourceGen.Binds
+import GHC.SourceGen.Binds hiding (patBind)
 import GHC.SourceGen.Binds.Internal (mkGRHSs)
 import GHC.SourceGen.Lit.Internal (noSourceText)
 import GHC.SourceGen.Name.Internal
@@ -60,6 +60,10 @@ import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
 
 -- | A definition that can appear in the body of a @class@ declaration.
+--
+-- 'ClassDecl' definitions may be constructed using 'funDep' or using the
+-- instance of 'HasValBind'.  For more details, see the documentation of
+-- that function, and of "GHC.SourceGen.Binds" overall.
 data ClassDecl
     = ClassSig Sig'
     | ClassDefaultMethod HsBind'
@@ -140,6 +144,10 @@ class' context name vars decls
             }
 
 -- | A definition that can appear in the body of an @instance@ declaration.
+--
+-- 'RawInstDecl' definitions may be constructed using its instance of
+-- 'HasValBind'.  For more details, see the documentation of that function, and
+-- of "GHC.SourceGen.Binds" overall.
 data RawInstDecl
     = InstSig Sig'
     | InstBind HsBind'
@@ -336,3 +344,4 @@ patBind p g =
             (withPlaceHolder
                 (noExt PatBind (builtPat p) (mkGRHSs g)))
         $ ([],[])
+{-# DEPRECATED patBind "Use GHC.SourceGen.patBind (equivalently: GHC.SourceGen.Binds.patBind)"#-}
