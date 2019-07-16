@@ -21,6 +21,11 @@ import PlaceHolder (PlaceHolder(..))
 import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 
+-- | A binding definition inside of a @let@ or @where@ clause.
+--
+-- 'RawValBind' definitions may be constructed using its instance of
+-- 'HasValBind'.  For more details, see the documentation of that function, and
+-- of "GHC.SourceGen.Binds" overall.
 data RawValBind
     = SigV Sig'
     | BindV HsBind'

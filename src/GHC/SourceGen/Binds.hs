@@ -12,6 +12,7 @@ module GHC.SourceGen.Binds
     , typeSigs
     , funBind
     , funBinds
+    , patBind
     -- * Matches
     -- $rawMatch
     , RawMatch
@@ -102,6 +103,33 @@ funBinds name matches = bindB $ withPlaceHolder
 --
 funBind :: HasValBind t => RdrNameStr -> RawMatch -> t
 funBind name m = funBinds name [m]
+
+-- | A pattern binding.
+--
+-- > x = y
+-- > =====
+-- > patBind (var "x") $ rhs $ var "y"
+--
+-- > (x, y) = e
+-- > =====
+-- > patBind (tuple [var "x", var "y"]) $ rhs e
+--
+-- > (x, y)
+-- >   | test = (1, 2)
+-- >   | otherwise = (2, 3)
+-- > =====
+-- > patBind (tuple [var "x", var "y"])
+-- >   $ guardedRhs
+-- >       [ var "test" `guard` tuple [int 1, int 2]
+-- >       , var "otherwise" `guard` [int 2, int 3]
+-- >       ]
+patBind :: HasValBind t => Pat' -> RawGRHSs -> t
+patBind p g =
+    bindB
+        $ withPlaceHolder
+            (withPlaceHolder
+                (noExt PatBind (builtPat p) (mkGRHSs g)))
+        $ ([],[])
 
 {- $rawMatch
 
@@ -209,7 +237,7 @@ infixl 1 <--
 -- declarations, or the body of a class declaration or class instance.
 --
 -- Use 'typeSig' or 'typeSigs' to declare that functions or values have
--- types, and use 'funBind' to give them definitions.
+-- types, and use 'funBind', 'funBinds' or 'patBind' to give them definitions.
 class HasValBind t where
     sigB :: Sig' -> t
     bindB :: HsBind' -> t
