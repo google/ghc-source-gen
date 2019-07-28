@@ -32,7 +32,7 @@ module GHC.SourceGen
     ) where
 
 import GHC.SourceGen.Binds
-import GHC.SourceGen.Decl hiding (patBind)
+import GHC.SourceGen.Decl
 import GHC.SourceGen.Expr
 import GHC.SourceGen.Lit
 import GHC.SourceGen.Module
