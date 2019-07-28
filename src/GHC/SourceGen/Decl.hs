@@ -11,8 +11,6 @@ module GHC.SourceGen.Decl
       type'
     , newtype'
     , data'
-      -- * Pattern bindings
-    , patBind
       -- * Data constructors
     , prefixCon
     , infixCon
@@ -32,7 +30,6 @@ module GHC.SourceGen.Decl
 
 import BasicTypes (LexicalFixity(Prefix))
 import Bag (listToBag)
-import HsBinds (HsBindLR(..))
 import HsDecls
 import HsTypes
     ( ConDeclField(..)
@@ -52,7 +49,6 @@ import PlaceHolder (PlaceHolder(..))
 #endif
 
 import GHC.SourceGen.Binds hiding (patBind)
-import GHC.SourceGen.Binds.Internal (mkGRHSs)
 import GHC.SourceGen.Lit.Internal (noSourceText)
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax
@@ -317,31 +313,3 @@ renderCon98Decl name details = noExt ConDeclH98 (typeRdrName name)
     Nothing
     details
     Nothing
-
--- | A pattern binding.
---
--- > x = y
--- > =====
--- > patBind (var "x") $ rhs $ var "y"
---
--- > (x, y) = e
--- > =====
--- > patBind (tuple [var "x", var "y"]) $ rhs e
---
--- > (x, y)
--- >   | test = (1, 2)
--- >   | otherwise = (2, 3)
--- > =====
--- > patBind (tuple [var "x", var "y"])
--- >   $ guardedRhs
--- >       [ var "test" `guard` tuple [int 1, int 2]
--- >       , var "otherwise" `guard` [int 2, int 3]
--- >       ]
-patBind :: Pat' -> RawGRHSs -> HsDecl'
-patBind p g =
-    bindB
-        $ withPlaceHolder
-            (withPlaceHolder
-                (noExt PatBind (builtPat p) (mkGRHSs g)))
-        $ ([],[])
-{-# DEPRECATED patBind "Use GHC.SourceGen.patBind (equivalently: GHC.SourceGen.Binds.patBind)"#-}
