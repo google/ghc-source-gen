@@ -6,14 +6,23 @@
 
 -- | This module provides combinators for constructing Haskell modules,
 -- including import and export statements.
-module GHC.SourceGen.Module where
+module GHC.SourceGen.Module
+    ( HsModule'
+    , IE'
+    , ImportDecl'
+    , module'
+    , qualified'
+    , as'
+    , import'
+    , exposing
+    , hiding
+    )  where
 
 import HsSyn
     ( HsModule(..)
     , ImportDecl(..)
     )
 
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)

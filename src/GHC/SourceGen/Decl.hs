@@ -7,11 +7,13 @@
 {-# LANGUAGE CPP #-}
 -- | This module provides combinators for constructing Haskell declarations.
 module GHC.SourceGen.Decl
-    ( -- * Type declarations
-      type'
+    ( HsDecl'
+      -- * Type declarations
+    , type'
     , newtype'
     , data'
       -- * Data constructors
+    , ConDecl'
     , prefixCon
     , infixCon
     , recordCon
@@ -51,7 +53,6 @@ import PlaceHolder (PlaceHolder(..))
 import GHC.SourceGen.Binds hiding (patBind)
 import GHC.SourceGen.Lit.Internal (noSourceText)
 import GHC.SourceGen.Name.Internal
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
 

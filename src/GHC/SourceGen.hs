@@ -13,7 +13,6 @@ module GHC.SourceGen
     ( -- * Syntax types
       -- | These modules declare combinators for constructing different parts
       -- of a GHC syntax tree.
-      module GHC.SourceGen.Syntax,
       module GHC.SourceGen.Name,
       module GHC.SourceGen.Decl,
       module GHC.SourceGen.Expr,
@@ -40,6 +39,5 @@ import GHC.SourceGen.Name
 import GHC.SourceGen.Overloaded
 import GHC.SourceGen.Pat
 import GHC.SourceGen.Pretty
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Type
 

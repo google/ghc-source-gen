@@ -7,7 +7,15 @@
 {-# LANGUAGE CPP #-}
 -- | This module provides combinators for constructing Haskell literals,
 -- which may be used in either patterns or expressions.
-module GHC.SourceGen.Lit where
+module GHC.SourceGen.Lit
+    ( HsLit'
+    , HsOverLit'
+    , HasLit(..)
+    , char
+    , string
+    , int
+    , frac
+    ) where
 
 import BasicTypes (FractionalLit(..))
 #if MIN_VERSION_ghc(8,4,0)
@@ -19,7 +27,6 @@ import HsPat (Pat(..))
 import FastString (fsLit)
 
 import GHC.SourceGen.Lit.Internal
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 
 class HasLit e where

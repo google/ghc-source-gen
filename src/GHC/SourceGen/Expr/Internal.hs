@@ -14,7 +14,6 @@ import HsExpr
 import HsLit
 import SrcLoc (Located, unLoc)
 
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 
 parenthesizeExprForApp, parenthesizeExprForOp
