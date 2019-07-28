@@ -6,7 +6,20 @@
 
 {-# LANGUAGE CPP #-}
 -- | This module provides combinators for constructing Haskell expressions.
-module GHC.SourceGen.Expr where
+module GHC.SourceGen.Expr
+    ( HsExpr'
+    , overLabel
+    , let'
+    , case'
+    , lambda
+    , lambdaCase
+    , if'
+    , multiIf
+    , do'
+    , Stmt'
+    , (@::@)
+    , tyApp
+    ) where
 
 import HsExpr
 import Data.String (fromString)
@@ -14,7 +27,6 @@ import SrcLoc (unLoc)
 
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Binds
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
     ( parenthesizeTypeForApp

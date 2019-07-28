@@ -17,8 +17,6 @@ import SrcLoc (Located)
 import PlaceHolder (PlaceHolder(..))
 #endif
 
-
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 
 -- | A binding definition inside of a @let@ or @where@ clause.

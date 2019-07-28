@@ -40,7 +40,6 @@ import TysWiredIn (consDataCon_RDR, nilDataCon, unitDataCon)
 
 import GHC.SourceGen.Expr.Internal
 import GHC.SourceGen.Name.Internal
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
 

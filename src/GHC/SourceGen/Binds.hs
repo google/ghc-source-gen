@@ -6,8 +6,10 @@
 
 -- | This module provides combinators for constructing Haskell declarations.
 module GHC.SourceGen.Binds
-    ( -- * Overloaded constructors
-      HasValBind(..)
+    (  -- * Overloaded constructors
+      HsBind'
+    , HasValBind(..)
+    , Sig'
     , typeSig
     , typeSigs
     , funBind
@@ -24,6 +26,7 @@ module GHC.SourceGen.Binds
     -- ** Guards
     , guardedRhs
     , GuardedExpr
+    , GRHS'
     , guards
     , guard
     -- ** Where clauses
@@ -43,7 +46,6 @@ import TcEvidence (HsWrapper(WpHole))
 
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Name.Internal
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal (sigWcType)
 

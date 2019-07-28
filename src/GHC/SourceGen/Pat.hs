@@ -5,13 +5,19 @@
 -- https://developers.google.com/open-source/licenses/bsd
 
 -- | This module provides combinators for constructing Haskell patterns.
-module GHC.SourceGen.Pat where
+module GHC.SourceGen.Pat
+    ( Pat'
+    , wildP
+    , asP
+    , conP
+    , strictP
+    , lazyP
+    ) where
 
 import HsTypes
 import HsPat
 
 import GHC.SourceGen.Name.Internal
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 
 -- | A wild pattern (@_@).

@@ -10,7 +10,6 @@ module GHC.SourceGen.Type.Internal where
 import HsTypes
 import SrcLoc (Located, unLoc)
 
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name.Internal
 

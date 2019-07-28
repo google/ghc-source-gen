@@ -5,12 +5,22 @@
 -- https://developers.google.com/open-source/licenses/bsd
 
 -- | This module provides combinators for constructing Haskell types.
-module GHC.SourceGen.Type where
+module GHC.SourceGen.Type
+    ( HsType'
+    , tyPromotedVar
+    , stringTy
+    , numTy
+    , listTy
+    , listPromotedTy
+    , (-->)
+    , forall'
+    , HsTyVarBndr'
+    , (==>)
+    ) where
 
 import Data.String (fromString)
 import HsTypes
 
-import GHC.SourceGen.Syntax
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
 import GHC.SourceGen.Name.Internal
