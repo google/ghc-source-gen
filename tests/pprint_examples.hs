@@ -134,7 +134,9 @@ test3 = pprint $ module' Nothing Nothing []
         [ prefixCon "A" [field (var "b"), field (var "c")]
         , prefixCon "D" []
         ]
+        [deriving' [var "X", var "Y"]]
     , newtype' "A" ["b", "c"] (prefixCon "A" [field (var "b")])
+        [deriving' [var "X", var "Y"]]
     , instance' (var "A" @@ var "b" @@ var "c")
         [ typeSig "f" $ var "b" --> var "c"
         , funBind "f" $ matchRhs [] $ var "undefined"
@@ -187,6 +189,7 @@ test3 = pprint $ module' Nothing Nothing []
             , ("y", lazy $ field $ var "A" @@ var "b")
             ]
         ]
+        []
     , funBind "strictness"
         $ matchRhs
             [strictP (conP "A" [var "b"]),
