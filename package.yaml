@@ -28,9 +28,22 @@ description: |
     .
     For more information, please see the <https://github.com/google/ghc-source-gen README>.
 
+flags:
+  ghc-lib:
+    description: Use the ghc-lib-parser package instead of ghc.
+    manual: True
+    default: False
+
 dependencies:
 - base >= 4.7 && < 5
-- ghc >= 8.2 && < 8.9
+
+when:
+- condition: flag(ghc-lib)
+  then:
+    dependencies: ghc-lib-parser == 8.8.*
+    cpp-options: -DMIN_VERSION_ghc(a,b,c)=1
+  else:
+    dependencies: ghc >= 8.2 && < 8.9
 
 default-extensions:
 - DataKinds
