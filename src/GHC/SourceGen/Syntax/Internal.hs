@@ -33,6 +33,10 @@ import HsSyn
     , ImportDecl
     , LHsSigWcType
     , LHsWcType
+#if !MIN_VERSION_ghc(8,8,0)
+    , LHsRecField
+    , LHsRecUpdField
+#endif
     )
 import HsBinds (Sig, HsLocalBinds)
 #if MIN_VERSION_ghc(8,6,0)
@@ -92,11 +96,10 @@ builtLoc = L builtSpan
 
 -- In GHC-8.8, source locations for Pat aren't stored in each node, and
 -- LPat is a synonym for Pat.
+builtPat :: Pat' -> LPat'
 #if MIN_VERSION_ghc(8,8,0)
-builtPat :: Pat' -> Pat'
 builtPat = id
 #else
-builtPat :: Pat' -> Located Pat'
 builtPat = builtLoc
 #endif
 
@@ -205,6 +208,9 @@ type ImportDecl' = ImportDecl GhcPs
 type LHsSigWcType' = LHsSigWcType GhcPs
 type LHsWcType' = LHsWcType GhcPs
 type HsDerivingClause' = HsDerivingClause GhcPs
+type LHsRecField' arg = LHsRecField GhcPs arg
+type LHsRecUpdField' = LHsRecUpdField GhcPs
+type LPat' = LPat GhcPs
 
 #else
 type HsLit' = HsLit
@@ -229,6 +235,9 @@ type ImportDecl' = ImportDecl RdrName
 type LHsSigWcType' = LHsSigWcType RdrName
 type LHsWcType' = LHsWcType RdrName
 type HsDerivingClause' = HsDerivingClause RdrName
+type LHsRecField' arg = LHsRecField RdrName arg
+type LHsRecUpdField' = LHsRecUpdField RdrName
+type LPat' = LPat RdrName
 
 #endif
 

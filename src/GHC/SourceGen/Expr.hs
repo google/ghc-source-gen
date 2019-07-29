@@ -19,14 +19,20 @@ module GHC.SourceGen.Expr
     , Stmt'
     , (@::@)
     , tyApp
+    , recordConE
+    , recordUpd
     ) where
 
 import HsExpr
+import HsPat (HsRecField'(..), HsRecFields(..))
+import HsTypes (FieldOcc(..), AmbiguousFieldOcc(..))
 import Data.String (fromString)
-import SrcLoc (unLoc)
+import SrcLoc (unLoc, Located)
 
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Binds
+import GHC.SourceGen.Expr.Internal
+import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
     ( parenthesizeTypeForApp
@@ -114,3 +120,55 @@ tyApp e t = HsAppType (builtLoc e) t'
 #endif
   where
     t' = wcType $ unLoc $ parenthesizeTypeForApp $ builtLoc t
+
+-- | Constructs a record with explicit field names.
+--
+-- > A { x = y }
+-- > =====
+-- > recordConE "A" [("x", var "y")]
+recordConE :: RdrNameStr -> [(RdrNameStr, HsExpr')] -> HsExpr'
+recordConE c fs = (withPlaceHolder $ noExt RecordCon (valueRdrName c))
+#if !MIN_VERSION_ghc(8,6,0)
+                    noPostTcExpr
+#endif
+                    $ HsRecFields (map recField fs)
+                        Nothing -- No ".."
+  where
+    recField :: (RdrNameStr, HsExpr') -> LHsRecField' (Located HsExpr')
+    recField (f, e) =
+        builtLoc HsRecField
+            { hsRecFieldLbl =
+                  builtLoc $ withPlaceHolder $ noExt FieldOcc $ valueRdrName f
+            , hsRecFieldArg = builtLoc e
+            , hsRecPun = False
+            }
+
+-- | Updates a record expression with explicit field names.
+--
+-- > r {a = b, c = d}
+-- > =====
+-- > recordUpd (var "x") [("a", var "b", ("c", var "d"))]
+--
+-- > (f x) {a = b}
+-- > =====
+-- > recordUpd (var "f" @@ var "x") [("a", var "b")]
+--
+-- > f x {a = b} -- equivalent to f (x {a = b})
+-- > =====
+-- > var "f" @@ recordUpd (var "x") [("a", var "b")]
+recordUpd :: HsExpr' -> [(RdrNameStr, HsExpr')] -> HsExpr'
+recordUpd e fs =
+    withPlaceHolder4
+       $ noExt RecordUpd (parenthesizeExprForApp $ builtLoc e)
+       $ map mkField fs
+  where
+    mkField :: (RdrNameStr, HsExpr') -> LHsRecUpdField'
+    mkField (f, e') =
+        builtLoc HsRecField
+            { hsRecFieldLbl =
+                builtLoc $ withPlaceHolder $ noExt Ambiguous $ valueRdrName f
+            , hsRecFieldArg = builtLoc e'
+            , hsRecPun = False
+            }
+    withPlaceHolder4 = withPlaceHolder . withPlaceHolder . withPlaceHolder
+                            . withPlaceHolder

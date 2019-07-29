@@ -10,12 +10,13 @@ module GHC.SourceGen.Pat
     , wildP
     , asP
     , conP
+    , recordConP
     , strictP
     , lazyP
     ) where
 
 import HsTypes
-import HsPat
+import HsPat hiding (LHsRecField')
 
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
@@ -39,6 +40,20 @@ v `asP` p = noExt AsPat (valueRdrName v) $ builtPat p
 -- > conP "A" [var "b", var "c"]
 conP :: RdrNameStr -> [Pat'] -> Pat'
 conP c xs = ConPatIn (valueRdrName c) $ PrefixCon $ map builtPat xs
+
+recordConP :: RdrNameStr -> [(RdrNameStr, Pat')] -> Pat'
+recordConP c fs
+    = ConPatIn (valueRdrName c)
+        $ RecCon $ HsRecFields (map mkRecField fs) Nothing -- No ".."
+  where
+    mkRecField :: (RdrNameStr, Pat') -> LHsRecField' LPat'
+    mkRecField (f, p) =
+        builtLoc $ HsRecField
+            { hsRecFieldLbl =
+                builtLoc $ withPlaceHolder $ noExt FieldOcc $ valueRdrName f
+            , hsRecFieldArg = builtPat p
+            , hsRecPun = False
+            }
 
 -- | A bang-pattern.
 --

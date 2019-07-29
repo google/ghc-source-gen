@@ -133,6 +133,22 @@ exprsTest dflags = testGroup "Expr"
         , "x @(a b)" :~ tyApp (var "x") (var "a" @@ var "b")
         , "x @(a + b)" :~ tyApp (var "x") (op (var "a") "+" (var "b"))
         ]
+    , test "recordConE"
+        [ "A {}" :~ recordConE "A" []
+        , "A {x = 1, y = 2}" :~ recordConE "A" [("x", int 1), ("y", int 2)]
+        ]
+    , test "recordUpd"
+        [ "r {b = x, c = y}"
+            :~ recordUpd (var "r") [("b", var "x"), ("c", var "y")]
+        , "(f x) {b = x}"
+            :~ recordUpd (var "f" @@ var "x") [("b", var "x")]
+        , "f x {b = x}"
+            :~ var "f" @@ recordUpd (var "x") [("b", var "x")]
+        , "(x + y) {b = x}"
+            :~ recordUpd (op (var "x") "+" (var "y")) [("b", var "x")]
+        , "x + y {b = x}"
+            :~ op (var "x") "+" (recordUpd (var "y") [("b", var "x")])
+        ]
     ]
   where
     test = testExprs dflags
