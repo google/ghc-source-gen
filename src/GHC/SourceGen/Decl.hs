@@ -12,7 +12,7 @@ module GHC.SourceGen.Decl
     , type'
     , newtype'
     , data'
-      -- * Data constructors
+      -- ** Data constructors
     , ConDecl'
     , prefixCon
     , infixCon
@@ -21,6 +21,12 @@ module GHC.SourceGen.Decl
     , field
     , strict
     , lazy
+      -- ** Deriving clauses
+    , HsDerivingClause'
+    , deriving'
+    , derivingStock
+    , derivingAnyclass
+    , derivingNewtype
       -- * Class declarations
     , class'
     , ClassDecl
@@ -31,6 +37,9 @@ module GHC.SourceGen.Decl
     ) where
 
 import BasicTypes (LexicalFixity(Prefix))
+#if !MIN_VERSION_ghc(8,6,0)
+import BasicTypes (DerivStrategy(..))
+#endif
 import Bag (listToBag)
 import HsDecls
 import HsTypes
@@ -192,9 +201,14 @@ type' name vars t =
         Prefix
         (builtLoc t)
 
-newOrDataType ::
-    NewOrData -> RdrNameStr -> [RdrNameStr] -> [ConDecl'] -> HsDecl'
-newOrDataType newOrData name vars conDecls
+newOrDataType
+    :: NewOrData
+    -> RdrNameStr
+    -> [RdrNameStr]
+    -> [ConDecl']
+    -> [HsDerivingClause']
+    -> HsDecl'
+newOrDataType newOrData name vars conDecls derivs
     = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
         noExt DataDecl (typeRdrName name)
             (mkQTyVars vars)
@@ -203,25 +217,29 @@ newOrDataType newOrData name vars conDecls
                 (builtLoc []) Nothing
                 Nothing
                 (map builtLoc conDecls)
-                (builtLoc [])
+                (builtLoc $ map builtLoc derivs)
 
 -- | A newtype declaration.
 --
--- > newtype Const a b = Const a
+-- > newtype Const a b = Const a deriving Eq
 -- > =====
--- > newtype' "Const" ["a", "b"] $ conDecl "Const" [var "a"]
-newtype' :: RdrNameStr -> [RdrNameStr] -> ConDecl' -> HsDecl'
+-- > newtype' "Const" ["a", "b"]
+-- >    (conDecl "Const" [var "a"])
+-- >    [var "Show"]
+newtype' :: RdrNameStr -> [RdrNameStr] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
 newtype' name vars conD = newOrDataType NewType name vars [conD]
 
 -- | A data declaration.
 --
 -- > data Either a b = Left a | Right b
+-- >    deriving Show
 -- > =====
 -- > data' "Either" ["a", "b"]
 -- >   [ conDecl "Left" [var "a"]
 -- >   , conDecl "Right" [var "b"]
 -- >   ]
-data' :: RdrNameStr -> [RdrNameStr] -> [ConDecl'] -> HsDecl'
+-- >   [var "Show"]
+data' :: RdrNameStr -> [RdrNameStr] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
 data' = newOrDataType DataType
 
 -- | Declares a Haskell-98-style prefix constructor for a data or type
@@ -314,3 +332,19 @@ renderCon98Decl name details = noExt ConDeclH98 (typeRdrName name)
     Nothing
     details
     Nothing
+
+deriving' :: [HsType'] -> HsDerivingClause'
+deriving' = derivingWay Nothing
+
+derivingWay :: Maybe DerivStrategy' -> [HsType'] -> HsDerivingClause'
+derivingWay way ts =
+    noExt HsDerivingClause (fmap builtLoc way) $ builtLoc $ map sigType ts
+
+derivingStock :: [HsType'] -> HsDerivingClause'
+derivingStock = derivingWay (Just StockStrategy)
+
+derivingNewtype :: [HsType'] -> HsDerivingClause'
+derivingNewtype = derivingWay (Just NewtypeStrategy)
+
+derivingAnyclass :: [HsType'] -> HsDerivingClause'
+derivingAnyclass = derivingWay (Just AnyclassStrategy)
