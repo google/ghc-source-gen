@@ -8,7 +8,6 @@
 -- including import and export statements.
 module GHC.SourceGen.Module
     ( HsModule'
-    , IE'
     , ImportDecl'
     , module'
     , qualified'
@@ -16,12 +15,18 @@ module GHC.SourceGen.Module
     , import'
     , exposing
     , hiding
+      -- * Imported/exported things
+    , IE'
+    , thingAll
+    , thingWith
     )  where
 
+import HsImpExp (LIEWrappedName, IEWildcard(..), IEWrappedName(..), IE(..))
 import HsSyn
     ( HsModule(..)
     , ImportDecl(..)
     )
+import RdrName (RdrName)
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name.Internal
@@ -60,3 +65,29 @@ exposing d ies = d
 hiding :: ImportDecl' -> [IE'] -> ImportDecl'
 hiding d ies = d
     { ideclHiding = Just (True, builtLoc $ map builtLoc ies) }
+
+-- | Exports all methods and/or constructors.
+--
+-- > A(..)
+-- > =====
+-- > thingAll "A"
+thingAll :: RdrNameStr -> IE'
+thingAll = noExt IEThingAll . wrappedName
+
+-- | Exports specific methods and/or constructors.
+--
+-- > A(b, C)
+-- > =====
+-- > thingWith "A" ["b", "C"]
+thingWith :: RdrNameStr -> [RdrNameStr] -> IE'
+thingWith n cs = noExt IEThingWith (wrappedName n) NoIEWildcard
+                    (map wrappedName cs)
+                    -- The parsing step leaves the list of fields empty
+                    -- and lumps them all together with the above list of
+                    -- constructors.
+                    []
+
+-- TODO: support "mixed" syntax with both ".." and explicit names.
+
+wrappedName :: RdrNameStr -> LIEWrappedName RdrName
+wrappedName = builtLoc . IEName. exportRdrName
