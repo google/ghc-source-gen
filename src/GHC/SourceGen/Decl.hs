@@ -27,6 +27,9 @@ module GHC.SourceGen.Decl
     , derivingStock
     , derivingAnyclass
     , derivingNewtype
+#if MIN_VERSION_ghc(8,6,0)
+    , derivingVia
+#endif
       -- * Class declarations
     , class'
     , ClassDecl
@@ -348,3 +351,14 @@ derivingNewtype = derivingWay (Just NewtypeStrategy)
 
 derivingAnyclass :: [HsType'] -> HsDerivingClause'
 derivingAnyclass = derivingWay (Just AnyclassStrategy)
+
+#if MIN_VERSION_ghc(8,6,0)
+-- | A `DerivingVia` clause.
+--
+-- > deriving (Eq, Show) via T
+-- > =====
+-- > derivingVia (var "T") [var "Eq", var "Show"]
+-- Available with `ghc >= 8.6`.
+derivingVia :: HsType' -> [HsType'] -> HsDerivingClause'
+derivingVia t = derivingWay (Just $ ViaStrategy $ sigType t)
+#endif

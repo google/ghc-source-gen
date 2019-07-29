@@ -57,12 +57,12 @@ with `ghc-source-gen` should compile unchanged on each of those versions.
 
 Currently, this library supports GHC versions 8.2, 8.4, 8.6 and 8.8.
 
-One caveat: in the future, `ghc-source-gen` will support some forms of syntax
+One caveat: `ghc-source-gen` supports some forms of syntax
 which are not implemented by all of those GHC versions.  For example, the
 `DerivingVia` extension is only implemented in `ghc >= 8.6`.  When built on
 older versions of GHC, `ghc-source-gen` will omit functions for constructing
-that syntax.  We will also tag any such function with a note in its Haddock
-documentation.
+that syntax (for example: `GHC.SourceGen.Decl.derivingVia`).  We will also tag
+any such function with a note in its Haddock documentation.
 
 ### Less verbose types and construction functions
 
