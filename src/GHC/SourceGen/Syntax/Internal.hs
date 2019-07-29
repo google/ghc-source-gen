@@ -110,17 +110,75 @@ promoted = Promoted
 notPromoted = NotPromoted
 #endif
 
+-- TODO: these Haddock cross-references don't link to the actual
+-- definition, only to the module they come from.  I think it's
+-- because the classes aren't in scope here.
+
+-- | A Haskell type, as it is represented after the parsing step.
+--
+-- Instances:
+--
+-- * 'GHC.SourceGen.Overloaded.Var'
+-- * 'GHC.SourceGen.Overloaded.Par'
+-- * 'GHC.SourceGen.Overloaded.App'
+-- * 'GHC.SourceGen.Overloaded.HasTuple'
+#if MIN_VERSION_ghc(8,4,0)
+type HsType' = HsType GhcPs
+#else
+type HsType' = HsType RdrName
+#endif
+
+-- | A Haskell pattern, as it is represented after the parsing step.
+--
+-- Instances:
+--
+-- * 'GHC.SourceGen.Overloaded.Var'
+-- * 'GHC.SourceGen.Overloaded.Par'
+-- * 'GHC.SourceGen.Overloaded.HasTuple'
+-- * 'GHC.SourceGen.Overloaded.HasList'
+-- * 'GHC.SourceGen.Lit.HasLit'
+#if MIN_VERSION_ghc(8,4,0)
+type Pat' = Pat GhcPs
+#else
+type Pat' = Pat RdrName
+#endif
+
+-- | A Haskell expression, as it is represented after the parsing step.
+--
+-- Instances:
+--
+-- * 'GHC.SourceGen.Overloaded.Var'
+-- * 'GHC.SourceGen.Overloaded.Par'
+-- * 'GHC.SourceGen.Overloaded.App'
+-- * 'GHC.SourceGen.Overloaded.HasTuple'
+-- * 'GHC.SourceGen.Overloaded.HasList'
+-- * 'GHC.SourceGen.Lit.HasLit'
 #if MIN_VERSION_ghc(8,4,0)
 type HsExpr' = HsExpr GhcPs
-type HsLit' = HsLit GhcPs
-type HsType' = HsType GhcPs
+#else
+type HsExpr' = HsExpr RdrName
+#endif
+
+-- | A Haskell declaration, as it is represented after the parsing step.
+--
+-- Instances:
+--
+-- * 'GHC.SourceGen.Bs.HasValBind'
+#if MIN_VERSION_ghc(8,4,0)
 type HsDecl' = HsDecl GhcPs
+#else
+type HsDecl' = HsDecl RdrName
+#endif
+
+
+
+#if MIN_VERSION_ghc(8,4,0)
+type HsLit' = HsLit GhcPs
 type HsModule' = HsModule GhcPs
 type HsBind' = HsBind GhcPs
 type HsLocalBinds' = HsLocalBinds GhcPs
 type HsValBinds' = HsValBinds GhcPs
 type Sig' = Sig GhcPs
-type Pat' = Pat GhcPs
 type HsMatchContext' = HsMatchContext RdrName
 type Match' = Match GhcPs
 type MatchGroup' = MatchGroup GhcPs
@@ -140,16 +198,12 @@ type LHsWcType' = LHsWcType GhcPs
 type HsDerivingClause' = HsDerivingClause GhcPs
 
 #else
-type HsExpr' = HsExpr RdrName
 type HsLit' = HsLit
-type HsType' = HsType RdrName
-type HsDecl' = HsDecl RdrName
 type HsModule' = HsModule RdrName
 type HsBind' = HsBind RdrName
 type HsLocalBinds' = HsLocalBinds RdrName
 type HsValBinds' = HsValBinds RdrName
 type Sig' = Sig RdrName
-type Pat' = Pat RdrName
 type HsMatchContext' = HsMatchContext RdrName
 type Match' = Match RdrName
 type MatchGroup' = MatchGroup RdrName
