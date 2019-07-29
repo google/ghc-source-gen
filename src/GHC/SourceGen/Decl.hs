@@ -37,6 +37,9 @@ module GHC.SourceGen.Decl
     ) where
 
 import BasicTypes (LexicalFixity(Prefix))
+#if !MIN_VERSION_ghc(8,6,0)
+import BasicTypes (DerivStrategy(..))
+#endif
 import Bag (listToBag)
 import HsDecls
 import HsTypes

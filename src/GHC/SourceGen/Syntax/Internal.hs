@@ -35,7 +35,12 @@ import HsSyn
     , LHsWcType
     )
 import HsBinds (Sig, HsLocalBinds)
-import HsDecls (DerivStrategy, HsDerivingClause)
+#if MIN_VERSION_ghc(8,6,0)
+import HsDecls (DerivStrategy)
+#else
+import BasicTypes (DerivStrategy)
+#endif
+import HsDecls (HsDerivingClause)
 import HsPat
 import RdrName (RdrName)
 import SrcLoc (SrcSpan, Located, GenLocated(..), mkGeneralSrcSpan)
@@ -133,7 +138,6 @@ type ImportDecl' = ImportDecl GhcPs
 type LHsSigWcType' = LHsSigWcType GhcPs
 type LHsWcType' = LHsWcType GhcPs
 type HsDerivingClause' = HsDerivingClause GhcPs
-type DerivStrategy' = DerivStrategy GhcPs
 
 #else
 type HsExpr' = HsExpr RdrName
@@ -163,6 +167,11 @@ type ImportDecl' = ImportDecl RdrName
 type LHsSigWcType' = LHsSigWcType RdrName
 type LHsWcType' = LHsWcType RdrName
 type HsDerivingClause' = HsDerivingClause RdrName
-type DerivStrategy' = DerivStrategy
 
+#endif
+
+#if MIN_VERSION_ghc(8,6,0)
+type DerivStrategy' = DerivStrategy GhcPs
+#else
+type DerivStrategy' = DerivStrategy
 #endif
