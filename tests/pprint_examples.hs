@@ -205,7 +205,11 @@ test4 = pprint constModule
 test5 :: IO ()
 test5 = pprint $ module' (Just "M") (Just exports) imports []
   where
-    exports = [var "a", var "b"]
+    exports = [ var "a"
+              , var "A"
+              , thingAll "B"
+              , thingWith "C" ["d", "E"]
+              ]
     imports = [ qualified' $ import' "A"
               , import' "B" `as'` "C"
               , import' "D" `exposing` [var "d"]

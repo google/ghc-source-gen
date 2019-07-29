@@ -231,4 +231,4 @@ instance Var HsTyVarBndr' where
     var = noExt UserTyVar . typeRdrName
 
 instance Var IE' where
-    var = noExt IEVar . builtLoc . IEName . valueRdrName
+    var n = noExt IEVar $ builtLoc $ IEName $ exportRdrName n

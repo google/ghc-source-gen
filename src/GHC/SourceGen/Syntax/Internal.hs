@@ -163,13 +163,23 @@ type HsExpr' = HsExpr RdrName
 --
 -- Instances:
 --
--- * 'GHC.SourceGen.Bs.HasValBind'
+-- * 'GHC.SourceGen.Binds.HasValBind'
 #if MIN_VERSION_ghc(8,4,0)
 type HsDecl' = HsDecl GhcPs
 #else
 type HsDecl' = HsDecl RdrName
 #endif
 
+-- | An imported or exported entity, as it is represented after the parsing step.
+--
+-- Instances:
+--
+-- * 'GHC.SourceGen.Overloaded.Var'
+#if MIN_VERSION_ghc(8,4,0)
+type IE' = IE GhcPs
+#else
+type IE' = IE RdrName
+#endif
 
 
 #if MIN_VERSION_ghc(8,4,0)
@@ -191,7 +201,6 @@ type LHsQTyVars' = LHsQTyVars GhcPs
 type ConDecl' = ConDecl GhcPs
 type HsConDeclDetails' = HsConDeclDetails GhcPs
 type LHsSigType' = LHsSigType GhcPs
-type IE' = IE GhcPs
 type ImportDecl' = ImportDecl GhcPs
 type LHsSigWcType' = LHsSigWcType GhcPs
 type LHsWcType' = LHsWcType GhcPs
@@ -216,7 +225,6 @@ type LHsQTyVars' = LHsQTyVars RdrName
 type ConDecl' = ConDecl RdrName
 type HsConDeclDetails' = HsConDeclDetails RdrName
 type LHsSigType' = LHsSigType RdrName
-type IE' = IE RdrName
 type ImportDecl' = ImportDecl RdrName
 type LHsSigWcType' = LHsSigWcType RdrName
 type LHsWcType' = LHsWcType RdrName

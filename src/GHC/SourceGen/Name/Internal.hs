@@ -70,3 +70,15 @@ instance IsString RdrNameStr where
         (f', '.':f'') ->
             QualStr (fromString $ reverse f'') (fromString $ reverse f')
         _ -> UnqualStr (fromString f)
+
+-- | A RdrName suitable for an import or export list.
+-- E.g.: `import F(a, B)`
+-- The 'a' should be a value, but the 'B' should be a type/class.
+-- (Currently, GHC doesn't distinguish the class and type namespaces.)
+exportRdrName :: RdrNameStr -> Located RdrName
+exportRdrName (UnqualStr r) = builtLoc $ Unqual $ exportOccName r
+exportRdrName (QualStr (ModuleNameStr m) r) = builtLoc $ Qual m $ exportOccName r
+
+exportOccName :: OccNameStr -> OccName
+exportOccName (OccNameStr Value s) = mkVarOccFS s
+exportOccName (OccNameStr Constructor s) = mkTcOccFS s
