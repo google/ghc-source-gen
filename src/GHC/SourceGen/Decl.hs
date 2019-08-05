@@ -37,6 +37,8 @@ module GHC.SourceGen.Decl
       -- * Instance declarations
     , instance'
     , RawInstDecl
+    , HasTyFamInst(..)
+    , tyFamInst
     ) where
 
 import BasicTypes (LexicalFixity(Prefix))
@@ -51,6 +53,9 @@ import HsTypes
     , HsConDetails(..)
     , HsSrcBang(..)
     , HsType(..)
+#if MIN_VERSION_ghc(8,8,0)
+    , HsArg(..)
+#endif
     , SrcStrictness(..)
     , SrcUnpackedness(..)
     )
@@ -154,12 +159,12 @@ class' context name vars decls
 
 -- | A definition that can appear in the body of an @instance@ declaration.
 --
--- 'RawInstDecl' definitions may be constructed using its instance of
--- 'HasValBind'.  For more details, see the documentation of that function, and
--- of "GHC.SourceGen.Binds" overall.
+-- 'RawInstDecl' definitions may be constructed using its class instances, e.g.,
+-- 'HasValBind'.  For more details, see the documentation of those classes.
 data RawInstDecl
     = InstSig Sig'
     | InstBind HsBind'
+    | InstTyFam TyFamInstDecl'
 
 instance HasValBind RawInstDecl where
     sigB = InstSig
@@ -187,10 +192,49 @@ instance' ty decls = noExt InstD  $ noExt ClsInstD $ ClsInstDecl
 #endif
     , cid_binds = listToBag [builtLoc b | InstBind b <- decls]
     , cid_sigs = [builtLoc sig | InstSig sig <- decls]
-    , cid_tyfam_insts = []
+    , cid_tyfam_insts = [builtLoc $ t | InstTyFam t <- decls]
     , cid_datafam_insts = []
     , cid_overlap_mode = Nothing
     }
+
+-- | Terms which can contain a type instance declaration.
+--
+-- To use this class, call 'tyFamInst'.
+class HasTyFamInst t where
+    tyFamInstD :: TyFamInstDecl' -> t
+
+instance HasTyFamInst HsDecl' where
+    tyFamInstD = noExt InstD . noExt TyFamInstD
+
+instance HasTyFamInst RawInstDecl where
+    tyFamInstD = InstTyFam
+
+-- | A type family instance.
+--
+-- > type Elt String = Char
+-- > =====
+-- > tyFamInst "Elt" [var "String"] (var "Char")
+tyFamInst :: HasTyFamInst t => RdrNameStr -> [HsType'] -> HsType' -> t
+tyFamInst name params ty = tyFamInstD
+#if MIN_VERSION_ghc(8,4,0)
+        $ TyFamInstDecl
+        $ implicitBndrs
+        $ noExt FamEqn (typeRdrName name)
+#if MIN_VERSION_ghc(8,8,0)
+            Nothing -- eqn binders
+            (map (HsValArg . builtLoc) params)
+#else
+            (map builtLoc params)
+#endif
+            Prefix
+            (builtLoc ty)
+#else
+        $ withPlaceHolder $ TyFamInstDecl
+        $ builtLoc $ TyFamEqn (typeRdrName name)
+                        (implicitBndrs $ map builtLoc params)
+                        Prefix
+                        (builtLoc ty)
+#endif
 
 -- | Declares a type synonym.
 --

@@ -187,6 +187,13 @@ declsTest dflags = testGroup "Decls"
                     , guard (var "otherwise") (var "True")
                     ]
         ]
+    , test "tyFamInst"
+        [ "type instance Elt String = Char"
+            :~ tyFamInst "Elt" [var "String"] (var "Char")
+        , "instance Container String where\n  type Elt String = Char"
+            :~ instance' (var "Container" @@ var "String")
+                [tyFamInst "Elt" [var "String"] (var "Char")]
+        ]
     ]
   where
     test = testDecls dflags

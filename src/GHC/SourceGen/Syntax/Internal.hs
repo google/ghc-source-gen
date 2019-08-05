@@ -33,6 +33,8 @@ import HsSyn
     , ImportDecl
     , LHsSigWcType
     , LHsWcType
+    , HsImplicitBndrs
+    , TyFamInstDecl
 #if !MIN_VERSION_ghc(8,8,0)
     , LHsRecField
     , LHsRecUpdField
@@ -211,6 +213,8 @@ type HsDerivingClause' = HsDerivingClause GhcPs
 type LHsRecField' arg = LHsRecField GhcPs arg
 type LHsRecUpdField' = LHsRecUpdField GhcPs
 type LPat' = LPat GhcPs
+type HsImplicitBndrs' = HsImplicitBndrs GhcPs
+type TyFamInstDecl' = TyFamInstDecl GhcPs
 
 #else
 type HsLit' = HsLit
@@ -238,6 +242,8 @@ type HsDerivingClause' = HsDerivingClause RdrName
 type LHsRecField' arg = LHsRecField RdrName arg
 type LHsRecUpdField' = LHsRecUpdField RdrName
 type LPat' = LPat RdrName
+type HsImplicitBndrs' = HsImplicitBndrs RdrName
+type TyFamInstDecl' = TyFamInstDecl RdrName
 
 #endif
 

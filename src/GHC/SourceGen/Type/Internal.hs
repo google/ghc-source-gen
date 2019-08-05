@@ -20,7 +20,10 @@ mkQTyVars vars =  withPlaceHolder
                     vars
 
 sigType :: HsType' -> LHsSigType'
-sigType t = withPlaceHolder $ noExt (withPlaceHolder HsTypes.HsIB) $ builtLoc t
+sigType = implicitBndrs . builtLoc
+
+implicitBndrs :: t -> HsImplicitBndrs' t
+implicitBndrs = withPlaceHolder . noExt (withPlaceHolder HsTypes.HsIB)
 
 
 -- TODO: GHC >= 8.6 provides parenthesizeHsType.  For consistency with
