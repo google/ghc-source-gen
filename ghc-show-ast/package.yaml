@@ -12,5 +12,5 @@ executables:
     dependencies:
     - base
     - ghc
-    - ghc-exactprint
+    - ghc-paths
     - pretty
