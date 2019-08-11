@@ -4,12 +4,12 @@
 -- license that can be found in the LICENSE file or at
 -- https://developers.google.com/open-source/licenses/bsd
 
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE GADTs #-}
 module Main where
 
-import Data.Data
+import Data.Data (Data, showConstr,  toConstr, gmapQ)
 import Data.Typeable (cast)
-import Language.Haskell.GHC.ExactPrint.Parsers
 import System.Environment (getArgs)
 import Text.PrettyPrint
 
@@ -34,14 +34,43 @@ import OccName
     , tcClsName
     )
 
+import qualified DynFlags as GHC
+import qualified FastString as GHC
+import qualified GHC as GHC
+import qualified GhcMonad as GHC
+import qualified HeaderInfo as GHC
+import qualified Outputable as GHC
+import qualified Lexer as GHC
+import qualified Parser as Parser
+import qualified SrcLoc as GHC
+import qualified StringBuffer as GHC
+import GHC.Paths (libdir)
+
 main :: IO ()
 main = do
     [f] <- getArgs
     result <- parseModule f
-    case result of
-        Left err -> print err
-        Right (_, ps) -> do
-            print $ gPrint ps
+    print $ gPrint result
+
+#if MIN_VERSION_ghc(8,4,0)
+parseModule :: FilePath -> IO (GHC.HsModule GHC.GhcPs)
+#else
+parseModule :: FilePath -> IO (GHC.HsModule GHC.RdrName)
+#endif
+parseModule f = GHC.runGhc (Just libdir) $ do
+    dflags <- GHC.getDynFlags
+    contents <- GHC.liftIO $ GHC.stringToStringBuffer <$> readFile f
+    let options = GHC.getOptions dflags contents f
+    (dflags', _, _) <- GHC.parseDynamicFilePragma dflags options
+    let state = GHC.mkPState dflags' contents (GHC.mkRealSrcLoc (GHC.fsLit f) 1 1)
+    case GHC.unP Parser.parseModule state of
+        GHC.POk _state m -> return $ GHC.unLoc m
+        GHC.PFailed
+#if MIN_VERSION_ghc(8,4,0)
+            _message
+#endif
+            loc docs ->
+            error $ GHC.showPpr dflags loc ++ GHC.showSDoc dflags docs
 
 gPrint :: Data a => a -> Doc
 gPrint x

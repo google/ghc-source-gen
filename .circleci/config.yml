@@ -11,7 +11,7 @@ jobs:
             - stack-cache-v2-11.22-{{ arch }}-{{ .Branch }}
             - stack-cache-v2-11.22-{{ arch }}-master
     - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --resolver=lts-11.22 ghc-source-gen
+    - run: stack test --no-terminal --resolver=lts-11.22
     - save_cache:
             key: stack-cache-v2-11.22-{{ arch }}-{{ .Branch }}-{{ epoch }}
             paths:
@@ -27,7 +27,7 @@ jobs:
             - stack-cache-v2-12.8-{{ arch }}-{{ .Branch }}
             - stack-cache-v2-12.8-{{ arch }}-master
     - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --resolver=lts-12.8 ghc-source-gen
+    - run: stack test --no-terminal --resolver=lts-12.8
     - save_cache:
             key: stack-cache-v2-12.8-{{ arch }}-{{ .Branch }}-{{ epoch }}
             paths:
@@ -43,7 +43,7 @@ jobs:
             - stack-cache-v2-13.23-{{ arch }}-{{ .Branch }}
             - stack-cache-v2-13.23-{{ arch }}-master
     - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --resolver=lts-13.23 ghc-source-gen
+    - run: stack test --no-terminal --resolver=lts-13.23
     - save_cache:
             key: stack-cache-v2-13.23-{{ arch }}-{{ .Branch }}-{{ epoch }}
             paths:
@@ -60,7 +60,7 @@ jobs:
             - stack-cache-v2-ghc-8.8-{{ arch }}-{{ .Branch }}
             - stack-cache-v2-ghc-8.8-{{ arch }}-master
     - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --stack-yaml=stack-8.8.yaml ghc-source-gen
+    - run: stack test --no-terminal --stack-yaml=stack-8.8.yaml
     - save_cache:
             key: stack-cache-v2-ghc-8.8-{{ arch }}-{{ .Branch }}-{{ epoch }}
             paths:
