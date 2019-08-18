@@ -15,32 +15,17 @@ main = defaultMain $ testGroup "Tests" [testOccName, testRdrName]
 testRdrName, testOccName :: TestTree
 testRdrName = testGroup "RdrName"
     [ testCase "unqual ident" $ do
-        UnqualStr "x" @=? "x"
         UnqualStr "abc" @=? "abc"
-        UnqualStr "a_b_c'" @=? "a_b_c'"
     , testCase "qual ident" $ do
-        QualStr "Foo" "x" @=? "Foo.x"
         QualStr "Foo" "abc" @=? "Foo.abc"
-        QualStr "Foo" "a_b_c'" @=? "Foo.a_b_c'"
     , testCase "hierarchical qual ident" $ do
-        QualStr "Foo.Bar" "x" @=? "Foo.Bar.x"
         QualStr "Foo.Bar" "abc" @=? "Foo.Bar.abc"
-        QualStr "Foo.Bar" "a_b_c'" @=? "Foo.Bar.a_b_c'"
     , testCase "unqual op" $ do
-        UnqualStr "+" @=? "+"
         UnqualStr "+-+" @=? "+-+"
-        UnqualStr "." @=? "."
-        UnqualStr ".+." @=? ".+."
     , testCase "qual op" $ do
-        QualStr "Foo" "+" @=? "Foo.+"
         QualStr "Foo" "+-+" @=? "Foo.+-+"
-        QualStr "Foo" "." @=? "Foo.."
-        QualStr "Foo" ".+." @=? "Foo..+."
     , testCase "hierarchical qual op" $ do
-        QualStr "Foo.Bar" "+" @=? "Foo.Bar.+"
         QualStr "Foo.Bar" "+-+" @=? "Foo.Bar.+-+"
-        QualStr "Foo.Bar" "." @=? "Foo.Bar.."
-        QualStr "Foo.Bar" ".+." @=? "Foo.Bar..+."
     , testProperty "round tip" $ forAll genRdrName $ \r ->
         fromString (rdrNameStrToString r) === r
     ]
