@@ -193,7 +193,11 @@ type IE' = IE RdrName
 -- Instances:
 --
 -- * 'GHC.SourceGen.Overloaded.Var'
+#if MIN_VERSION_ghc(8,4,0)
 type HsTyVarBndr' = HsTyVarBndr GhcPs
+#else
+type HsTyVarBndr' = HsTyVarBndr RdrName
+#endif
 
 #if MIN_VERSION_ghc(8,4,0)
 type HsLit' = HsLit GhcPs
@@ -236,7 +240,6 @@ type MatchGroup' = MatchGroup RdrName
 type GRHS' = GRHS RdrName
 type GRHSs' = GRHSs RdrName
 type Stmt' = Stmt RdrName (Located HsExpr')
-type HsTyVarBndr' = HsTyVarBndr RdrName
 type HsOverLit' = HsOverLit RdrName
 type LHsQTyVars' = LHsQTyVars RdrName
 type ConDecl' = ConDecl RdrName
