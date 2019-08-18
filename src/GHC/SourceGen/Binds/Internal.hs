@@ -115,7 +115,7 @@ type GuardedExpr = GRHS' (Located HsExpr')
 -- 'GHC.SourceGen.Binds.funBind' or 'GHC.SourceGen.Binds.funBinds'.
 --
 -- To define a value, use
--- 'GHC.SourceGen.Binds.valBind' or 'GHC.SourceGen.Binds.valBindRhs'.
+-- 'GHC.SourceGen.Binds.valBind' or 'GHC.SourceGen.Binds.valBindGuarded'.
 class HasValBind t where
     sigB :: Sig' -> t
     bindB :: HsBind' -> t

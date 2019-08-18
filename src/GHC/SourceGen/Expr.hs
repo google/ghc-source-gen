@@ -56,7 +56,7 @@ case' e matches = noExt HsCase (builtLoc e)
                     $ matchGroup CaseAlt matches
 
 lambda :: [Pat'] -> HsExpr' -> HsExpr'
-lambda ps e = noExt HsLam $ matchGroup LambdaExpr [matchRhs ps e]
+lambda ps e = noExt HsLam $ matchGroup LambdaExpr [match ps e]
 
 lambdaCase :: [RawMatch] -> HsExpr'
 lambdaCase = noExt HsLamCase . matchGroup CaseAlt

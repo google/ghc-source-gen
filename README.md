@@ -26,7 +26,7 @@ constModule :: HsModule'
 constModule =
     module' (Just "Const") (Just [var "const"]) []
         [ typeSig "const" $ a --> b --> a
-        , funBind "const" $ matchRhs [wildP, x] x
+        , funBind "const" $ match [wildP, x] x
         ]
   where
     a = var "a"

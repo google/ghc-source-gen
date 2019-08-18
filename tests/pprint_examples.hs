@@ -30,7 +30,7 @@ test1 = pprint $ tuple
     , char 'g'
     , let' [ typeSig "result" $ var "A" @@ var "B"
            , funBind "result"
-                $ matchRhs [var "x", wildP]
+                $ match [var "x", wildP]
                     $ var "foo" @@ char 'c'
            ]
         (var "result")
@@ -40,37 +40,37 @@ test2 :: IO ()
 test2 = pprint $ module' (Just "Foo") (Just [var "efg"]) []
     [ typeSigs ["efg", "h"] $ tuple [var "A", var "B"]
     , funBind "efg"
-        $ match []
+        $ matchGRHSs []
         $ rhs (char 'a')
             `where'` [ typeSig "q" $ var "Q"
-                     , funBind "q" $ match []
+                     , funBind "q" $ matchGRHSs []
                         $ guardedRhs [var "True" `guard` char 'q']
                      ]
     , funBind "f"
-        $ match [var "x", var "y"]
+        $ matchGRHSs [var "x", var "y"]
         $ rhs
             (case' (var "y")
-                        [matchRhs [wildP] $ var "x"])
-            `where'` [funBind "q" $ matchRhs [] $ char 't']
+                        [match [wildP] $ var "x"])
+            `where'` [funBind "q" $ match [] $ char 't']
     ]
 
 test3 :: IO ()
 test3 = pprint $ module' Nothing Nothing []
-    [ funBind "lambdas" $ matchRhs [] $ lambda [var "y"]
-                    $ lambdaCase [matchRhs [var "z"] (char 'a')]
+    [ funBind "lambdas" $ match [] $ lambda [var "y"]
+                    $ lambdaCase [match [var "z"] (char 'a')]
     , funBinds "ifs"
-        [ matchRhs [var "x"] $ if' (var "b") (var "t") (var "f")
-        , matchRhs [var "y"] $ multiIf [guard (var "False") $ char 'f'
+        [ match [var "x"] $ if' (var "b") (var "t") (var "f")
+        , match [var "y"] $ multiIf [guard (var "False") $ char 'f'
                                        , guard (var "True") $ char 't'
                                        ]
-        , matchRhs [var "z"] $ multiIf
+        , match [var "z"] $ multiIf
             [ guard (var "f" @@ var "x") $ string "f"
             , guard (var "g" @@ var "x") $ string "g"
             , guard (var "otherwise") $ string "h"
             ]
         ]
     , funBind "do'"
-        $ matchRhs [] (do' [ var "x" <-- var "act"
+        $ match [] (do' [ var "x" <-- var "act"
                         , stmt $ var "return" @@ var "x"
                         ])
     , typeSig "types"
@@ -81,34 +81,34 @@ test3 = pprint $ module' Nothing Nothing []
             (forall' [var "x", var "y"]
                 $ var "y")
     , funBind "swap"
-        $ matchRhs [tuple [var "x", var "y"]]
+        $ match [tuple [var "x", var "y"]]
             $ tuple [var "y", var "x"]
-    , funBind "char" $ matchRhs [char 'a'] (char 'b')
-    , funBind "string" $ matchRhs [string "abc"] (string "def")
+    , funBind "char" $ match [char 'a'] (char 'b')
+    , funBind "string" $ match [string "abc"] (string "def")
     , funBind "as"
-        $ matchRhs [asP "x" (tuple [var "y", var "z"])]
+        $ match [asP "x" (tuple [var "y", var "z"])]
             (var "x")
     , funBind "con"
-        $ matchRhs [conP "A" [var "b", conP "C" [var "d"]]]
+        $ match [conP "A" [var "b", conP "C" [var "d"]]]
             $ tuple [var "b", var "d"]
     , funBind "ops"
-        $ matchRhs [var "x", var "y"]
+        $ match [var "x", var "y"]
             $ op (var "x") "+" (var "y")
     , funBinds "ops'"
-        [ matchRhs [] (op (int 1) "*"
+        [ match [] (op (int 1) "*"
                         (op (int 2) "+" (int 3)))
-        , matchRhs [] (op (var "A" @@ var "x") "*"
+        , match [] (op (var "A" @@ var "x") "*"
                         (op (var "B" @@ var "y") "+"
                                  (var "C" @@ var "z")))
-        , matchRhs [] (op (var "A" @@ var "x") "mult"
+        , match [] (op (var "A" @@ var "x") "mult"
                         (op (var "B" @@ var "y") "+"
                                  (var "C" @@ var "z")))
         ]
     , funBinds "cons'"
-        [ matchRhs [] (var "X" @@ int 1 @@
+        [ match [] (var "X" @@ int 1 @@
                         (var "Y" @@ int 2 @@ int 3)
                         @@ var "Z")
-        , matchRhs [] (var "f" @@ par (var "g" @@ var "x"))
+        , match [] (var "f" @@ par (var "g" @@ var "x"))
         ]
     , typeSig "f" $ var "X" @@ var "a" @@
                         (var "Y" @@ var "b" @@ var "c")
@@ -118,7 +118,7 @@ test3 = pprint $ module' Nothing Nothing []
                                  (var "C" @@ var "z"))
     , class' [var "A" @@ var "a"] "B" ["b", "b'"]
         [ typeSig "f" $ var "b" --> var "b'"
-        , funBind "f" $ matchRhs [] $ var "id"
+        , funBind "f" $ match [] $ var "id"
         ]
     , class' [] "F" ["a", "b", "c"]
         [ funDep ["a", "b"] ["c"]
@@ -139,7 +139,7 @@ test3 = pprint $ module' Nothing Nothing []
         [deriving' [var "X", var "Y"]]
     , instance' (var "A" @@ var "b" @@ var "c")
         [ typeSig "f" $ var "b" --> var "c"
-        , funBind "f" $ matchRhs [] $ var "undefined"
+        , funBind "f" $ match [] $ var "undefined"
         ]
     , let a = var "a"
       in class'
@@ -149,14 +149,14 @@ test3 = pprint $ module' Nothing Nothing []
            [ typeSig "divMod" $ a --> a --> tuple [a, a]
            , typeSig "div" $ a --> a --> a
            , funBind "div"
-               $ matchRhs [var "x", var "y"]
+               $ match [var "x", var "y"]
                   $ var "fst" @@ (var "divMod" @@ var "x" @@ var "y")
            ]
     , instance' (var "Show" @@ var "Bool")
         [ typeSig "show" $ var "Bool" --> var "String"
         , funBinds "show"
-            [ matchRhs [var "True"] $ string "True"
-            , matchRhs [var "False"] $ string "False"
+            [ match [var "True"] $ string "True"
+            , match [var "False"] $ string "False"
             ]
         ]
     , data' "X" ["b"]
@@ -191,12 +191,12 @@ test3 = pprint $ module' Nothing Nothing []
         ]
         []
     , funBind "strictness"
-        $ matchRhs
+        $ match
             [strictP (conP "A" [var "b"]),
              lazyP (conP "A" [var "b"])
             ] (char 'x')
     , typeSig "unit" $ unit --> unit
-    , funBind "unit" $ matchRhs [unit] unit
+    , funBind "unit" $ match [unit] unit
     ]
 
 test4 :: IO ()
@@ -219,7 +219,7 @@ test5 = pprint $ module' (Just "M") (Just exports) imports []
 constModule :: HsModule'
 constModule = module' (Just "Const") (Just [var "const"]) []
     [ typeSig "const" $ a --> b --> a
-    , funBind "const" $ matchRhs [wildP, x] x
+    , funBind "const" $ match [wildP, x] x
     ]
   where
     a = var "a"
