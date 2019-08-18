@@ -45,6 +45,7 @@ import HsTypes
 import TcEvidence (HsWrapper(WpHole))
 
 import GHC.SourceGen.Binds.Internal
+import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal (sigWcType)
@@ -54,9 +55,9 @@ import GHC.SourceGen.Type.Internal (sigWcType)
 -- > f, g :: A
 -- > =====
 -- > typeSigs ["f", "g"] (var "A")
-typeSigs :: HasValBind t => [RdrNameStr] -> HsType' -> t
+typeSigs :: HasValBind t => [OccNameStr] -> HsType' -> t
 typeSigs names t =
-    sigB $ noExt TypeSig (map typeRdrName names)
+    sigB $ noExt TypeSig (map (typeRdrName . unqual) names)
         $ sigWcType t
 
 -- | Declare that a function or value has a type:
@@ -64,7 +65,7 @@ typeSigs names t =
 -- > f :: A
 -- > =====
 -- > typeSig "f" (var "A")
-typeSig :: HasValBind t => RdrNameStr -> HsType' -> t
+typeSig :: HasValBind t => OccNameStr -> HsType' -> t
 typeSig n = typeSigs [n]
 
 -- | Define a function or value.

@@ -69,6 +69,7 @@ import PlaceHolder (PlaceHolder(..))
 
 import GHC.SourceGen.Binds hiding (patBind)
 import GHC.SourceGen.Lit.Internal (noSourceText)
+import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
@@ -131,7 +132,7 @@ funDep = ClassFunDep
 -- >      ]
 class'
     :: [HsType'] -- ^ Context
-    -> RdrNameStr -- ^ Class name
+    -> OccNameStr -- ^ Class name
     -> [RdrNameStr] -- ^ Type parameters
     -> [ClassDecl] -- ^ Class declarations
     -> HsDecl'
@@ -143,7 +144,7 @@ class' context name vars decls
 #else
             , tcdFVs = PlaceHolder
 #endif
-            , tcdLName = typeRdrName name
+            , tcdLName = typeRdrName $ unqual name
             , tcdTyVars = mkQTyVars vars
             , tcdFixity = Prefix
             , tcdFDs = [ builtLoc (map typeRdrName xs, map typeRdrName ys)
@@ -241,23 +242,23 @@ tyFamInst name params ty = tyFamInstD
 -- > type A a b = B b a
 -- > =====
 -- > type' "A" ["a", "b"] $ var "B" @@ var "b" @@ var "a"
-type' :: RdrNameStr -> [RdrNameStr] -> HsType' -> HsDecl'
+type' :: OccNameStr -> [RdrNameStr] -> HsType' -> HsDecl'
 type' name vars t =
-    noExt TyClD $ withPlaceHolder $ noExt SynDecl (typeRdrName name)
+    noExt TyClD $ withPlaceHolder $ noExt SynDecl (typeRdrName $ unqual name)
         (mkQTyVars vars)
         Prefix
         (builtLoc t)
 
 newOrDataType
     :: NewOrData
-    -> RdrNameStr
+    -> OccNameStr
     -> [RdrNameStr]
     -> [ConDecl']
     -> [HsDerivingClause']
     -> HsDecl'
 newOrDataType newOrData name vars conDecls derivs
     = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
-        noExt DataDecl (typeRdrName name)
+        noExt DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
             $ noExt HsDataDefn newOrData
@@ -273,7 +274,7 @@ newOrDataType newOrData name vars conDecls derivs
 -- > newtype' "Const" ["a", "b"]
 -- >    (conDecl "Const" [var "a"])
 -- >    [var "Show"]
-newtype' :: RdrNameStr -> [RdrNameStr] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
+newtype' :: OccNameStr -> [RdrNameStr] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
 newtype' name vars conD = newOrDataType NewType name vars [conD]
 
 -- | A data declaration.
@@ -286,7 +287,7 @@ newtype' name vars conD = newOrDataType NewType name vars [conD]
 -- >   , conDecl "Right" [var "b"]
 -- >   ]
 -- >   [var "Show"]
-data' :: RdrNameStr -> [RdrNameStr] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
+data' :: OccNameStr -> [RdrNameStr] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
 data' = newOrDataType DataType
 
 -- | Declares a Haskell-98-style prefix constructor for a data or type
@@ -295,7 +296,7 @@ data' = newOrDataType DataType
 -- > Foo a Int
 -- > =====
 -- > conDecl "Foo" [field (var "a"), field (var "Int")]
-prefixCon :: RdrNameStr -> [Field] -> ConDecl'
+prefixCon :: OccNameStr -> [Field] -> ConDecl'
 prefixCon name fields = renderCon98Decl name
     $ PrefixCon $ map renderField fields
 
@@ -305,7 +306,7 @@ prefixCon name fields = renderCon98Decl name
 -- > A b :+: C d
 -- > =====
 -- > infixCon (field (var "A" @@ var "b")) ":+:" (field (Var "C" @@ var "d"))
-infixCon :: Field -> RdrNameStr -> Field -> ConDecl'
+infixCon :: Field -> OccNameStr -> Field -> ConDecl'
 infixCon f name f' = renderCon98Decl name
     $ InfixCon (renderField f) (renderField f')
 
@@ -315,13 +316,13 @@ infixCon f name f' = renderCon98Decl name
 -- > A { x :: B, y :: C }
 -- > =====
 -- > recordCon "A" [("x", var "B"), ("y", var "C")]
-recordCon :: RdrNameStr -> [(RdrNameStr, Field)] -> ConDecl'
+recordCon :: OccNameStr -> [(OccNameStr, Field)] -> ConDecl'
 recordCon name fields = renderCon98Decl name
     $ RecCon $ builtLoc $ map mkLConDeclField fields
   where
     mkLConDeclField (n, f) =
         builtLoc $ noExt ConDeclField
-                        [builtLoc $ withPlaceHolder $ noExt FieldOcc $ valueRdrName n]
+                        [builtLoc $ withPlaceHolder $ noExt FieldOcc $ valueRdrName $ unqual n]
                         (renderField f)
                         Nothing
 
@@ -368,8 +369,8 @@ renderField f = wrap $ parenthesizeTypeForApp $ builtLoc $ fieldType f
         NoSrcStrict -> id
         s -> builtLoc . (noExt HsBangTy $ noSourceText HsSrcBang NoSrcUnpack s)
 
-renderCon98Decl :: RdrNameStr -> HsConDeclDetails' -> ConDecl'
-renderCon98Decl name details = noExt ConDeclH98 (typeRdrName name)
+renderCon98Decl :: OccNameStr -> HsConDeclDetails' -> ConDecl'
+renderCon98Decl name details = noExt ConDeclH98 (typeRdrName $ unqual name)
 #if MIN_VERSION_ghc(8,6,0)
     (builtLoc False)
     []

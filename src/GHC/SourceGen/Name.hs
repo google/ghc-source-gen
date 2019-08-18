@@ -7,7 +7,7 @@
 -- | This module defines custom types for defining names of various
 -- syntax terms.
 --
--- These types are all instances of 'Data.String.IsString'.  For easier use,
+-- These types are all instances of 'Data.String.IsString'.  For ease of use,
 -- we recommend enabling the @OverloadedStrings@ extension.
 module GHC.SourceGen.Name
     ( RdrNameStr(..)
