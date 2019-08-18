@@ -127,7 +127,7 @@ funDep = ClassFunDep
 -- >      [ typeSig "divMod" $ a --> a --> tuple [a, a]
 -- >      , typeSig "div" $ a --> a --> a
 -- >      , funBind "div"
--- >          $ matchRhs [var "x", var "y"]
+-- >          $ match [var "x", var "y"]
 -- >             $ var "fst" @@ (var "divMod" @@ var "x" @@ var "y")
 -- >      ]
 class'
@@ -181,8 +181,8 @@ instance HasValBind RawInstDecl where
 -- > instance' (var "Show" @@ var "Bool")
 -- >   [ typeSig "show" $ var "Bool" --> var "String"
 -- >   , funBinds "show"
--- >       [ matchRhs [var "True"] $ string "True"
--- >       , matchRhs [var "False"] $ string "False"
+-- >       [ match [var "True"] $ string "True"
+-- >       , match [var "False"] $ string "False"
 -- >       ]
 -- >   ]
 instance' :: HsType' -> [RawInstDecl] -> HsDecl'

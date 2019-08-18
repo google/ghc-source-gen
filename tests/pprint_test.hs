@@ -155,17 +155,17 @@ exprsTest dflags = testGroup "Expr"
 
 declsTest dflags = testGroup "Decls"
     [ test "patBind"
-        [ "x = x" :~ patBind (var "x") (rhs $ var "x")
+        [ "x = x" :~ patBind (var "x") (var "x")
         , "(x, y) = (y, x)" :~ patBind (tuple [var "x", var "y"])
-                                    (rhs $ tuple [var "y", var "x"])
+                                    (tuple [var "y", var "x"])
         , "(x, y)\n  | test = (1, 2)\n  | otherwise = (2, 3)" :~
-            patBind (tuple [var "x", var "y"])
+            patBindGRHSs (tuple [var "x", var "y"])
                 $ guardedRhs
                     [ var "test" `guard` tuple [int 1, int 2]
                         , var "otherwise" `guard` tuple [int 2, int 3]
                     ]
         , "z | Just y <- x, y = ()" :~
-            patBind (var "z")
+            patBindGRHSs (var "z")
                 $ guardedRhs
                     [guards
                         [ conP "Just" [var "y"] <-- var "x"
@@ -175,10 +175,10 @@ declsTest dflags = testGroup "Decls"
                     ]
         ]
     , test "valBind"
-        [ "x = y" :~ valBind "x" $ rhs $ var "y"
-        , "x = y" :~ valBindRhs "x" $ var "y"
+        [ "x = y" :~ valBindGRHSs "x" $ rhs $ var "y"
+        , "x = y" :~ valBind "x" $ var "y"
         , "x | test = 1\n  | otherwise = 2" :~
-            valBind "x"
+            valBindGRHSs "x"
             $ guardedRhs
                 [ var "test" `guard` int 1
                 , var "otherwise" `guard` int 2
@@ -187,12 +187,12 @@ declsTest dflags = testGroup "Decls"
     , test "funBind"
         [ "not True = False\nnot False = True" :~
              funBinds "not"
-                [ matchRhs [var "True"] (var "False")
-                , matchRhs [var "False"] (var "True")
+                [ match [var "True"] (var "False")
+                , match [var "False"] (var "True")
                 ]
         , "not x\n  | x = False\n  | otherwise = True" :~
             funBind "not"
-                $ match [var "x"] $ guardedRhs
+                $ matchGRHSs [var "x"] $ guardedRhs
                     [ guard (var "x") (var "False")
                     , guard (var "otherwise") (var "True")
                     ]

@@ -16,17 +16,17 @@ module GHC.SourceGen.Binds
     , funBind
     , funBinds
       -- * Values
-    , valBindRhs
     , valBind
+    , valBindGRHSs
     -- ** Patterns
     , HasPatBind
-    , patBindRhs
     , patBind
+    , patBindGRHSs
     -- * Matches
     -- $rawMatch
     , RawMatch
     , match
-    , matchRhs
+    , matchGRHSs
     -- * Right-hand sides
     , RawGRHSs
     , rhs
@@ -78,18 +78,18 @@ typeSig n = typeSigs [n]
 --
 -- > f = x
 -- > =====
--- > funBinds "f" [matchRhs [] "x"]
+-- > funBinds "f" [match [] "x"]
 --
 -- > id x = x
 -- > =====
--- > funBinds "id" [matchRhs [var "x"] (var "x")]
+-- > funBinds "id" [match [var "x"] (var "x")]
 --
 -- > not True = False
 -- > not False = True
 -- > =====
 -- > funBinds "not"
--- >   [ matchRhs [conP "True" []] (var "False")
--- >   , matchRhs [conP "False" []] (var "True")
+-- >   [ match [conP "True" []] (var "False")
+-- >   , match [conP "False" []] (var "True")
 -- >   ]
 funBinds :: HasValBind t => OccNameStr -> [RawMatch] -> t
 funBinds name matches = bindB $ withPlaceHolder
@@ -104,11 +104,11 @@ funBinds name matches = bindB $ withPlaceHolder
 --
 -- > f = x
 -- > =====
--- > funBind "f" (matchRhs [] "x")
+-- > funBind "f" (match [] "x")
 --
 -- > id x = x
 -- > =====
--- > funBind "id" $ matchRhs [var "x"] (var "x")
+-- > funBind "id" $ match [var "x"] (var "x")
 --
 funBind :: HasValBind t => OccNameStr -> RawMatch -> t
 funBind name m = funBinds name [m]
@@ -117,21 +117,17 @@ funBind name m = funBinds name [m]
 --
 -- The resulting syntax is the same as a function with no arguments.
 --
--- > x = y
--- > =====
--- > valBind "x" $ rhs $ var "y"
---
 -- > x
 -- >   | test = 1
 -- >   | otherwise = 2
 -- > =====
--- > valBind "x"
+-- > valBindGRHSs "x"
 -- >   $ guardedRhs
--- >     [ var "test" `guard` int 1
--- >     , var "otherwise" `guard` int 2
--- >     ]
-valBind :: HasValBind t => OccNameStr -> RawGRHSs -> t
-valBind name = funBind name . match []
+-- >       [ var "test" `guard` int 1
+-- >       , var "otherwise" `guard` int 2
+-- >       ]
+valBindGRHSs :: HasValBind t => OccNameStr -> RawGRHSs -> t
+valBindGRHSs name = funBind name . matchGRHSs []
 
 -- | Defines a value without any guards.
 --
@@ -139,27 +135,23 @@ valBind name = funBind name . match []
 --
 -- > x = y
 -- > =====
--- > valBindRhs "x" $ var "y"
-valBindRhs :: HasValBind t => OccNameStr -> HsExpr' -> t
-valBindRhs name = valBind name . rhs
+-- > valBind "x" $ var "y"
+valBind :: HasValBind t => OccNameStr -> HsExpr' -> t
+valBind name = valBindGRHSs name . rhs
 
 -- | Defines a pattern binding consisting of multiple guards.
---
--- > (x, y) = e
--- > =====
--- > patBind (tuple [var "x", var "y"]) $ rhs e
 --
 -- > (x, y)
 -- >   | test = (1, 2)
 -- >   | otherwise = (2, 3)
 -- > =====
--- > patBind (tuple [var "x", var "y"])
+-- > patBindGrhs (tuple [var "x", var "y"])
 -- >   $ guardedRhs
 -- >       [ var "test" `guard` tuple [int 1, int 2]
 -- >       , var "otherwise" `guard` [int 2, int 3]
 -- >       ]
-patBind :: HasPatBind t => Pat' -> RawGRHSs -> t
-patBind p g =
+patBindGRHSs :: HasPatBind t => Pat' -> RawGRHSs -> t
+patBindGRHSs p g =
     bindB
         $ withPlaceHolder
             (withPlaceHolder
@@ -170,9 +162,9 @@ patBind p g =
 --
 -- > (x, y) = e
 -- > =====
--- > patBindRhs (tuple [var "x", var "y"]) e
-patBindRhs :: HasPatBind t => Pat' -> HsExpr' -> t
-patBindRhs p = patBind p . rhs
+-- > patBind (tuple [var "x", var "y"]) e
+patBind :: HasPatBind t => Pat' -> HsExpr' -> t
+patBind p = patBindGRHSs p . rhs
 
 {- $rawMatch
 
@@ -186,8 +178,8 @@ A function definition is made up of one or more 'RawMatch' terms.  Each
 We could using a list of two 'RawMatch'es:
 
 > funBinds "not"
->   [ matchRhs [conP "True" []] (var "False")
->   , matchRhs [conP "False" [] (var "True")
+>   [ match [conP "True" []] (var "False")
+>   , match [conP "False" [] (var "True")
 >   ]
 
 A match may consist of one or more guarded expressions.  For example, to
@@ -200,19 +192,19 @@ define the function as:
 We would say:
 
 > funBind "not"
->      $ match [var "x"] $ guardedRhs
+>      $ matchGRHSs [var "x"] $ guardedRhs
 >          [ guard (var "x") (var "False")
 >          , guard (var "otherwise") (var "True")
 >          ]
 -}
 
 -- | A function match consisting of multiple guards.
-match :: [Pat'] -> RawGRHSs -> RawMatch
-match = RawMatch
+matchGRHSs :: [Pat'] -> RawGRHSs -> RawMatch
+matchGRHSs = RawMatch
 
 -- | A function match with a single case.
-matchRhs :: [Pat'] -> HsExpr' -> RawMatch
-matchRhs ps = match ps . rhs
+match :: [Pat'] -> HsExpr' -> RawMatch
+match ps = matchGRHSs ps . rhs
 
 -- | Adds a "where" clause to an existing 'RawGRHSs'.
 --
@@ -220,9 +212,9 @@ matchRhs ps = match ps . rhs
 -- >   where y = x
 -- > =====
 -- > funBind "x"
--- >   $ match [var "x"]
+-- >   $ matchGRHSs [var "x"]
 -- >   $ rhs (var "y")
--- >      `where` [valueRhs (var "y") $ var "x']
+-- >      `where` [valBind (var "y") $ var "x']
 where' :: RawGRHSs -> [RawValBind] -> RawGRHSs
 where' r vbs = r { rawGRHSWhere = rawGRHSWhere r ++ vbs }
 
