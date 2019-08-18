@@ -188,6 +188,13 @@ type IE' = IE RdrName
 #endif
 
 
+-- | A type variable binding, as it is represented after the parsing step.
+--
+-- Instances:
+--
+-- * 'GHC.SourceGen.Overloaded.Var'
+type HsTyVarBndr' = HsTyVarBndr GhcPs
+
 #if MIN_VERSION_ghc(8,4,0)
 type HsLit' = HsLit GhcPs
 type HsModule' = HsModule GhcPs
@@ -201,7 +208,6 @@ type MatchGroup' = MatchGroup GhcPs
 type GRHS' = GRHS GhcPs
 type GRHSs' = GRHSs GhcPs
 type Stmt' = Stmt GhcPs (Located HsExpr')
-type HsTyVarBndr' = HsTyVarBndr GhcPs
 type HsOverLit' = HsOverLit GhcPs
 type LHsQTyVars' = LHsQTyVars GhcPs
 type ConDecl' = ConDecl GhcPs
