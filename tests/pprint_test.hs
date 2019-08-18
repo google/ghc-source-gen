@@ -174,6 +174,16 @@ declsTest dflags = testGroup "Decls"
                         unit
                     ]
         ]
+    , test "valBind"
+        [ "x = y" :~ valBind "x" $ rhs $ var "y"
+        , "x = y" :~ valBindRhs "x" $ var "y"
+        , "x | test = 1\n  | otherwise = 2" :~
+            valBind "x"
+            $ guardedRhs
+                [ var "test" `guard` int 1
+                , var "otherwise" `guard` int 2
+                ]
+        ]
     , test "funBind"
         [ "not True = False\nnot False = True" :~
              funBinds "not"

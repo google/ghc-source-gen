@@ -169,6 +169,7 @@ type HsExpr' = HsExpr RdrName
 -- Instances:
 --
 -- * 'GHC.SourceGen.Binds.HasValBind'
+-- * 'GHC.SourceGen.Binds.HasPatBind'
 #if MIN_VERSION_ghc(8,4,0)
 type HsDecl' = HsDecl GhcPs
 #else
