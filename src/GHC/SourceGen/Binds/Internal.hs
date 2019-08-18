@@ -10,6 +10,7 @@ module GHC.SourceGen.Binds.Internal where
 import BasicTypes (Origin(Generated))
 import Bag (listToBag)
 import HsBinds
+import HsDecls
 import HsExpr (MatchGroup(..), Match(..), GRHSs(..))
 import SrcLoc (Located)
 
@@ -104,3 +105,25 @@ mkGRHSs g = noExt GRHSs
 -- > | otherwise = ()
 type GuardedExpr = GRHS' (Located HsExpr')
 
+-- | Syntax types which can declare/define functions.  For example:
+-- declarations, or the body of a class declaration or class instance.
+--
+-- To declare the type of a function or value, use
+-- 'GHC.SourceGen.Binds.typeSig' or 'GHC.SourceGen.Binds.typeSigs'.
+--
+-- To define a function, use 
+-- 'GHC.SourceGen.Binds.funBind' or 'GHC.SourceGen.Binds.funBinds'.
+--
+-- To define a value, use
+-- 'GHC.SourceGen.Binds.valBind' or 'GHC.SourceGen.Binds.valBindRhs'.
+class HasValBind t where
+    sigB :: Sig' -> t
+    bindB :: HsBind' -> t
+
+instance HasValBind HsDecl' where
+    sigB = noExt SigD
+    bindB = noExt ValD
+
+instance HasValBind RawValBind where
+    sigB = SigV
+    bindB = BindV

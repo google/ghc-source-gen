@@ -67,7 +67,7 @@ import HsExtension (NoExt(NoExt))
 import PlaceHolder (PlaceHolder(..))
 #endif
 
-import GHC.SourceGen.Binds hiding (patBind)
+import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
 import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal

@@ -6,14 +6,21 @@
 
 -- | This module provides combinators for constructing Haskell declarations.
 module GHC.SourceGen.Binds
-    (  -- * Overloaded constructors
+    (  -- * Bindings
       HsBind'
-    , HasValBind(..)
-    , Sig'
+    , HasValBind
+      -- * Type signatures
     , typeSig
     , typeSigs
+      -- * Functions
     , funBind
     , funBinds
+      -- * Values
+    , valBindRhs
+    , valBind
+    -- ** Patterns
+    , HasPatBind
+    , patBindRhs
     , patBind
     -- * Matches
     -- $rawMatch
@@ -40,7 +47,6 @@ module GHC.SourceGen.Binds
 import BasicTypes (LexicalFixity(..))
 import HsBinds
 import HsExpr
-import HsDecls
 import HsTypes
 import TcEvidence (HsWrapper(WpHole))
 
@@ -50,7 +56,7 @@ import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal (sigWcType)
 
--- | Declare that a multiple functions or values have a type:
+-- | Declares the type of multiple functions or values.
 --
 -- > f, g :: A
 -- > =====
@@ -60,7 +66,7 @@ typeSigs names t =
     sigB $ noExt TypeSig (map (typeRdrName . unqual) names)
         $ sigWcType t
 
--- | Declare that a function or value has a type:
+-- | Declares the type of a single function or value.
 --
 -- > f :: A
 -- > =====
@@ -68,7 +74,7 @@ typeSigs names t =
 typeSig :: HasValBind t => OccNameStr -> HsType' -> t
 typeSig n = typeSigs [n]
 
--- | Define a function or value.
+-- | Defines a function or value.
 --
 -- > f = x
 -- > =====
@@ -85,13 +91,13 @@ typeSig n = typeSigs [n]
 -- >   [ matchRhs [conP "True" []] (var "False")
 -- >   , matchRhs [conP "False" []] (var "True")
 -- >   ]
-funBinds :: HasValBind t => RdrNameStr -> [RawMatch] -> t
+funBinds :: HasValBind t => OccNameStr -> [RawMatch] -> t
 funBinds name matches = bindB $ withPlaceHolder
         (noExt FunBind name'
             (matchGroup context matches) WpHole)
         []
   where
-    name' = valueRdrName name
+    name' = valueRdrName $ unqual name
     context = FunRhs name' Prefix NoSrcStrict
 
 -- | Defines a function that has a single case.
@@ -104,14 +110,40 @@ funBinds name matches = bindB $ withPlaceHolder
 -- > =====
 -- > funBind "id" $ matchRhs [var "x"] (var "x")
 --
-funBind :: HasValBind t => RdrNameStr -> RawMatch -> t
+funBind :: HasValBind t => OccNameStr -> RawMatch -> t
 funBind name m = funBinds name [m]
 
--- | A pattern binding.
+-- | Defines a value consisting of multiple guards.
+--
+-- The resulting syntax is the same as a function with no arguments.
 --
 -- > x = y
 -- > =====
--- > patBind (var "x") $ rhs $ var "y"
+-- > valBind "x" $ rhs $ var "y"
+--
+-- > x
+-- >   | test = 1
+-- >   | otherwise = 2
+-- > =====
+-- > valBind "x"
+-- >   $ guardedRhs
+-- >     [ var "test" `guard` int 1
+-- >     , var "otherwise" `guard` int 2
+-- >     ]
+valBind :: HasValBind t => OccNameStr -> RawGRHSs -> t
+valBind name = funBind name . match []
+
+-- | Defines a value without any guards.
+--
+-- The resulting syntax is the same as a function with no arguments.
+--
+-- > x = y
+-- > =====
+-- > valBindRhs "x" $ var "y"
+valBindRhs :: HasValBind t => OccNameStr -> HsExpr' -> t
+valBindRhs name = valBind name . rhs
+
+-- | Defines a pattern binding consisting of multiple guards.
 --
 -- > (x, y) = e
 -- > =====
@@ -126,13 +158,21 @@ funBind name m = funBinds name [m]
 -- >       [ var "test" `guard` tuple [int 1, int 2]
 -- >       , var "otherwise" `guard` [int 2, int 3]
 -- >       ]
-patBind :: HasValBind t => Pat' -> RawGRHSs -> t
+patBind :: HasPatBind t => Pat' -> RawGRHSs -> t
 patBind p g =
     bindB
         $ withPlaceHolder
             (withPlaceHolder
                 (noExt PatBind (builtPat p) (mkGRHSs g)))
         $ ([],[])
+
+-- | Defines a pattern binding without any guards.
+--
+-- > (x, y) = e
+-- > =====
+-- > patBindRhs (tuple [var "x", var "y"]) e
+patBindRhs :: HasPatBind t => Pat' -> HsExpr' -> t
+patBindRhs p = patBind p . rhs
 
 {- $rawMatch
 
@@ -182,7 +222,7 @@ matchRhs ps = match ps . rhs
 -- > funBind "x"
 -- >   $ match [var "x"]
 -- >   $ rhs (var "y")
--- >      `where` [patBind (var "y") $ rhs $ var "x']
+-- >      `where` [valueRhs (var "y") $ var "x']
 where' :: RawGRHSs -> [RawValBind] -> RawGRHSs
 where' r vbs = r { rawGRHSWhere = rawGRHSWhere r ++ vbs }
 
@@ -236,19 +276,12 @@ stmt e =
 p <-- e = withPlaceHolder $ noExt BindStmt (builtPat p) (builtLoc e) noSyntaxExpr noSyntaxExpr
 infixl 1 <--
 
--- | Syntax types which can declare/define functions.  For example:
--- declarations, or the body of a class declaration or class instance.
+-- | Syntax types which can declare/define pattern bindings.
+-- For example: declarations at the top-level or in let/where clauses.
 --
--- Use 'typeSig' or 'typeSigs' to declare that functions or values have
--- types, and use 'funBind', 'funBinds' or 'patBind' to give them definitions.
-class HasValBind t where
-    sigB :: Sig' -> t
-    bindB :: HsBind' -> t
+-- Note: this class is more restrictive than 'HasValBind' since pattern
+-- bindings cannot be used in class or instance declarations.
+class HasValBind t => HasPatBind t where
 
-instance HasValBind RawValBind where
-    sigB = SigV
-    bindB = BindV
-
-instance HasValBind HsDecl' where
-    sigB = noExt SigD
-    bindB = noExt ValD
+instance HasPatBind RawValBind where
+instance HasPatBind HsDecl' where
