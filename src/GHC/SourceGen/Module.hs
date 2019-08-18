@@ -29,6 +29,7 @@ import HsSyn
 import RdrName (RdrName)
 
 import GHC.SourceGen.Syntax.Internal
+import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
 
@@ -79,9 +80,9 @@ thingAll = noExt IEThingAll . wrappedName
 -- > A(b, C)
 -- > =====
 -- > thingWith "A" ["b", "C"]
-thingWith :: RdrNameStr -> [RdrNameStr] -> IE'
+thingWith :: RdrNameStr -> [OccNameStr] -> IE'
 thingWith n cs = noExt IEThingWith (wrappedName n) NoIEWildcard
-                    (map wrappedName cs)
+                    (map (wrappedName . unqual) cs)
                     -- The parsing step leaves the list of fields empty
                     -- and lumps them all together with the above list of
                     -- constructors.
@@ -90,4 +91,4 @@ thingWith n cs = noExt IEThingWith (wrappedName n) NoIEWildcard
 -- TODO: support "mixed" syntax with both ".." and explicit names.
 
 wrappedName :: RdrNameStr -> LIEWrappedName RdrName
-wrappedName = builtLoc . IEName. exportRdrName
+wrappedName = builtLoc . IEName . exportRdrName
