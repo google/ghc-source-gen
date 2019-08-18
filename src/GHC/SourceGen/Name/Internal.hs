@@ -6,10 +6,11 @@
 
 module GHC.SourceGen.Name.Internal where
 
-import Data.Char (isUpper)
+import Data.Char (isAlphaNum, isUpper)
+import Data.List (intercalate)
 import Data.String (IsString(..))
 import FastString (FastString, fsLit)
-import Module (mkModuleNameFS, ModuleName)
+import Module (mkModuleNameFS, ModuleName, moduleNameString)
 import RdrName
 import OccName
 import SrcLoc (Located)
@@ -28,10 +29,10 @@ import GHC.SourceGen.Syntax.Internal (builtLoc)
 -- makes it easier to implement an 'IsString' instance without the context
 -- where a name would be used.)
 data OccNameStr = OccNameStr !RawNameSpace !FastString
-    deriving (Eq, Ord)
+    deriving (Show, Eq, Ord)
 
 data RawNameSpace = Constructor | Value
-    deriving (Eq, Ord)
+    deriving (Show, Eq, Ord)
 
 -- TODO: symbols
 rawNameSpace :: String -> RawNameSpace
@@ -51,6 +52,9 @@ typeOccName (OccNameStr Value s) = mkTyVarOccFS s
 -- | A newtype wrapper around 'ModuleName' which is an instance of 'IsString'.
 newtype ModuleNameStr = ModuleNameStr { unModuleNameStr :: ModuleName }
     deriving (Eq, Ord)
+
+instance Show ModuleNameStr where
+    show = show . moduleNameString . unModuleNameStr
 
 instance IsString ModuleNameStr where
     fromString = ModuleNameStr . mkModuleNameFS . fsLit
@@ -73,7 +77,7 @@ instance IsString ModuleNameStr where
 -- > fromString "A.B.c" == QualStr (fromString "A.B") (fromString "c")
 -- > fromString "c" == UnqualStr (fromString "c")
 data RdrNameStr = UnqualStr OccNameStr | QualStr ModuleNameStr OccNameStr
-    deriving (Eq, Ord)
+    deriving (Show, Eq, Ord)
 
 -- GHC always wraps RdrName in a Located.  (Usually: 'Located (IdP pass)')
 -- So for convenience, these functions return a Located-wrapped value.
@@ -86,10 +90,22 @@ typeRdrName (QualStr (ModuleNameStr m) r) = builtLoc $ Qual m $ typeOccName r
 -- TODO: operators
 instance IsString RdrNameStr where
     -- Split "Foo.Bar.baz" into ("Foo.Bar", "baz")
-    fromString f = case span (/= '.') (reverse f) of
-        (f', '.':f'') ->
-            QualStr (fromString $ reverse f'') (fromString $ reverse f')
-        _ -> UnqualStr (fromString f)
+    fromString s = case collectModuleName s of
+        (m, n)
+            | null m -> UnqualStr (fromString n)
+            | otherwise -> QualStr (fromString $ intercalate "." m) (fromString n)
+
+collectModuleName :: String -> ([String],String)
+collectModuleName s = case span isVarChar s of
+    ("", n) -> ([], n)  -- Symbol
+    (n, "") -> ([], n)  -- Identifier
+    (m, '.' : s') -> case collectModuleName s' of
+                            (m', s'') -> (m : m', s'')
+    _ -> error $ "Unable to parse RdrNameStr: " ++ show s
+  where
+    isVarChar '\'' = True
+    isVarChar '_' = True
+    isVarChar c = isAlphaNum c
 
 -- | A RdrName suitable for an import or export list.
 -- E.g.: `import F(a, B)`
