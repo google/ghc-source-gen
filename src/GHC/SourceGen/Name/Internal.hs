@@ -28,10 +28,12 @@ import GHC.SourceGen.Syntax.Internal (builtLoc)
 -- makes it easier to implement an 'IsString' instance without the context
 -- where a name would be used.)
 data OccNameStr = OccNameStr !RawNameSpace !FastString
+    deriving (Eq, Ord)
 
 data RawNameSpace = Constructor | Value
--- TODO: symbols
+    deriving (Eq, Ord)
 
+-- TODO: symbols
 rawNameSpace :: String -> RawNameSpace
 rawNameSpace (c:_)
     | isUpper c = Constructor
@@ -48,6 +50,7 @@ typeOccName (OccNameStr Value s) = mkTyVarOccFS s
 
 -- | A newtype wrapper around 'ModuleName' which is an instance of 'IsString'.
 newtype ModuleNameStr = ModuleNameStr { unModuleNameStr :: ModuleName }
+    deriving (Eq, Ord)
 
 instance IsString ModuleNameStr where
     fromString = ModuleNameStr . mkModuleNameFS . fsLit
@@ -70,6 +73,7 @@ instance IsString ModuleNameStr where
 -- > fromString "A.B.c" == QualStr (fromString "A.B") (fromString "c")
 -- > fromString "c" == UnqualStr (fromString "c")
 data RdrNameStr = UnqualStr OccNameStr | QualStr ModuleNameStr OccNameStr
+    deriving (Eq, Ord)
 
 -- GHC always wraps RdrName in a Located.  (Usually: 'Located (IdP pass)')
 -- So for convenience, these functions return a Located-wrapped value.
