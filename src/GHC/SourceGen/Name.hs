@@ -11,12 +11,18 @@
 -- we recommend enabling the @OverloadedStrings@ extension.
 module GHC.SourceGen.Name
     ( RdrNameStr(..)
-    , OccNameStr
+    , RawNameSpace(..)
+    , rdrNameStrToString
+    , OccNameStr(..)
+    , occNameStrToString
     , ModuleNameStr(..)
+    , moduleNameStrToString
     , qual
     , unqual
     ) where
 
+import FastString (unpackFS)
+import Module (moduleNameString)
 import GHC.SourceGen.Name.Internal
 
 unqual :: OccNameStr -> RdrNameStr
@@ -24,3 +30,14 @@ unqual = UnqualStr
 
 qual :: ModuleNameStr -> OccNameStr -> RdrNameStr
 qual = QualStr
+
+moduleNameStrToString :: ModuleNameStr -> String
+moduleNameStrToString = moduleNameString . unModuleNameStr
+
+occNameStrToString :: OccNameStr -> String
+occNameStrToString (OccNameStr _ s) = unpackFS s
+
+rdrNameStrToString :: RdrNameStr -> String
+rdrNameStrToString (UnqualStr o) = occNameStrToString o
+rdrNameStrToString (QualStr m o) =
+    moduleNameStrToString m ++ '.' : occNameStrToString o
