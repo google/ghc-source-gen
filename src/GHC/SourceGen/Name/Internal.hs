@@ -16,8 +16,17 @@ import SrcLoc (Located)
 
 import GHC.SourceGen.Syntax.Internal (builtLoc)
 
--- | A string identifier.  This definition is simililar to 'RdrNameStr', but
--- independent of whether it's in the type or value namespace.
+-- | A string identifier referring to a name.
+--
+-- 'OccNameStr' keeps track of whether it is a "constructor" or "variable"
+-- (e.g.: @\"Foo\"@ vs @\"foo\"@, respectively).
+--
+-- 'OccNameStr' is simililar in purpose to GHC's 'OccName'.  However, unlike
+-- 'OccName', 'OccNameStr' does not differentiate between the type or function/value
+-- namespaces. Functions in this package that take an 'OccNameStr' as input
+-- will internally convert it to the proper namespace.  (This approach
+-- makes it easier to implement an 'IsString' instance without the context
+-- where a name would be used.)
 data OccNameStr = OccNameStr !RawNameSpace !FastString
 
 data RawNameSpace = Constructor | Value
@@ -45,14 +54,21 @@ instance IsString ModuleNameStr where
 
 -- | A string identifier which may be qualified to a particular module.
 --
+-- 'RdrNameStr' wraps an 'OccNameStr' and thus keeps track of whether it is a
+-- "constructor" or "variable" (e.g.: @\"Foo.Bar\"@ vs @\"Foo.bar\"@,
+-- respectively).
+--
+-- 'RdrNameStr' is simililar in purpose to GHC's 'RdrName'.  However, unlike
+-- 'RdrName', 'RdrNameStr' does not differentiate between the type or function/value
+-- namespaces.  Functions in this package that take a 'RdrNameStr' as input
+-- will internally convert it to the proper namespace.  (This approach
+-- makes it easier to implement an 'IsString' instance without the context
+-- where a name would be used.)
+--
 -- For example:
 --
 -- > fromString "A.B.c" == QualStr (fromString "A.B") (fromString "c")
 -- > fromString "c" == UnqualStr (fromString "c")
---
--- This definition is simililar to 'RdrName', but independent of whether it's
--- in the type or value namespace.  Functions in this package that take
--- a 'RdrNameStr' as input will internally convert it to the proper namespace.
 data RdrNameStr = UnqualStr OccNameStr | QualStr ModuleNameStr OccNameStr
 
 -- GHC always wraps RdrName in a Located.  (Usually: 'Located (IdP pass)')
