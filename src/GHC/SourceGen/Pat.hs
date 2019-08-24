@@ -4,6 +4,7 @@
 -- license that can be found in the LICENSE file or at
 -- https://developers.google.com/open-source/licenses/bsd
 
+{-# LANGUAGE CPP #-}
 -- | This module provides combinators for constructing Haskell patterns.
 module GHC.SourceGen.Pat
     ( Pat'
@@ -13,6 +14,7 @@ module GHC.SourceGen.Pat
     , recordConP
     , strictP
     , lazyP
+    , sigP
     ) where
 
 import HsTypes
@@ -20,6 +22,7 @@ import HsPat hiding (LHsRecField')
 
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
+import GHC.SourceGen.Type.Internal (sigWcType)
 
 -- | A wild pattern (@_@).
 wildP :: Pat'
@@ -70,3 +73,17 @@ strictP = noExt BangPat . builtPat
 -- > lazyP (conP "A" [var x])
 lazyP :: Pat' -> Pat'
 lazyP = noExt LazyPat . builtPat
+
+-- | A pattern type signature
+--
+-- > x :: y
+-- > =====
+-- > sigPat (var "x") (var "y")
+sigP :: Pat' -> HsType' -> Pat'
+#if MIN_VERSION_ghc(8,8,0)
+sigP p t = noExt SigPat p (sigWcType t)
+#elif MIN_VERSION_ghc(8,6,0)
+sigP p t = SigPat (sigWcType t) (builtPat p)
+#else
+sigP p t = SigPatIn (builtPat p) (sigWcType t)
+#endif
