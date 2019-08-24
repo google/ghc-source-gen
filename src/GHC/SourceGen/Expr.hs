@@ -33,6 +33,7 @@ import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Binds
 import GHC.SourceGen.Expr.Internal
 import GHC.SourceGen.Name.Internal
+import GHC.SourceGen.Overloaded (par)
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
     ( parenthesizeTypeForApp
@@ -49,7 +50,7 @@ overLabel :: String -> HsExpr'
 overLabel = noExt HsOverLabel Nothing . fromString
 
 let' :: [RawValBind] -> HsExpr' -> HsExpr'
-let' binds e = noExt HsLet (builtLoc $ valBinds binds) $ builtLoc e
+let' binds e = par $ noExt HsLet (builtLoc $ valBinds binds) $ builtLoc e
 
 case' :: HsExpr' -> [RawMatch] -> HsExpr'
 case' e matches = noExt HsCase (builtLoc e)
