@@ -62,3 +62,5 @@ forall' ts = noExt HsForAllTy (map builtLoc ts) . builtLoc
 -- > [var "F" @@ var "x", var "G" @@ var "x"] ==> var "x"
 (==>) :: [HsType'] -> HsType' -> HsType'
 (==>) cs = noExt HsQualTy (builtLoc (map builtLoc cs)) . builtLoc
+
+infixr 0 ==>
