@@ -54,6 +54,8 @@ tests:
     dependencies:
     - ghc-source-gen
     - ghc-paths == 0.1.*
+    - tasty
+    - tasty-hunit
 
   # TODO: Fill out this test, and use it to replace pprint_examples.
   pprint_test:
@@ -64,3 +66,13 @@ tests:
     - ghc-paths == 0.1.*
     - tasty
     - tasty-hunit
+
+  name_test:
+    main: name_test.hs
+    source-dirs: tests
+    dependencies:
+    - ghc-source-gen
+    - QuickCheck
+    - tasty
+    - tasty-hunit
+    - tasty-quickcheck

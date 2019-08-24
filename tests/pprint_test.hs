@@ -94,6 +94,7 @@ exprsTest dflags = testGroup "Expr"
     , test "app"
         [ "A x" :~ var "A" @@ var "x"
         , "(+) x" :~ var "+" @@ var "x"
+        , "(Prelude.+) x" :~ var "Prelude.+" @@ var "x"
         , "A (B x)" :~ var "A" @@ par (var "B" @@ var "x")
         , "A x (B y z)" :~ var "A" @@ var "x" @@ (var "B" @@ var "y" @@ var "z")
         , "A w (B x y) Z"
@@ -107,11 +108,16 @@ exprsTest dflags = testGroup "Expr"
         ]
     , test "op"
         [ "x + y" :~ op (var "x") "+" (var "y")
+        , "x Prelude.+ y" :~ op (var "x") "Prelude.+" (var "y")
         , "x `add` y" :~ op (var "x") "add" (var "y")
         , "x * (y + z)" :~ op (var "x") "*" (op (var "y") "+" (var "z"))
         , "x `mult` (y `add` z)" :~ op (var "x") "mult" (op (var "y") "add" (var "z"))
         , "A x * (B y + C z)" :~ op (var "A" @@ var "x") "*"
                                     (op (var "B" @@ var "y") "+" (var "C" @@ var "z"))
+        ]
+    , test "period-op"
+        [ "(Prelude..) x" :~ var "Prelude.." @@ var "x"
+        , "x Prelude.. y" :~ op (var "x") "Prelude.." (var "y")
         ]
     , test ":@@:"
         -- TODO: GHC puts extra space here.
@@ -183,6 +189,7 @@ declsTest dflags = testGroup "Decls"
                 [ var "test" `guard` int 1
                 , var "otherwise" `guard` int 2
                 ]
+        , "x = (+)" :~ valBind "x" $ var "+"
         ]
     , test "funBind"
         [ "not True = False\nnot False = True" :~
