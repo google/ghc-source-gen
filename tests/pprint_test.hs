@@ -174,6 +174,13 @@ exprsTest dflags = testGroup "Expr"
         , "x + y {b = x}"
             :~ op (var "x") "+" (recordUpd (var "y") [("b", var "x")])
         ]
+    , test "let"
+        [ "let x = 1 in x" :~ let' [valBind "x" $ int 1] (var "x")
+        , "let f x = 1 in f" :~
+            let' [ funBind "f" $ match [var "x"] $ int 1] (var "f")
+        , "let f (A x) = 1 in f" :~
+            let' [ funBind "f" $ match [conP "A" [var "x"]] $ int 1] (var "f")
+        ]
     ]
   where
     test = testExprs dflags
@@ -222,6 +229,7 @@ declsTest dflags = testGroup "Decls"
                     [ guard (var "x") (var "False")
                     , guard (var "otherwise") (var "True")
                     ]
+        , "f (A x) = 1" :~ funBind "f" $ match [conP "A" [var "x"]] (int 1)
         ]
     , test "tyFamInst"
         [ "type instance Elt String = Char"
