@@ -195,6 +195,11 @@ exprsTest dflags = testGroup "Expr"
         -- TODO: add more tests.
         [ "do (let x = 1 in x)" :~ do' [stmt $ let' [valBind "x" (int 1)] (var "x")]
         ]
+    , test "tyApp"
+        [ "x @t" :~ var "x" `tyApp` var "t"
+        , "(f x) @t" :~ (var "f" @@ var "x") `tyApp` var "t"
+        , "f x @t" :~ var "f" @@ (var "x" `tyApp` var "t")
+        ]
     ]
   where
     test = testExprs dflags

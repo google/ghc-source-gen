@@ -126,14 +126,15 @@ e @::@ t = ExprWithTySig (builtLoc e) (sigWcType t)
 -- > var "f" @@ var "Int"
 tyApp :: HsExpr' -> HsType' -> HsExpr'
 #if MIN_VERSION_ghc(8,8,0)
-tyApp e t = noExt HsAppType (builtLoc e) t'
+tyApp e t = noExt HsAppType e' t'
 #elif MIN_VERSION_ghc(8,6,0)
-tyApp e t = HsAppType t' (builtLoc e)
+tyApp e t = HsAppType t' e'
 #else
-tyApp e t = HsAppType (builtLoc e) t'
+tyApp e t = HsAppType e' t'
 #endif
   where
     t' = wcType $ unLoc $ parenthesizeTypeForApp $ builtLoc t
+    e' = parenthesizeExprForApp $ builtLoc e
 
 -- | Constructs a record with explicit field names.
 --
