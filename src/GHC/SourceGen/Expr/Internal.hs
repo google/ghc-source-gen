@@ -52,6 +52,7 @@ needsExprForOp e = case e of
     _ -> False
 needsExprForApp e = case e of
     HsApp{} -> True
+    HsAppType{} -> True
     HsStatic{} -> True
     _ -> needsExprForOp e
 

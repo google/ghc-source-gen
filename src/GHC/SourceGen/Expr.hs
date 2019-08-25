@@ -134,7 +134,7 @@ tyApp e t = HsAppType e' t'
 #endif
   where
     t' = wcType $ unLoc $ parenthesizeTypeForApp $ builtLoc t
-    e' = parenthesizeExprForApp $ builtLoc e
+    e' = builtLoc e
 
 -- | Constructs a record with explicit field names.
 --

@@ -129,6 +129,8 @@ exprsTest dflags = testGroup "Expr"
         , "(\\ x -> x) (\\ x -> x)" :~
             let f = lambda [var "x"] (var "x")
             in f @@ f
+        , "f x @t" :~ tyApp (var "f" @@ var "x") (var "t")
+        , "f (x @t)" :~ var "f" @@ (tyApp (var "x") (var "t"))
         ]
     , test "op"
         [ "x + y" :~ op (var "x") "+" (var "y")
@@ -143,6 +145,8 @@ exprsTest dflags = testGroup "Expr"
         , "(\\ x -> x) . (\\ x -> x)" :~
             let f = lambda [var "x"] (var "x")
             in op f "." f
+        , "x @s + y @t" :~
+                op (var "x" `tyApp` var "s") "+" (var "y" `tyApp` var "t")
         ]
     , test "period-op"
         [ "(Prelude..) x" :~ var "Prelude.." @@ var "x"
@@ -167,6 +171,8 @@ exprsTest dflags = testGroup "Expr"
         , "x @a b" :~ tyApp (var "x") (var "a") @@ var "b"
         , "x @(a b)" :~ tyApp (var "x") (var "a" @@ var "b")
         , "x @(a + b)" :~ tyApp (var "x") (op (var "a") "+" (var "b"))
+        , "f x @t" :~ (var "f" @@ var "x") `tyApp` var "t"
+        , "f (x @t)" :~ var "f" @@ (var "x" `tyApp` var "t")
         ]
     , test "recordConE"
         [ "A {}" :~ recordConE "A" []
@@ -194,11 +200,6 @@ exprsTest dflags = testGroup "Expr"
     , test "do"
         -- TODO: add more tests.
         [ "do (let x = 1 in x)" :~ do' [stmt $ let' [valBind "x" (int 1)] (var "x")]
-        ]
-    , test "tyApp"
-        [ "x @t" :~ var "x" `tyApp` var "t"
-        , "(f x) @t" :~ (var "f" @@ var "x") `tyApp` var "t"
-        , "f x @t" :~ var "f" @@ (var "x" `tyApp` var "t")
         ]
     ]
   where
