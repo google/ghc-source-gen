@@ -126,7 +126,7 @@ instance App HsExpr' where
             PlaceHolder
 #endif
             (parenthesizeExprForOp $ builtLoc y)
-    x @@ y = noExt HsApp (builtLoc x)
+    x @@ y = noExt HsApp (parenthesizeExprForOp $ builtLoc x)
                 (parenthesizeExprForApp $ builtLoc y)
 
 instance App HsType' where
@@ -135,7 +135,7 @@ instance App HsType' where
                 (typeRdrName o)
                 (parenthesizeTypeForOp $ builtLoc y)
     x @@ y = noExt HsAppTy
-                (builtLoc x)
+                (parenthesizeTypeForOp $ builtLoc x)
                 (parenthesizeTypeForApp $ builtLoc y)
 
 class HasTuple e where
