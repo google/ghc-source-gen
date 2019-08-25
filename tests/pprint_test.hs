@@ -181,6 +181,10 @@ exprsTest dflags = testGroup "Expr"
         , "let f (A x) = 1 in f" :~
             let' [ funBind "f" $ match [conP "A" [var "x"]] $ int 1] (var "f")
         ]
+    , test "do"
+        -- TODO: add more tests.
+        [ "do (let x = 1 in x)" :~ do' [stmt $ let' [valBind "x" (int 1)] (var "x")]
+        ]
     ]
   where
     test = testExprs dflags
