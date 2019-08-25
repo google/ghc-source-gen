@@ -18,6 +18,7 @@ import SrcLoc (Located)
 import PlaceHolder (PlaceHolder(..))
 #endif
 
+import GHC.SourceGen.Pat.Internal (parenthesize)
 import GHC.SourceGen.Syntax.Internal
 
 -- | A binding definition inside of a @let@ or @where@ clause.
@@ -85,7 +86,8 @@ matchGroup context matches =
                             Generated
   where
     mkMatch :: RawMatch -> Match' (Located HsExpr')
-    mkMatch r = noExt Match context (map builtPat $ rawMatchPats r)
+    mkMatch r = noExt Match context
+                    (map builtPat $ map parenthesize $ rawMatchPats r)
 #if !MIN_VERSION_ghc(8,4,0)
                     -- The GHC docs say: "A type signature for the result of the match."
                     -- The parsing step produces 'Nothing' for this field.
