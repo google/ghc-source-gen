@@ -174,6 +174,13 @@ exprsTest dflags = testGroup "Expr"
         , "x + y {b = x}"
             :~ op (var "x") "+" (recordUpd (var "y") [("b", var "x")])
         ]
+    , test "let"
+        [ "let x = 1 in x" :~ let' [valBind "x" $ int 1] (var "x")
+        , "let f x = 1 in f" :~
+            let' [ funBind "f" $ match [var "x"] $ int 1] (var "f")
+        , "let f (A x) = 1 in f" :~
+            let' [ funBind "f" $ match [conP "A" [var "x"]] $ int 1] (var "f")
+        ]
     , test "do"
         -- TODO: add more tests.
         [ "do (let x = 1 in x)" :~ do' [stmt $ let' [valBind "x" (int 1)] (var "x")]
@@ -226,6 +233,7 @@ declsTest dflags = testGroup "Decls"
                     [ guard (var "x") (var "False")
                     , guard (var "otherwise") (var "True")
                     ]
+        , "f (A x) = 1" :~ funBind "f" $ match [conP "A" [var "x"]] (int 1)
         ]
     , test "tyFamInst"
         [ "type instance Elt String = Char"
@@ -256,6 +264,8 @@ patsTest dflags = testGroup "Pats"
         -- , "A ((-3) % 1)" :~ conP "A" [frac (-3.0)]
         , "A 'x'" :~ conP "A" [char 'x']
         , "A \"xyz\"" :~ conP "A" [string "xyz"]
+        , "A B {x = C}"
+            :~ conP "A" [recordConP "B" [("x", conP "C" [])]]
         ]
     , test "asP"
         [ "x@B" :~ asP "x" $ conP "B" []
@@ -277,6 +287,9 @@ patsTest dflags = testGroup "Pats"
     , test "sigPat"
         [ "x :: A" :~ sigP (var "x") (var "A")
         , "A x :: A x" :~ sigP (conP "A" [var "x"]) (var "A" @@ var "x")
+        ]
+    , test "recordConP"
+        [ "A {x = Y}" :~ recordConP "A" [("x", conP "Y" [])]
         ]
     ]
   where
