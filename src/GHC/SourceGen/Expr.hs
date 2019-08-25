@@ -27,7 +27,7 @@ import HsExpr
 import HsPat (HsRecField'(..), HsRecFields(..))
 import HsTypes (FieldOcc(..), AmbiguousFieldOcc(..))
 import Data.String (fromString)
-import SrcLoc (unLoc, Located)
+import SrcLoc (unLoc, GenLocated(..), Located)
 
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Binds
@@ -88,7 +88,21 @@ multiIf = noExtOrPlaceHolder HsMultiIf . map builtLoc
 -- > =====
 -- > do' [var "x" <-- var "act", stmt $ var "return" @@ var "x"]
 do' :: [Stmt'] -> HsExpr'
-do' = withPlaceHolder . noExt HsDo DoExpr . builtLoc . map builtLoc
+do' = withPlaceHolder . noExt HsDo DoExpr
+        . builtLoc . map (builtLoc . parenthesizeIfLet)
+  where
+  -- Put parentheses around a "let" in a do-binding, to avoid:
+  --   do let x = ...
+  --      in x
+  -- which is not valid Haskell.
+#if MIN_VERSION_ghc(8,6,0)
+    parenthesizeIfLet (BodyStmt ext e@(L _ HsLet{}) x y)
+        = BodyStmt ext (parExpr e) x y
+#else
+    parenthesizeIfLet (BodyStmt e@(L _ HsLet{}) x y tc)
+        = BodyStmt (parExpr e) x y tc
+#endif
+    parenthesizeIfLet s = s
 
 -- | A type constraint on an expression.
 --

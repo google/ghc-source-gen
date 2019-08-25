@@ -174,6 +174,10 @@ exprsTest dflags = testGroup "Expr"
         , "x + y {b = x}"
             :~ op (var "x") "+" (recordUpd (var "y") [("b", var "x")])
         ]
+    , test "do"
+        -- TODO: add more tests.
+        [ "do (let x = 1 in x)" :~ do' [stmt $ let' [valBind "x" (int 1)] (var "x")]
+        ]
     ]
   where
     test = testExprs dflags
