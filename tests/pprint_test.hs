@@ -83,6 +83,8 @@ typesTest dflags = testGroup "Type"
         -- GHC still parses it as a function between two HsQualTy.
         , "(A => b) -> A => c" :~
             ([var "A"] ==> var "b") --> ([var "A"] ==> var "c")
+        , "(A => b) -> A => c" :~
+            ([var "A"] ==> var "b") --> [var "A"] ==> var "c"
         ]
     , test "literals"
         [ "\"abc\"" :~ stringTy "abc"
