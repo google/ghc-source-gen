@@ -17,9 +17,10 @@ data TestCase a = String :~ a
 infixr 0 :~
 
 testCases :: Outputable a => DynFlags -> String -> [TestCase a] -> TestTree
-testCases dflags name cases = testCase name $ mapM_ run cases
+testCases dflags name cases = testGroup name $ map run cases
   where
-    run (expected :~ x) = expected @=? showPpr dflags x
+    run (expected :~ x) =
+        testCase (takeWhile (/='\n') expected) $ expected @=? showPpr dflags x
 
 testTypes :: DynFlags ->  String -> [TestCase HsType'] -> TestTree
 testTypes = testCases
@@ -30,13 +31,17 @@ testExprs = testCases
 testDecls :: DynFlags ->  String -> [TestCase HsDecl'] -> TestTree
 testDecls = testCases
 
+testPats :: DynFlags ->  String -> [TestCase Pat'] -> TestTree
+testPats = testCases
+
+
 main :: IO ()
 main = runGhc (Just libdir) $ do
     dflags <- getDynFlags
     liftIO $ defaultMain $ testGroup "Tests"
-        [typesTest dflags, exprsTest dflags, declsTest dflags]
+        [typesTest dflags, exprsTest dflags, declsTest dflags, patsTest dflags]
 
-typesTest, exprsTest, declsTest :: DynFlags -> TestTree
+typesTest, exprsTest, declsTest, patsTest :: DynFlags -> TestTree
 typesTest dflags = testGroup "Type"
     [ test "var"
         [ "A" :~ var "A"
@@ -49,6 +54,8 @@ typesTest dflags = testGroup "Type"
         [ "A x" :~ var "A" @@ var "x"
         , "(+) x" :~ var "+" @@ var "x"
         , "A (B x)" :~ var "A" @@ par (var "B" @@ var "x")
+        , "A (B x)" :~ var "A" @@ par (var "B" @@ var "x")
+        , "A ((B x))" :~ var "A" @@ par (par (var "B" @@ var "x"))
         , "A x (B y z)" :~ var "A" @@ var "x" @@ (var "B" @@ var "y" @@ var "z")
         , "A w (B x y) Z"
             :~ var "A" @@ var "w" @@ (var "B" @@ var "x" @@ var "y") @@ var "Z"
@@ -57,9 +64,11 @@ typesTest dflags = testGroup "Type"
         [ "x + y" :~ op (var "x") "+" (var "y")
         , "x `add` y" :~ op (var "x") "add" (var "y")
         , "x * (y + z)" :~ op (var "x") "*" (op (var "y") "+" (var "z"))
+        , "(x * y) + z" :~ op (op (var "x") "*" (var "y")) "+" (var "z")
         , "x `mult` (y `add` z)" :~ op (var "x") "mult" (op (var "y") "add" (var "z"))
         , "A x * (B y + C z)" :~ op (var "A" @@ var "x") "*"
                                     (op (var "B" @@ var "y") "+" (var "C" @@ var "z"))
+        , "(f . g) x" :~ op (var "f") "." (var "g") @@ var "x"
         ]
     , test "function"
         [ "a -> b" :~ var "a" --> var "b"
@@ -95,7 +104,9 @@ exprsTest dflags = testGroup "Expr"
         [ "A x" :~ var "A" @@ var "x"
         , "(+) x" :~ var "+" @@ var "x"
         , "(Prelude.+) x" :~ var "Prelude.+" @@ var "x"
+        , "A (B x)" :~ var "A" @@ (var "B" @@ var "x")
         , "A (B x)" :~ var "A" @@ par (var "B" @@ var "x")
+        , "A ((B x))" :~ var "A" @@ par (par (var "B" @@ var "x"))
         , "A x (B y z)" :~ var "A" @@ var "x" @@ (var "B" @@ var "y" @@ var "z")
         , "A w (B x y) Z"
             :~ var "A" @@ var "w" @@ (var "B" @@ var "x" @@ var "y") @@ var "Z"
@@ -105,15 +116,23 @@ exprsTest dflags = testGroup "Expr"
         , "A ((-3) % 1)" :~ var "A" @@ frac (-3.0)
         , "A 'x'" :~ var "A" @@ char 'x'
         , "A \"xyz\"" :~ var "A" @@ string "xyz"
+        , "(\\ x -> x) (\\ x -> x)" :~
+            let f = lambda [var "x"] (var "x")
+            in f @@ f
         ]
     , test "op"
         [ "x + y" :~ op (var "x") "+" (var "y")
         , "x Prelude.+ y" :~ op (var "x") "Prelude.+" (var "y")
         , "x `add` y" :~ op (var "x") "add" (var "y")
         , "x * (y + z)" :~ op (var "x") "*" (op (var "y") "+" (var "z"))
+        , "(x * y) + z" :~ op (op (var "x") "*" (var "y")) "+" (var "z")
         , "x `mult` (y `add` z)" :~ op (var "x") "mult" (op (var "y") "add" (var "z"))
         , "A x * (B y + C z)" :~ op (var "A" @@ var "x") "*"
                                     (op (var "B" @@ var "y") "+" (var "C" @@ var "z"))
+        , "(f . g) x" :~ op (var "f") "." (var "g") @@ var "x"
+        , "(\\ x -> x) . (\\ x -> x)" :~
+            let f = lambda [var "x"] (var "x")
+            in op f "." f
         ]
     , test "period-op"
         [ "(Prelude..) x" :~ var "Prelude.." @@ var "x"
@@ -214,3 +233,44 @@ declsTest dflags = testGroup "Decls"
     ]
   where
     test = testDecls dflags
+
+patsTest dflags = testGroup "Pats"
+    [ test "app"
+        [ "A x y" :~ conP "A" [var "x", var "y"]
+        , "(:) x y" :~ conP ":" [var "x", var "y"]
+        , "(Prelude.:) x" :~ conP "Prelude.:" [var "x"]
+        , "A (B x)" :~ conP "A" [conP "B" [var "x"]]
+        , "A (B x)" :~ conP "A" [par $ conP "B" [var "x"]]
+        , "A ((B x))" :~ conP "A" [par $ par $ conP "B" [var "x"]]
+        , "A x (B y z)" :~ conP "A" [var "x", conP "B" [var "y", var "z"]]
+        , "A w (B x y) Z"
+            :~ conP "A" [var "w", conP "B" [var "x", var "y"], conP "Z" []]
+        , "A 3" :~ conP "A" [int 3]
+        , "A (-3)" :~ conP "A" [int (-3)]
+        -- TODO(#33): this is incorrect:
+        -- , "A (3 % 1)" :~ conP "A" [frac 3.0]
+        -- , "A ((-3) % 1)" :~ conP "A" [frac (-3.0)]
+        , "A 'x'" :~ conP "A" [char 'x']
+        , "A \"xyz\"" :~ conP "A" [string "xyz"]
+        ]
+    , test "asP"
+        [ "x@B" :~ asP "x" $ conP "B" []
+        , "x@(B y)" :~ asP "x" $ conP "B" [var "y"]
+        , "x@_" :~ asP "x" wildP
+        ]
+    , test "strictP"
+        [ "!x" :~ strictP $ var "x"
+        , "!B" :~ strictP $ conP "B" []
+        , "!(B y)" :~ strictP $ conP "B" [var "y"]
+        , "!_" :~ strictP wildP
+        ]
+    , test "lazyP"
+        [ "~x" :~ lazyP $ var "x"
+        , "~B" :~ lazyP $ conP "B" []
+        , "~(B y)" :~ lazyP $ conP "B" [var "y"]
+        , "~_" :~ lazyP wildP
+        ]
+    ]
+  where
+    test = testPats dflags
+
