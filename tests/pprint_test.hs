@@ -75,6 +75,10 @@ typesTest dflags = testGroup "Type"
         , "a -> b -> c" :~ var "a" --> var "b" --> var "c"
         , "a -> b -> c" :~ var "a" --> (var "b" --> var "c")
         , "(a -> b) -> c" :~ (var "a" --> var "b") --> var "c"
+        -- These tests also check that ==> and --> have compatible precedences:
+        , "A a => a -> b" :~ [var "A" @@ var "a"] ==> var "a" --> var "b"
+        , "(A a, B b) => a -> b" :~
+            [var "A" @@ var "a", var "B" @@ var "b"] ==> var "a" --> var "b"
         ]
     , test "literals"
         [ "\"abc\"" :~ stringTy "abc"
