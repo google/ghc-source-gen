@@ -270,6 +270,10 @@ patsTest dflags = testGroup "Pats"
         , "~(B y)" :~ lazyP $ conP "B" [var "y"]
         , "~_" :~ lazyP wildP
         ]
+    , test "sigPat"
+        [ "x :: A" :~ sigP (var "x") (var "A")
+        , "A x :: A x" :~ sigP (conP "A" [var "x"]) (var "A" @@ var "x")
+        ]
     ]
   where
     test = testPats dflags

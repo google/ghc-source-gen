@@ -14,6 +14,7 @@ module GHC.SourceGen.Pat
     , recordConP
     , strictP
     , lazyP
+    , sigP
     ) where
 
 import SrcLoc (unLoc)
@@ -24,6 +25,7 @@ import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Overloaded (par)
 import GHC.SourceGen.Expr.Internal (litNeedsParen, overLitNeedsParen)
 import GHC.SourceGen.Syntax.Internal
+import GHC.SourceGen.Type.Internal (sigWcType)
 
 -- | A wild pattern (@_@).
 wildP :: Pat'
@@ -101,3 +103,17 @@ strictP = noExt BangPat . builtPat . parenthesize
 -- > lazyP (conP "A" [var x])
 lazyP :: Pat' -> Pat'
 lazyP = noExt LazyPat . builtPat . parenthesize
+
+-- | A pattern type signature
+--
+-- > x :: y
+-- > =====
+-- > sigPat (var "x") (var "y")
+sigP :: Pat' -> HsType' -> Pat'
+#if MIN_VERSION_ghc(8,8,0)
+sigP p t = noExt SigPat p (sigWcType t)
+#elif MIN_VERSION_ghc(8,6,0)
+sigP p t = SigPat (sigWcType t) (builtPat p)
+#else
+sigP p t = SigPatIn (builtPat p) (sigWcType t)
+#endif
