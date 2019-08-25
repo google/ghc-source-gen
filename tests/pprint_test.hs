@@ -252,7 +252,8 @@ patsTest dflags = testGroup "Pats"
         -- , "A ((-3) % 1)" :~ conP "A" [frac (-3.0)]
         , "A 'x'" :~ conP "A" [char 'x']
         , "A \"xyz\"" :~ conP "A" [string "xyz"]
-        , "A B{x = C}" :~ conP "A" [recordConP "B" [("x", conP "C" [])]]
+        , "A B {x = C}"
+            :~ conP "A" [recordConP "B" [("x", conP "C" [])]]
         ]
     , test "asP"
         [ "x@B" :~ asP "x" $ conP "B" []
@@ -270,6 +271,10 @@ patsTest dflags = testGroup "Pats"
         , "~B" :~ lazyP $ conP "B" []
         , "~(B y)" :~ lazyP $ conP "B" [var "y"]
         , "~_" :~ lazyP wildP
+        ]
+    , test "sigPat"
+        [ "x :: A" :~ sigP (var "x") (var "A")
+        , "A x :: A x" :~ sigP (conP "A" [var "x"]) (var "A" @@ var "x")
         ]
     , test "recordConP"
         [ "A {x = Y}" :~ recordConP "A" [("x", conP "Y" [])]
