@@ -258,6 +258,14 @@ declsTest dflags = testGroup "Decls"
             :~ instance' (var "Container" @@ var "String")
                 [tyFamInst "Elt" [var "String"] (var "Char")]
         ]
+    , test "patSynSigs"
+        [ "pattern F, G :: T" :~ patSynSigs ["F", "G"] $ var "T"
+        , "pattern F :: T" :~ patSynSig "F" $ var "T"
+        ]
+    , test "patSynBind"
+        [ "pattern F a b = G b a"
+            :~ patSynBind "F" ["a", "b"] $ conP "G" [var "b", var "a"]
+        ]
     ]
   where
     test = testDecls dflags
