@@ -4,7 +4,7 @@ module GHC.SourceGen.Pat.Internal where
 import HsPat (Pat(..))
 import HsTypes (HsConDetails(..))
 
-import GHC.SourceGen.Expr.Internal (litNeedsParen, overLitNeedsParen)
+import GHC.SourceGen.Lit.Internal (litNeedsParen, overLitNeedsParen)
 import GHC.SourceGen.Syntax.Internal
 import SrcLoc (unLoc)
 

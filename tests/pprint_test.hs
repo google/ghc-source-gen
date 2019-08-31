@@ -122,8 +122,8 @@ exprsTest dflags = testGroup "Expr"
             :~ var "A" @@ var "w" @@ (var "B" @@ var "x" @@ var "y") @@ var "Z"
         , "A 3" :~ var "A" @@ int 3
         , "A (-3)" :~ var "A" @@ int (-3)
-        , "A (3 % 1)" :~ var "A" @@ frac 3.0
-        , "A ((-3) % 1)" :~ var "A" @@ frac (-3.0)
+        , "A 3.0" :~ var "A" @@ frac 3.0
+        , "A (-3.0)" :~ var "A" @@ frac (-3.0)
         , "A 'x'" :~ var "A" @@ char 'x'
         , "A \"xyz\"" :~ var "A" @@ string "xyz"
         , "(\\ x -> x) (\\ x -> x)" :~
@@ -275,9 +275,8 @@ patsTest dflags = testGroup "Pats"
             :~ conP "A" [var "w", conP "B" [var "x", var "y"], conP "Z" []]
         , "A 3" :~ conP "A" [int 3]
         , "A (-3)" :~ conP "A" [int (-3)]
-        -- TODO(#33): this is incorrect:
-        -- , "A (3 % 1)" :~ conP "A" [frac 3.0]
-        -- , "A ((-3) % 1)" :~ conP "A" [frac (-3.0)]
+        , "A 3.0" :~ conP "A" [frac 3.0]
+        , "A (-3.0)" :~ conP "A" [frac (-3.0)]
         , "A 'x'" :~ conP "A" [char 'x']
         , "A \"xyz\"" :~ conP "A" [string "xyz"]
         , "A B {x = C}"
