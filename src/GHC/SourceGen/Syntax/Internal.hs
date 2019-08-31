@@ -137,7 +137,7 @@ type HsType' = HsType RdrName
 --
 -- Instances:
 --
--- * 'GHC.SourceGen.Overloaded.Var'
+-- * 'GHC.SourceGen.Overloaded.BVar'
 -- * 'GHC.SourceGen.Overloaded.Par'
 -- * 'GHC.SourceGen.Overloaded.HasTuple'
 -- * 'GHC.SourceGen.Overloaded.HasList'
@@ -152,6 +152,7 @@ type Pat' = Pat RdrName
 --
 -- Instances:
 --
+-- * 'GHC.SourceGen.Overloaded.BVar'
 -- * 'GHC.SourceGen.Overloaded.Var'
 -- * 'GHC.SourceGen.Overloaded.Par'
 -- * 'GHC.SourceGen.Overloaded.App'
@@ -180,6 +181,7 @@ type HsDecl' = HsDecl RdrName
 --
 -- Instances:
 --
+-- * 'GHC.SourceGen.Overloaded.BVar'
 -- * 'GHC.SourceGen.Overloaded.Var'
 #if MIN_VERSION_ghc(8,4,0)
 type IE' = IE GhcPs
@@ -192,7 +194,7 @@ type IE' = IE RdrName
 --
 -- Instances:
 --
--- * 'GHC.SourceGen.Overloaded.Var'
+-- * 'GHC.SourceGen.Overloaded.BVar'
 #if MIN_VERSION_ghc(8,4,0)
 type HsTyVarBndr' = HsTyVarBndr GhcPs
 #else
