@@ -137,7 +137,7 @@ type HsType' = HsType RdrName
 --
 -- Instances:
 --
--- * 'GHC.SourceGen.Overloaded.Var'
+-- * 'GHC.SourceGen.Overloaded.BVar'
 -- * 'GHC.SourceGen.Overloaded.Par'
 -- * 'GHC.SourceGen.Overloaded.HasTuple'
 -- * 'GHC.SourceGen.Overloaded.HasList'
