@@ -28,7 +28,7 @@ import GHC.SourceGen.Type.Internal
 
 -- | A promoted name, for example from the @DataKinds@ extension.
 tyPromotedVar :: RdrNameStr -> HsType'
-tyPromotedVar = noExt HsTyVar notPromoted . typeRdrName
+tyPromotedVar = noExt HsTyVar promoted . typeRdrName
 
 stringTy :: String -> HsType'
 stringTy = noExt HsTyLit . noSourceText HsStrTy . fromString

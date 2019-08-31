@@ -11,6 +11,7 @@ import Test.Tasty
 import Test.Tasty.HUnit
 
 import GHC.SourceGen
+import GhcVersion
 
 data TestCase a = String :~ a
 
@@ -97,6 +98,11 @@ typesTest dflags = testGroup "Type"
         , "[]" :~ listPromotedTy []
         , "[x]" :~ listPromotedTy [var "x"]
         , "[y, z]" :~ listPromotedTy [var "y", var "z"]
+        ]
+    , test "tyPromotedVar"
+        -- For some reason, older GHC pretty-printed an extra space.
+        [ ifGhc88 "'Abc" " 'Abc" :~ tyPromotedVar "Abc"
+        , ifGhc88 "T 'Abc" "T  'Abc" :~ var "T" @@ tyPromotedVar "Abc"
         ]
     ]
   where
