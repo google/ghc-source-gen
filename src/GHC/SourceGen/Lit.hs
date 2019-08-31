@@ -19,7 +19,7 @@ module GHC.SourceGen.Lit
 
 import BasicTypes (FractionalLit(..))
 #if MIN_VERSION_ghc(8,4,0)
-import BasicTypes(IntegralLit(..))
+import BasicTypes(IntegralLit(..), SourceText(..))
 #endif
 import HsLit
 import HsExpr (noExpr, noSyntaxExpr, HsExpr(..))
@@ -63,7 +63,8 @@ frac :: HasLit e => Rational -> e
 frac x = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit $ HsFractional il) noExpr
   where
 #if MIN_VERSION_ghc(8,4,0)
-    il = noSourceText FL (x < 0) x
+    il = FL (SourceText s) (x < 0) x
 #else
-    il = FL (show x) x
+    il = FL s x
 #endif
+    s = show (fromRational x :: Double)
