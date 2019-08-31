@@ -10,15 +10,19 @@
 -- These types are all instances of 'Data.String.IsString'.  For ease of use,
 -- we recommend enabling the @OverloadedStrings@ extension.
 module GHC.SourceGen.Name
-    ( RdrNameStr(..)
+    ( -- * RdrNameStr
+      RdrNameStr(..)
     , RawNameSpace(..)
     , rdrNameStrToString
-    , OccNameStr(..)
-    , occNameStrToString
-    , ModuleNameStr(..)
-    , moduleNameStrToString
     , qual
     , unqual
+      -- * OccNameStr
+    , OccNameStr
+    , occNameStrToString
+    , occNameStrNamespace
+      -- ModuleNameStr
+    , ModuleNameStr(..)
+    , moduleNameStrToString
     ) where
 
 import FastString (unpackFS)
@@ -36,6 +40,9 @@ moduleNameStrToString = moduleNameString . unModuleNameStr
 
 occNameStrToString :: OccNameStr -> String
 occNameStrToString (OccNameStr _ s) = unpackFS s
+
+occNameStrNamespace :: OccNameStr -> RawNameSpace
+occNameStrNamespace (OccNameStr n _) = n
 
 rdrNameStrToString :: RdrNameStr -> String
 rdrNameStrToString (UnqualStr o) = occNameStrToString o

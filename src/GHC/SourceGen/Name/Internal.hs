@@ -23,8 +23,9 @@ import GHC.SourceGen.Syntax.Internal (builtLoc)
 -- (e.g.: @\"Foo\"@ vs @\"foo\"@, respectively).
 --
 -- 'OccNameStr' is simililar in purpose to GHC's 'OccName'.  However, unlike
--- 'OccName', 'OccNameStr' does not differentiate between the type or function/value
--- namespaces. Functions in this package that take an 'OccNameStr' as input
+-- 'OccName', 'OccNameStr' does not differentiate between the namespace
+-- of types and of values.
+-- Functions in this package that take an 'OccNameStr' as input
 -- will internally convert it to the proper namespace.  (This approach
 -- makes it easier to implement an 'IsString' instance without the context
 -- where a name would be used.)
@@ -66,8 +67,9 @@ instance IsString ModuleNameStr where
 -- respectively).
 --
 -- 'RdrNameStr' is simililar in purpose to GHC's 'RdrName'.  However, unlike
--- 'RdrName', 'RdrNameStr' does not differentiate between the type or function/value
--- namespaces.  Functions in this package that take a 'RdrNameStr' as input
+-- 'RdrName', 'RdrNameStr' does not differentiate between the namespace of types
+-- and of values.
+-- Functions in this package that take a 'RdrNameStr' as input
 -- will internally convert it to the proper namespace.  (This approach
 -- makes it easier to implement an 'IsString' instance without the context
 -- where a name would be used.)

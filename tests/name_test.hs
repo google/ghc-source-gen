@@ -31,14 +31,16 @@ testRdrName = testGroup "RdrName"
     ]
 
 testOccName = testGroup "OccName"
-    [ testProperty "constructor" $ forAll genUpperName $ \n ->
-        fromString n === OccNameStr Constructor (fromString n)
-    , testProperty "value" $ forAll genLowerName $ \n ->
-        fromString n === OccNameStr Value (fromString n)
-    , testProperty "punctuation" $ forAll genOp $ \n ->
-        fromString n === OccNameStr Value (fromString n)
+    [ testProperty "toString" $ forAll genOccNameString $ \n ->
+        occNameStrToString (fromString n) == n
     , testProperty "round-trip" $ forAll genOccName $ \o ->
         fromString (occNameStrToString o) === o
+    , testProperty "constructor" $ forAll genUpperName $ \n ->
+        occNameStrNamespace (fromString n) === Constructor
+    , testProperty "value" $ forAll genLowerName $ \n ->
+        occNameStrNamespace (fromString n) === Value
+    , testProperty "punctuation" $ forAll genOp $ \n ->
+        occNameStrNamespace (fromString n) === Value
     ]
 
 genUpperName, genLowerName, genOp :: Gen String
@@ -53,10 +55,10 @@ genRest = elements "Ab1_'"
 genPunctuation = elements ".-+"
 
 genOccName :: Gen OccNameStr
-genOccName = oneof
-    [ OccNameStr Constructor . fromString <$> genUpperName
-    , OccNameStr Value . fromString <$> oneof [genLowerName, genOp]
-    ]
+genOccName = fromString <$> genOccNameString
+
+genOccNameString :: Gen String
+genOccNameString = oneof [genUpperName, genLowerName, genOp]
 
 genModuleName :: Gen ModuleNameStr
 genModuleName = fromString . intercalate "." <$> listOf1 genUpperName

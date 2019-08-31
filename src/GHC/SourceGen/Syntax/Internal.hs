@@ -123,6 +123,7 @@ notPromoted = NotPromoted
 --
 -- Instances:
 --
+-- * 'GHC.SourceGen.Overloaded.BVar'
 -- * 'GHC.SourceGen.Overloaded.Var'
 -- * 'GHC.SourceGen.Overloaded.Par'
 -- * 'GHC.SourceGen.Overloaded.App'

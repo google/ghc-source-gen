@@ -408,20 +408,36 @@ derivingAnyclass = derivingWay (Just AnyclassStrategy)
 -- > deriving (Eq, Show) via T
 -- > =====
 -- > derivingVia (var "T") [var "Eq", var "Show"]
--- Available with `ghc >= 8.6`.
+-- Available with @ghc>=8.6@.
 derivingVia :: HsType' -> [HsType'] -> HsDerivingClause'
 derivingVia t = derivingWay (Just $ ViaStrategy $ sigType t)
 #endif
 
+-- | Declares multiple pattern signatures of the same type.
+--
+-- > pattern F, G :: T
+-- > =====
+-- > patSynSigs ["F", "G"] $ var "T"
 patSynSigs :: [OccNameStr] -> HsType' -> HsDecl'
 patSynSigs names t =
     sigB $ noExt PatSynSig (map (typeRdrName . unqual) names)
         $ sigType t
 
+-- | Declares a pattern signature and its type.
+--
+-- > pattern F :: T
+-- > =====
+-- > patSynSigs "F" $ var "T"
 patSynSig :: OccNameStr -> HsType' -> HsDecl'
 patSynSig n = patSynSigs [n]
 
 -- TODO: patSynBidi, patSynUni
+
+-- | Defines a pattern signature.
+--
+-- > pattern F a b = G b a
+-- > =====
+-- > patSynBind "F" ["a", "b"] $ conP "G" [bvar "b", bvar "a"]
 patSynBind :: OccNameStr -> [OccNameStr] -> Pat' -> HsDecl'
 patSynBind n ns p = bindB $ noExt PatSynBind
                     $ withPlaceHolder (noExt PSB (valueRdrName $ unqual n))
