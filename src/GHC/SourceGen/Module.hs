@@ -19,6 +19,7 @@ module GHC.SourceGen.Module
     , IE'
     , thingAll
     , thingWith
+    , moduleContents
     )  where
 
 import HsImpExp (LIEWrappedName, IEWildcard(..), IEWrappedName(..), IE(..))
@@ -92,3 +93,13 @@ thingWith n cs = noExt IEThingWith (wrappedName n) NoIEWildcard
 
 wrappedName :: RdrNameStr -> LIEWrappedName RdrName
 wrappedName = builtLoc . IEName . exportRdrName
+
+-- | Exports an entire module.
+--
+-- Note: this is not valid inside of an import list.
+--
+-- > module M
+-- > =====
+-- > moduleContents "M"
+moduleContents :: ModuleNameStr -> IE'
+moduleContents = noExt IEModuleContents . builtLoc . unModuleNameStr
