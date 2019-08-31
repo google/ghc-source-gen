@@ -22,11 +22,11 @@ module GHC.SourceGen
       -- * Overloaded combinators
       -- | Certain concepts make sense in different
       -- parts of Haskell syntax.  For example, 'var' may be used in
-      -- expressions, types, patterns, and import or export lists.
+      -- expressions, types, and import or export lists.
       module GHC.SourceGen.Binds,
       module GHC.SourceGen.Lit,
       module GHC.SourceGen.Overloaded,
-      -- * Renders Haskell syntax into text
+      -- * Rendering Haskell syntax into text
       module GHC.SourceGen.Pretty,
     ) where
 
