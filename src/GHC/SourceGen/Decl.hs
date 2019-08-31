@@ -39,6 +39,10 @@ module GHC.SourceGen.Decl
     , RawInstDecl
     , HasTyFamInst(..)
     , tyFamInst
+      -- * Pattern synonyms
+    , patSynSigs
+    , patSynSig
+    , patSynBind
     ) where
 
 import BasicTypes (LexicalFixity(Prefix))
@@ -46,6 +50,7 @@ import BasicTypes (LexicalFixity(Prefix))
 import BasicTypes (DerivStrategy(..))
 #endif
 import Bag (listToBag)
+import HsBinds
 import HsDecls
 import HsTypes
     ( ConDeclField(..)
@@ -407,3 +412,25 @@ derivingAnyclass = derivingWay (Just AnyclassStrategy)
 derivingVia :: HsType' -> [HsType'] -> HsDerivingClause'
 derivingVia t = derivingWay (Just $ ViaStrategy $ sigType t)
 #endif
+
+patSynSigs :: [OccNameStr] -> HsType' -> HsDecl'
+patSynSigs names t =
+    sigB $ noExt PatSynSig (map (typeRdrName . unqual) names)
+        $ sigType t
+
+patSynSig :: OccNameStr -> HsType' -> HsDecl'
+patSynSig n = patSynSigs [n]
+
+-- TODO: patSynBidi, patSynUni
+patSynBind :: OccNameStr -> [OccNameStr] -> Pat' -> HsDecl'
+patSynBind n ns p = bindB $ noExt PatSynBind
+                    $ withPlaceHolder (noExt PSB (valueRdrName $ unqual n))
+#if MIN_VERSION_ghc(8,4,0)
+                        (PrefixCon
+#else
+                        (PrefixPatSyn
+#endif
+                            (map (valueRdrName . unqual) ns))
+                        (builtPat p)
+                        ImplicitBidirectional
+
