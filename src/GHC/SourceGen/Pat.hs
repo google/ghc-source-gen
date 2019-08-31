@@ -11,6 +11,7 @@ module GHC.SourceGen.Pat
     , wildP
     , asP
     , conP
+    , conP_
     , recordConP
     , strictP
     , lazyP
@@ -45,6 +46,14 @@ v `asP` p = noExt AsPat (valueRdrName v) $ builtPat $ parenthesize p
 conP :: RdrNameStr -> [Pat'] -> Pat'
 conP c xs = ConPatIn (valueRdrName c) $ PrefixCon
                 $ map (builtPat . parenthesize) xs
+
+-- | A pattern constructor with no arguments.
+--
+-- > A
+-- > =====
+-- > conP_ "A"
+conP_ :: RdrNameStr -> Pat'
+conP_ c = conP c []
 
 recordConP :: RdrNameStr -> [(RdrNameStr, Pat')] -> Pat'
 recordConP c fs
