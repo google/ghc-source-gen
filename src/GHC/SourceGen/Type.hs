@@ -4,6 +4,7 @@
 -- license that can be found in the LICENSE file or at
 -- https://developers.google.com/open-source/licenses/bsd
 
+{-# LANGUAGE CPP #-}
 -- | This module provides combinators for constructing Haskell types.
 module GHC.SourceGen.Type
     ( HsType'
@@ -28,7 +29,7 @@ import GHC.SourceGen.Type.Internal
 
 -- | A promoted name, for example from the @DataKinds@ extension.
 tyPromotedVar :: RdrNameStr -> HsType'
-tyPromotedVar = noExt HsTyVar notPromoted . typeRdrName
+tyPromotedVar = noExt HsTyVar promoted . typeRdrName
 
 stringTy :: String -> HsType'
 stringTy = noExt HsTyLit . noSourceText HsStrTy . fromString
