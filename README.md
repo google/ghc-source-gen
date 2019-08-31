@@ -31,7 +31,7 @@ constModule =
   where
     a = var "a"
     b = var "b"
-    x = var "x"
+    x = bvar "x"
 
 main = runGhc (Just libdir) $ putPpr constModule
 ```
