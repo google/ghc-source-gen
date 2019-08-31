@@ -41,7 +41,7 @@ v `asP` p = noExt AsPat (valueRdrName v) $ builtPat $ parenthesize p
 --
 -- > A b c
 -- > =====
--- > conP "A" [var "b", var "c"]
+-- > conP "A" [bvar "b", bvar "c"]
 conP :: RdrNameStr -> [Pat'] -> Pat'
 conP c xs = ConPatIn (valueRdrName c) $ PrefixCon
                 $ map (builtPat . parenthesize) xs
@@ -64,7 +64,7 @@ recordConP c fs
 --
 -- > !x
 -- > =====
--- > strictP (var x)
+-- > strictP (bvar x)
 strictP :: Pat' -> Pat'
 strictP = noExt BangPat . builtPat . parenthesize
 
@@ -72,7 +72,7 @@ strictP = noExt BangPat . builtPat . parenthesize
 --
 -- > ~(A x)
 -- > =====
--- > lazyP (conP "A" [var x])
+-- > lazyP (conP "A" [bvar x])
 lazyP :: Pat' -> Pat'
 lazyP = noExt LazyPat . builtPat . parenthesize
 
@@ -80,7 +80,7 @@ lazyP = noExt LazyPat . builtPat . parenthesize
 --
 -- > x :: y
 -- > =====
--- > sigPat (var "x") (var "y")
+-- > sigPat (bvar "x") (var "y")
 sigP :: Pat' -> HsType' -> Pat'
 #if MIN_VERSION_ghc(8,8,0)
 sigP p t = noExt SigPat p (sigWcType t)

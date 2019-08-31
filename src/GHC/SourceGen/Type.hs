@@ -52,6 +52,11 @@ a --> b = noExt HsFunTy (parenthesizeTypeForFun $ builtLoc a) (builtLoc b)
 
 infixr 0 -->
 
+-- | A type variable binding.
+--
+-- > forall a . T a
+-- > =====
+-- > forall' [bvar "a"] $ var "T" @@ var "a"
 forall' :: [HsTyVarBndr'] -> HsType' -> HsType'
 forall' ts = noExt HsForAllTy (map builtLoc ts) . builtLoc
 

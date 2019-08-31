@@ -133,7 +133,7 @@ exprsTest dflags = testGroup "Expr"
         , "A 'x'" :~ var "A" @@ char 'x'
         , "A \"xyz\"" :~ var "A" @@ string "xyz"
         , "(\\ x -> x) (\\ x -> x)" :~
-            let f = lambda [var "x"] (var "x")
+            let f = lambda [bvar "x"] (var "x")
             in f @@ f
         , "f x @t" :~ tyApp (var "f" @@ var "x") (var "t")
         , "f (x @t)" :~ var "f" @@ (tyApp (var "x") (var "t"))
@@ -149,7 +149,7 @@ exprsTest dflags = testGroup "Expr"
                                     (op (var "B" @@ var "y") "+" (var "C" @@ var "z"))
         , "(f . g) x" :~ op (var "f") "." (var "g") @@ var "x"
         , "(\\ x -> x) . (\\ x -> x)" :~
-            let f = lambda [var "x"] (var "x")
+            let f = lambda [bvar "x"] (var "x")
             in op f "." f
         , "x @s + y @t" :~
                 op (var "x" `tyApp` var "s") "+" (var "y" `tyApp` var "t")
@@ -199,9 +199,9 @@ exprsTest dflags = testGroup "Expr"
     , test "let"
         [ "let x = 1 in x" :~ let' [valBind "x" $ int 1] (var "x")
         , "let f x = 1 in f" :~
-            let' [ funBind "f" $ match [var "x"] $ int 1] (var "f")
+            let' [ funBind "f" $ match [bvar "x"] $ int 1] (var "f")
         , "let f (A x) = 1 in f" :~
-            let' [ funBind "f" $ match [conP "A" [var "x"]] $ int 1] (var "f")
+            let' [ funBind "f" $ match [conP "A" [bvar "x"]] $ int 1] (var "f")
         ]
     , test "do"
         -- TODO: add more tests.
@@ -213,20 +213,20 @@ exprsTest dflags = testGroup "Expr"
 
 declsTest dflags = testGroup "Decls"
     [ test "patBind"
-        [ "x = x" :~ patBind (var "x") (var "x")
-        , "(x, y) = (y, x)" :~ patBind (tuple [var "x", var "y"])
+        [ "x = x" :~ patBind (bvar "x") (var "x")
+        , "(x, y) = (y, x)" :~ patBind (tuple [bvar "x", bvar "y"])
                                     (tuple [var "y", var "x"])
         , "(x, y)\n  | test = (1, 2)\n  | otherwise = (2, 3)" :~
-            patBindGRHSs (tuple [var "x", var "y"])
+            patBindGRHSs (tuple [bvar "x", bvar "y"])
                 $ guardedRhs
                     [ var "test" `guard` tuple [int 1, int 2]
                         , var "otherwise" `guard` tuple [int 2, int 3]
                     ]
         , "z | Just y <- x, y = ()" :~
-            patBindGRHSs (var "z")
+            patBindGRHSs (bvar "z")
                 $ guardedRhs
                     [guards
-                        [ conP "Just" [var "y"] <-- var "x"
+                        [ conP "Just" [bvar "y"] <-- var "x"
                         , stmt (var "y")
                         ]
                         unit
@@ -246,16 +246,16 @@ declsTest dflags = testGroup "Decls"
     , test "funBind"
         [ "not True = False\nnot False = True" :~
              funBinds "not"
-                [ match [var "True"] (var "False")
-                , match [var "False"] (var "True")
+                [ match [bvar "True"] (var "False")
+                , match [bvar "False"] (var "True")
                 ]
         , "not x\n  | x = False\n  | otherwise = True" :~
             funBind "not"
-                $ matchGRHSs [var "x"] $ guardedRhs
+                $ matchGRHSs [bvar "x"] $ guardedRhs
                     [ guard (var "x") (var "False")
                     , guard (var "otherwise") (var "True")
                     ]
-        , "f (A x) = 1" :~ funBind "f" $ match [conP "A" [var "x"]] (int 1)
+        , "f (A x) = 1" :~ funBind "f" $ match [conP "A" [bvar "x"]] (int 1)
         ]
     , test "tyFamInst"
         [ "type instance Elt String = Char"
@@ -270,7 +270,7 @@ declsTest dflags = testGroup "Decls"
         ]
     , test "patSynBind"
         [ "pattern F a b = G b a"
-            :~ patSynBind "F" ["a", "b"] $ conP "G" [var "b", var "a"]
+            :~ patSynBind "F" ["a", "b"] $ conP "G" [bvar "b", bvar "a"]
         ]
     ]
   where
@@ -278,15 +278,15 @@ declsTest dflags = testGroup "Decls"
 
 patsTest dflags = testGroup "Pats"
     [ test "app"
-        [ "A x y" :~ conP "A" [var "x", var "y"]
-        , "(:) x y" :~ conP ":" [var "x", var "y"]
-        , "(Prelude.:) x" :~ conP "Prelude.:" [var "x"]
-        , "A (B x)" :~ conP "A" [conP "B" [var "x"]]
-        , "A (B x)" :~ conP "A" [par $ conP "B" [var "x"]]
-        , "A ((B x))" :~ conP "A" [par $ par $ conP "B" [var "x"]]
-        , "A x (B y z)" :~ conP "A" [var "x", conP "B" [var "y", var "z"]]
+        [ "A x y" :~ conP "A" [bvar "x", bvar "y"]
+        , "(:) x y" :~ conP ":" [bvar "x", bvar "y"]
+        , "(Prelude.:) x" :~ conP "Prelude.:" [bvar "x"]
+        , "A (B x)" :~ conP "A" [conP "B" [bvar "x"]]
+        , "A (B x)" :~ conP "A" [par $ conP "B" [bvar "x"]]
+        , "A ((B x))" :~ conP "A" [par $ par $ conP "B" [bvar "x"]]
+        , "A x (B y z)" :~ conP "A" [bvar "x", conP "B" [bvar "y", bvar "z"]]
         , "A w (B x y) Z"
-            :~ conP "A" [var "w", conP "B" [var "x", var "y"], conP "Z" []]
+            :~ conP "A" [bvar "w", conP "B" [bvar "x", bvar "y"], conP "Z" []]
         , "A 3" :~ conP "A" [int 3]
         , "A (-3)" :~ conP "A" [int (-3)]
         , "A 3.0" :~ conP "A" [frac 3.0]
@@ -298,24 +298,24 @@ patsTest dflags = testGroup "Pats"
         ]
     , test "asP"
         [ "x@B" :~ asP "x" $ conP "B" []
-        , "x@(B y)" :~ asP "x" $ conP "B" [var "y"]
+        , "x@(B y)" :~ asP "x" $ conP "B" [bvar "y"]
         , "x@_" :~ asP "x" wildP
         ]
     , test "strictP"
-        [ "!x" :~ strictP $ var "x"
+        [ "!x" :~ strictP $ bvar "x"
         , "!B" :~ strictP $ conP "B" []
-        , "!(B y)" :~ strictP $ conP "B" [var "y"]
+        , "!(B y)" :~ strictP $ conP "B" [bvar "y"]
         , "!_" :~ strictP wildP
         ]
     , test "lazyP"
-        [ "~x" :~ lazyP $ var "x"
+        [ "~x" :~ lazyP $ bvar "x"
         , "~B" :~ lazyP $ conP "B" []
-        , "~(B y)" :~ lazyP $ conP "B" [var "y"]
+        , "~(B y)" :~ lazyP $ conP "B" [bvar "y"]
         , "~_" :~ lazyP wildP
         ]
     , test "sigPat"
-        [ "x :: A" :~ sigP (var "x") (var "A")
-        , "A x :: A x" :~ sigP (conP "A" [var "x"]) (var "A" @@ var "x")
+        [ "x :: A" :~ sigP (bvar "x") (bvar "A")
+        , "A x :: A x" :~ sigP (conP "A" [bvar "x"]) (bvar "A" @@ bvar "x")
         ]
     , test "recordConP"
         [ "A {x = Y}" :~ recordConP "A" [("x", conP "Y" [])]
