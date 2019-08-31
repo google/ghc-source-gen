@@ -132,13 +132,13 @@ funDep = ClassFunDep
 -- >      [ typeSig "divMod" $ a --> a --> tuple [a, a]
 -- >      , typeSig "div" $ a --> a --> a
 -- >      , funBind "div"
--- >          $ match [var "x", var "y"]
+-- >          $ match [bvar "x", bvar "y"]
 -- >             $ var "fst" @@ (var "divMod" @@ var "x" @@ var "y")
 -- >      ]
 class'
     :: [HsType'] -- ^ Context
     -> OccNameStr -- ^ Class name
-    -> [RdrNameStr] -- ^ Type parameters
+    -> [OccNameStr] -- ^ Type parameters
     -> [ClassDecl] -- ^ Class declarations
     -> HsDecl'
 class' context name vars decls
@@ -186,8 +186,8 @@ instance HasValBind RawInstDecl where
 -- > instance' (var "Show" @@ var "Bool")
 -- >   [ typeSig "show" $ var "Bool" --> var "String"
 -- >   , funBinds "show"
--- >       [ match [var "True"] $ string "True"
--- >       , match [var "False"] $ string "False"
+-- >       [ match [bvar "True"] $ string "True"
+-- >       , match [bvar "False"] $ string "False"
 -- >       ]
 -- >   ]
 instance' :: HsType' -> [RawInstDecl] -> HsDecl'
@@ -247,7 +247,7 @@ tyFamInst name params ty = tyFamInstD
 -- > type A a b = B b a
 -- > =====
 -- > type' "A" ["a", "b"] $ var "B" @@ var "b" @@ var "a"
-type' :: OccNameStr -> [RdrNameStr] -> HsType' -> HsDecl'
+type' :: OccNameStr -> [OccNameStr] -> HsType' -> HsDecl'
 type' name vars t =
     noExt TyClD $ withPlaceHolder $ noExt SynDecl (typeRdrName $ unqual name)
         (mkQTyVars vars)
@@ -257,7 +257,7 @@ type' name vars t =
 newOrDataType
     :: NewOrData
     -> OccNameStr
-    -> [RdrNameStr]
+    -> [OccNameStr]
     -> [ConDecl']
     -> [HsDerivingClause']
     -> HsDecl'
@@ -279,7 +279,7 @@ newOrDataType newOrData name vars conDecls derivs
 -- > newtype' "Const" ["a", "b"]
 -- >    (conDecl "Const" [var "a"])
 -- >    [var "Show"]
-newtype' :: OccNameStr -> [RdrNameStr] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
+newtype' :: OccNameStr -> [OccNameStr] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
 newtype' name vars conD = newOrDataType NewType name vars [conD]
 
 -- | A data declaration.
@@ -292,7 +292,7 @@ newtype' name vars conD = newOrDataType NewType name vars [conD]
 -- >   , conDecl "Right" [var "b"]
 -- >   ]
 -- >   [var "Show"]
-data' :: OccNameStr -> [RdrNameStr] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
+data' :: OccNameStr -> [OccNameStr] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
 data' = newOrDataType DataType
 
 -- | Declares a Haskell-98-style prefix constructor for a data or type
@@ -408,20 +408,36 @@ derivingAnyclass = derivingWay (Just AnyclassStrategy)
 -- > deriving (Eq, Show) via T
 -- > =====
 -- > derivingVia (var "T") [var "Eq", var "Show"]
--- Available with `ghc >= 8.6`.
+-- Available with @ghc>=8.6@.
 derivingVia :: HsType' -> [HsType'] -> HsDerivingClause'
 derivingVia t = derivingWay (Just $ ViaStrategy $ sigType t)
 #endif
 
+-- | Declares multiple pattern signatures of the same type.
+--
+-- > pattern F, G :: T
+-- > =====
+-- > patSynSigs ["F", "G"] $ var "T"
 patSynSigs :: [OccNameStr] -> HsType' -> HsDecl'
 patSynSigs names t =
     sigB $ noExt PatSynSig (map (typeRdrName . unqual) names)
         $ sigType t
 
+-- | Declares a pattern signature and its type.
+--
+-- > pattern F :: T
+-- > =====
+-- > patSynSigs "F" $ var "T"
 patSynSig :: OccNameStr -> HsType' -> HsDecl'
 patSynSig n = patSynSigs [n]
 
 -- TODO: patSynBidi, patSynUni
+
+-- | Defines a pattern signature.
+--
+-- > pattern F a b = G b a
+-- > =====
+-- > patSynBind "F" ["a", "b"] $ conP "G" [bvar "b", bvar "a"]
 patSynBind :: OccNameStr -> [OccNameStr] -> Pat' -> HsDecl'
 patSynBind n ns p = bindB $ noExt PatSynBind
                     $ withPlaceHolder (noExt PSB (valueRdrName $ unqual n))

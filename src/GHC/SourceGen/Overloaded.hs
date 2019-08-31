@@ -15,6 +15,7 @@ module GHC.SourceGen.Overloaded
     , unboxedTuple
     , HasList(..)
     , Var(..)
+    , BVar(..)
     ) where
 
 import BasicTypes (Boxity(..))
@@ -34,7 +35,7 @@ import HsSyn
     , HsTupleSort(..)
     )
 import DataCon (dataConName)
-import RdrName (RdrName, nameRdrName)
+import RdrName (RdrName(..), nameRdrName)
 import SrcLoc (Located)
 import TysWiredIn (consDataCon_RDR, nilDataCon, unitDataCon)
 
@@ -209,26 +210,43 @@ instance HasList Pat' where
     nil = noExt VarPat nilDataConName
     cons = noExt VarPat $ builtLoc $ consDataCon_RDR
 
+-- | Terms that can contain references to locally-bound variables.
+--
+-- Depending on the context, @'bvar' \"a\"@ could refer to either a
+-- pattern variable or a type variable.
+class BVar a where
+    bvar :: OccNameStr -> a
+
 -- | Terms that can contain references to named things.  They may be actual variables,
 -- functions, or constructors.  For example, @'var' \"a\"@ and @'var' \"A\"@
 -- are equally valid.
 -- Depending on the context, the former could refer to either a function,
 -- value, type variable, or pattern; and the latter could refer to either a type
 -- constructor or a  data constructor,
-class Var a where
+class BVar a => Var a where
     var :: RdrNameStr -> a
 
-instance Var Pat' where
-    var = noExt VarPat . valueRdrName
+instance BVar Pat' where
+    bvar = noExt VarPat . valueRdrName . UnqualStr
 
 instance Var HsExpr' where
     var = noExt HsVar . valueRdrName
 
+instance BVar HsExpr' where
+    bvar = var . UnqualStr
+
 instance Var HsType' where
     var = noExt HsTyVar notPromoted . typeRdrName
 
-instance Var HsTyVarBndr' where
-    var = noExt UserTyVar . typeRdrName
+instance BVar HsType' where
+    bvar = var . UnqualStr
+
+instance BVar HsTyVarBndr' where
+    bvar = noExt UserTyVar . typeRdrName . UnqualStr
 
 instance Var IE' where
     var n = noExt IEVar $ builtLoc $ IEName $ exportRdrName n
+
+instance BVar IE' where
+    bvar = var . UnqualStr
+

@@ -86,7 +86,7 @@ multiIf = noExtOrPlaceHolder HsMultiIf . map builtLoc
 -- >   x <- act
 -- >   return x
 -- > =====
--- > do' [pvar "x" <-- var "act", stmt $ var "return" @@ var "x"]
+-- > do' [bvar "x" <-- var "act", stmt $ var "return" @@ var "x"]
 do' :: [Stmt'] -> HsExpr'
 do' = withPlaceHolder . noExt HsDo DoExpr
         . builtLoc . map (builtLoc . parenthesizeIfLet)

@@ -108,7 +108,7 @@ funBinds name matches = bindB $ withPlaceHolder
 --
 -- > id x = x
 -- > =====
--- > funBind "id" $ match [var "x"] (var "x")
+-- > funBind "id" $ match [bvar "x"] (var "x")
 --
 funBind :: HasValBind t => OccNameStr -> RawMatch -> t
 funBind name m = funBinds name [m]
@@ -145,7 +145,7 @@ valBind name = valBindGRHSs name . rhs
 -- >   | test = (1, 2)
 -- >   | otherwise = (2, 3)
 -- > =====
--- > patBindGrhs (tuple [var "x", var "y"])
+-- > patBindGrhs (tuple [bvar "x", bvar "y"])
 -- >   $ guardedRhs
 -- >       [ var "test" `guard` tuple [int 1, int 2]
 -- >       , var "otherwise" `guard` [int 2, int 3]
@@ -162,7 +162,7 @@ patBindGRHSs p g =
 --
 -- > (x, y) = e
 -- > =====
--- > patBind (tuple [var "x", var "y"]) e
+-- > patBind (tuple [bvar "x", bvar "y"]) e
 patBind :: HasPatBind t => Pat' -> HsExpr' -> t
 patBind p = patBindGRHSs p . rhs
 
@@ -192,7 +192,7 @@ define the function as:
 We would say:
 
 > funBind "not"
->      $ matchGRHSs [var "x"] $ guardedRhs
+>      $ matchGRHSs [bvar "x"] $ guardedRhs
 >          [ guard (var "x") (var "False")
 >          , guard (var "otherwise") (var "True")
 >          ]
@@ -212,9 +212,9 @@ match ps = matchGRHSs ps . rhs
 -- >   where y = x
 -- > =====
 -- > funBind "x"
--- >   $ matchGRHSs [var "x"]
+-- >   $ matchGRHSs [bvar "x"]
 -- >   $ rhs (var "y")
--- >      `where` [valBind (var "y") $ var "x']
+-- >      `where` [valBind "y" $ var "x']
 where' :: RawGRHSs -> [RawValBind] -> RawGRHSs
 where' r vbs = r { rawGRHSWhere = rawGRHSWhere r ++ vbs }
 
@@ -246,7 +246,7 @@ guard s = guards [stmt s]
 --
 -- >   | Just y <- x, y = ()
 -- > =====
--- > guards [conP "Just" (var "x") <-- var "y", var "x"] unit
+-- > guards [conP "Just" (bvar "x") <-- var "y", bvar "x"] unit
 guards :: [Stmt'] -> HsExpr' -> GuardedExpr
 guards stmts e = noExt GRHS (map builtLoc stmts) (builtLoc e)
 
@@ -263,7 +263,7 @@ stmt e =
 --
 -- > x <- act
 -- > =====
--- > var "x" <-- var "act"
+-- > bvar "x" <-- var "act"
 (<--) :: Pat' -> HsExpr' -> Stmt'
 p <-- e = withPlaceHolder $ noExt BindStmt (builtPat p) (builtLoc e) noSyntaxExpr noSyntaxExpr
 infixl 1 <--

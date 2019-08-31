@@ -7,10 +7,10 @@
 -- | This module provides combinators for constructing Haskell modules,
 -- including import and export statements.
 module GHC.SourceGen.Module
-    ( -- HsModule'
+    ( -- * HsModule'
       HsModule'
     , module'
-      -- Import declarations
+      -- * Import declarations
     , ImportDecl'
     , qualified'
     , as'
