@@ -5,7 +5,7 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 name:                ghc-source-gen
-version:             0.2
+version:             0.2.0.1
 github:              "google/ghc-source-gen"
 license:             BSD3
 author:              "Judah Jacobson"
@@ -72,7 +72,7 @@ tests:
     source-dirs: tests
     dependencies:
     - ghc-source-gen
-    - QuickCheck >= 2.10 && < 2.13
+    - QuickCheck >= 2.10 && < 2.14
     - tasty >= 1.0 && < 1.3
     - tasty-hunit == 0.10.*
     - tasty-quickcheck >= 0.9 && < 0.11

@@ -1,5 +1,8 @@
 # Changelog for haskell-syntax
 
+## 0.2.0.1
+- Bump upper-bound to allow `QuickCheck-2.13`.
+
 ## 0.2
 - Improve overall documentation..
 - Move `patBind` to a new `HasPatBind` class so that it can be used
