@@ -1,5 +1,8 @@
 # Changelog for haskell-syntax
 
+## Unreleased
+- Add `occNameToStr` and `nameToStr` to convert from the GHC types.
+
 ## 0.2.0.1
 - Bump upper-bound to allow `QuickCheck-2.13`.
 

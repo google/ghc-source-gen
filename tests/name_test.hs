@@ -3,6 +3,8 @@ module Main (main) where
 
 import GHC.SourceGen.Name
 
+import OccName
+
 import Data.List (intercalate)
 import Data.String (fromString)
 import Test.Tasty
@@ -41,6 +43,16 @@ testOccName = testGroup "OccName"
         occNameStrNamespace (fromString n) === Value
     , testProperty "punctuation" $ forAll genOp $ \n ->
         occNameStrNamespace (fromString n) === Value
+    , testGroup "occNameToStr"
+        [ testProperty "var" $ forAll genLowerName $ \n ->
+            occNameToStr (mkVarOcc n) === fromString n
+        , testProperty "data" $ forAll genUpperName $ \n ->
+            occNameToStr (mkDataOcc n) === fromString n
+        , testProperty "tyVar" $ forAll genLowerName $ \n ->
+            occNameToStr (mkTyVarOcc n) === fromString n
+        , testProperty "cls" $ forAll genUpperName $ \n ->
+            occNameToStr (mkClsOcc n) === fromString n
+        ]
     ]
 
 genUpperName, genLowerName, genOp :: Gen String
