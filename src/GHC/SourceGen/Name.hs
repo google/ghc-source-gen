@@ -20,6 +20,8 @@ module GHC.SourceGen.Name
     , OccNameStr
     , occNameStrToString
     , occNameStrNamespace
+    , occNameToStr
+    , nameToStr
       -- ModuleNameStr
     , ModuleNameStr(..)
     , moduleNameStrToString
@@ -28,6 +30,8 @@ module GHC.SourceGen.Name
 import FastString (unpackFS)
 import Module (moduleNameString)
 import GHC.SourceGen.Name.Internal
+import OccName (OccName, occNameFS, occNameSpace, isVarNameSpace)
+import Name (Name, nameOccName)
 
 unqual :: OccNameStr -> RdrNameStr
 unqual = UnqualStr
@@ -48,3 +52,18 @@ rdrNameStrToString :: RdrNameStr -> String
 rdrNameStrToString (UnqualStr o) = occNameStrToString o
 rdrNameStrToString (QualStr m o) =
     moduleNameStrToString m ++ '.' : occNameStrToString o
+
+-- | Converts a GHC 'OccName' to an 'OccNameStr'.  Ignores whether the input
+-- came from the namespace of types or of values.
+occNameToStr :: OccName -> OccNameStr
+occNameToStr o = OccNameStr n (occNameFS o)
+  where
+    n = if isVarNameSpace $ occNameSpace o
+            then Value
+            else Constructor
+
+-- | Converts from a GHC 'Name' to an 'OccNameStr'.  Ignores whether
+-- the input came from the namespace of types or of values, as well
+-- as any other information about where the name came from.
+nameToStr :: Name -> OccNameStr
+nameToStr = occNameToStr  . nameOccName
