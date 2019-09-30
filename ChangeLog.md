@@ -1,3 +1,4 @@
+test
 # Changelog for haskell-syntax
 
 ## Unreleased
