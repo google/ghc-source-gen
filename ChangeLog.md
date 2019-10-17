@@ -1,6 +1,6 @@
 # Changelog for haskell-syntax
 
-## Unreleased
+## 0.3.0.0
 - Add `occNameToStr` and `nameToStr` to convert from the GHC types.
 - Make `listPromotedTy` emit the promoted form `'[..]`,
   to distinguish from regular list types of zero or one elements.
