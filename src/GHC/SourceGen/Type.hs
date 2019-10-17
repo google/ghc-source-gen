@@ -40,7 +40,9 @@ listTy :: HsType' -> HsType'
 listTy = noExt HsListTy . builtLoc
 
 listPromotedTy :: [HsType'] -> HsType'
-listPromotedTy = withPlaceHolder (noExt HsExplicitListTy Promoted) . map builtLoc
+-- Lists of two or more elements don't need the explicit tick (`'`).
+-- But for consistency, just always add it.
+listPromotedTy = withPlaceHolder (noExt HsExplicitListTy promoted) . map builtLoc
 
 -- | A function type.
 --
