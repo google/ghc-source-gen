@@ -2,6 +2,8 @@
 
 ## Unreleased
 - Add `occNameToStr` and `nameToStr` to convert from the GHC types.
+- Make `listPromotedTy` emit the promoted form `'[..]`,
+  to distinguish from regular list types of zero or one elements.
 
 ## 0.2.0.1
 - Bump upper-bound to allow `QuickCheck-2.13`.

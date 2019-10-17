@@ -40,7 +40,7 @@ listTy :: HsType' -> HsType'
 listTy = noExt HsListTy . builtLoc
 
 listPromotedTy :: [HsType'] -> HsType'
-listPromotedTy = withPlaceHolder (noExt HsExplicitListTy notPromoted) . map builtLoc
+listPromotedTy = withPlaceHolder (noExt HsExplicitListTy Promoted) . map builtLoc
 
 -- | A function type.
 --

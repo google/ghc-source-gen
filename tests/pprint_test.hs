@@ -95,9 +95,9 @@ typesTest dflags = testGroup "Type"
         [ "()" :~ unit ]
    , test "list"
         [ "[x]" :~ listTy (var "x")
-        , "[]" :~ listPromotedTy []
-        , "[x]" :~ listPromotedTy [var "x"]
-        , "[y, z]" :~ listPromotedTy [var "y", var "z"]
+        , "'[]" :~ listPromotedTy []
+        , "'[x]" :~ listPromotedTy [var "x"]
+        , "'[y, z]" :~ listPromotedTy [var "y", var "z"]
         ]
     , test "tyPromotedVar"
         -- For some reason, older GHC pretty-printed an extra space.
