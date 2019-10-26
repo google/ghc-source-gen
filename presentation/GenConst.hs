@@ -9,7 +9,7 @@ constModule :: HsModule'
 constModule =
     module' (Just "Const") (Just [var "const"]) []
         [ typeSig "const" $ var "a" --> var "b" --> var "a"
-        , funBind "const" $ match [wildP, bvar "x"] (var "x")
+        , funBind "const" $ match [bvar "x", wildP] (var "x")
         ]
 
 main = runGhc (Just libdir) $ putPpr constModule
