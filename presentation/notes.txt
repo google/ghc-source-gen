@@ -1,0 +1,25 @@
+### Issues with the raw GHC AST:
+
+    cd presentation
+    stack run ghc-show-ast -- Const.hs
+
+### ghc-source-gen
+
+stack runghc --package ghc-source-gen --package ghc --package ghc-paths GenConst.hs 
+
+### Parentheses
+
+stack ghci GenParens.hs --package ghc --package ghc-source-gen --package ghc-paths
+
+
+*GenParens> render $ var "f" @@ var "g" @@ var "h"
+f g h
+*GenParens> render $ (var "f" @@ var "g") @@ var "h"
+f g h
+*GenParens> render $ var "f" @@ (var "g" @@ var "h")
+f (g h)
+*GenParens> render $ var "f" @@ tuple [var "g", var "h"]
+f (g, h)
+*GenParens> render $ var "f" @@ par (var "g" @@ var "h")
+f (g h)
+

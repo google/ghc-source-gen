@@ -74,7 +74,7 @@ parseModule f = GHC.runGhc (Just libdir) $ do
 
 gPrint :: Data a => a -> Doc
 gPrint x
-    | showConstr c == "L", [_,e] <- xs = e
+    -- | showConstr c == "L", [_,e] <- xs = e
     | showConstr c == "(:)" = gPrintList x
     | Just occ <- cast x = text $ showOccName occ
     | Just name <- cast x = text $ showName name
