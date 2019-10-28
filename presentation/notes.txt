@@ -23,3 +23,16 @@ f (g, h)
 *GenParens> render $ var "f" @@ par (var "g" @@ var "h")
 f (g h)
 
+
+
+stack ghci Examples.hs -XOverloadedStrings --package ghc --package ghc-source-gen --package ghc-paths 
+> :
+
+
+*Examples> renderDecl $ funBind "id" $ match [bvar "x"] $ var "x"
+id x = x
+
+:t funBinds
+
+*Examples> renderDecl $ funBinds "not" [match [conP_ "True"] $ var "False"]
+
