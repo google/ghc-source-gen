@@ -36,7 +36,7 @@ overloading: 2:15
 
 Total: 7m
 
-parens [demo]: 3:30
+final demo [demo]: 1:30 for expr, 4:15 for functions
 
 conclusion: 1:35
 

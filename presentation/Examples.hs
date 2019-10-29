@@ -24,6 +24,9 @@ test3 = var "f" @@ (var "g" @@ var "h")
 
 test4 = var "f" @@ tuple [var "g", var "h"]
 
+{-
+id x = x
+-}
 
 id1 = funBind "id" $ match [bvar "x"] $ var "x"
 
@@ -46,7 +49,7 @@ not x
 
 not2 =
     funBinds "not"
-        [ matchGRHSs [conP_ "x"]
+        [ matchGRHSs [bvar "x"]
             $ guardedRhs
                 [ guard (var "x") (var "False")
                 , guard (var "otherwise") (var "True")
@@ -57,9 +60,9 @@ not2 =
 {-
 not x
     | x = False
-    | otherwise = true
+    | otherwise = y
   where
-    true = True
+    y = True
 -}
 
 not3 =
@@ -67,7 +70,7 @@ not3 =
         [ matchGRHSs [conP_ "x"]
             $ guardedRhs
                 [ guard (var "x") (var "False")
-                , guard (var "otherwise") (var "true")
+                , guard (var "otherwise") (var "y")
                 ]
-                `where'` [valBind "true" (var "True")]
+                `where'` [valBind "y" (var "True")]
         ]
