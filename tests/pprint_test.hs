@@ -35,14 +35,21 @@ testDecls = testCases
 testPats :: DynFlags ->  String -> [TestCase Pat'] -> TestTree
 testPats = testCases
 
+testModule :: DynFlags -> String -> [TestCase HsModule'] -> TestTree
+testModule = testCases
 
 main :: IO ()
 main = runGhc (Just libdir) $ do
     dflags <- getDynFlags
     liftIO $ defaultMain $ testGroup "Tests"
-        [typesTest dflags, exprsTest dflags, declsTest dflags, patsTest dflags]
+        [ typesTest dflags
+        , exprsTest dflags
+        , declsTest dflags
+        , patsTest dflags
+        , modulesTest dflags
+        ]
 
-typesTest, exprsTest, declsTest, patsTest :: DynFlags -> TestTree
+typesTest, exprsTest, declsTest, patsTest, modulesTest :: DynFlags -> TestTree
 typesTest dflags = testGroup "Type"
     [ test "var"
         [ "A" :~ var "A"
@@ -324,3 +331,15 @@ patsTest dflags = testGroup "Pats"
   where
     test = testPats dflags
 
+-- TODO: Add more test cases from pprint_examples.hs.
+modulesTest dflags = testGroup "Modules"
+    [ test "import"
+        [ "import M" :~
+            module' Nothing Nothing [import' "M"] []
+        , "import {-# SOURCE #-} M" :~
+            module' Nothing Nothing
+                [source $ import' "M"] []
+        ]
+    ]
+  where
+    test = testModule dflags
