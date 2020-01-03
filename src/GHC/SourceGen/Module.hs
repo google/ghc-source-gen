@@ -17,6 +17,7 @@ module GHC.SourceGen.Module
     , import'
     , exposing
     , hiding
+    , source
       -- * Imported/exported things
     , IE'
     , thingAll
@@ -69,6 +70,10 @@ exposing d ies = d
 hiding :: ImportDecl' -> [IE'] -> ImportDecl'
 hiding d ies = d
     { ideclHiding = Just (True, builtLoc $ map builtLoc ies) }
+
+-- | Adds the @{-# SOURCE #-}@ pragma to an import.
+source :: ImportDecl' -> ImportDecl'
+source d = d { ideclSource = True }
 
 -- | Exports all methods and/or constructors.
 --
