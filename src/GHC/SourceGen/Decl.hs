@@ -276,11 +276,11 @@ newOrDataType newOrData name vars conDecls derivs
 
 -- | A newtype declaration.
 --
--- > newtype Const a b = Const a deriving Eq
+-- > newtype Const a b = Const a deriving Show
 -- > =====
 -- > newtype' "Const" ["a", "b"]
--- >    (conDecl "Const" [var "a"])
--- >    [var "Show"]
+-- >    (prefixCon "Const" [var "a"])
+-- >    [deriving' [var "Show"]]
 newtype' :: OccNameStr -> [OccNameStr] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
 newtype' name vars conD = newOrDataType NewType name (zip vars nothings) [conD]
 
@@ -290,7 +290,7 @@ newtype' name vars conD = newOrDataType NewType name (zip vars nothings) [conD]
 -- > =====
 -- > newtype' "Const" [("a", Nothing), ("b", Just (var "Type"))]
 -- >    (conDecl "Const" [var "a"])
--- >    [var "Show"]
+-- >    [deriving' [var "Show"]]
 newtype'' :: OccNameStr -> [(OccNameStr, Maybe HsType')] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
 newtype'' name kvars conD = newOrDataType NewType name kvars [conD]
 
@@ -300,10 +300,10 @@ newtype'' name kvars conD = newOrDataType NewType name kvars [conD]
 -- >    deriving Show
 -- > =====
 -- > data' "Either" ["a", "b"]
--- >   [ conDecl "Left" [var "a"]
--- >   , conDecl "Right" [var "b"]
+-- >   [ prefixCon "Left" [var "a"]
+-- >   , prefixCon "Right" [var "b"]
 -- >   ]
--- >   [var "Show"]
+-- >   [deriving' [var "Show"]]
 data' :: OccNameStr -> [OccNameStr] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
 data' n = newOrDataType DataType n . flip zip nothings
 
@@ -313,10 +313,10 @@ data' n = newOrDataType DataType n . flip zip nothings
 -- >    deriving Show
 -- > =====
 -- > data' "Either" [("a", Nothing), ("b", Just (var "Type"))]
--- >   [ conDecl "Left" [var "a"]
--- >   , conDecl "Right" [var "b"]
+-- >   [ prefixCon "Left" [var "a"]
+-- >   , prefixCon "Right" [var "b"]
 -- >   ]
--- >   [var "Show"]
+-- >   [deriving' [var "Show"]]
 data'' :: OccNameStr -> [(OccNameStr, Maybe HsType')] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
 data'' = newOrDataType DataType
 
@@ -325,7 +325,7 @@ data'' = newOrDataType DataType
 --
 -- > Foo a Int
 -- > =====
--- > conDecl "Foo" [field (var "a"), field (var "Int")]
+-- > prefixCon "Foo" [field (var "a"), field (var "Int")]
 prefixCon :: OccNameStr -> [Field] -> ConDecl'
 prefixCon name fields = renderCon98Decl name
     $ PrefixCon $ map renderField fields
