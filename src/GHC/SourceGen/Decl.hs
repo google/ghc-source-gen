@@ -150,7 +150,7 @@ class' context name vars decls
             , tcdFVs = PlaceHolder
 #endif
             , tcdLName = typeRdrName $ unqual name
-            , tcdTyVars = mkQTyVars vars
+            , tcdTyVars = mkQTyVars (zip vars nothings)
             , tcdFixity = Prefix
             , tcdFDs = [ builtLoc (map typeRdrName xs, map typeRdrName ys)
                        | ClassFunDep xs ys <- decls
@@ -250,7 +250,7 @@ tyFamInst name params ty = tyFamInstD
 type' :: OccNameStr -> [OccNameStr] -> HsType' -> HsDecl'
 type' name vars t =
     noExt TyClD $ withPlaceHolder $ noExt SynDecl (typeRdrName $ unqual name)
-        (mkQTyVars vars)
+        (mkQTyVars (zip vars nothings))
         Prefix
         (builtLoc t)
 
@@ -264,7 +264,7 @@ newOrDataType
 newOrDataType newOrData name vars conDecls derivs
     = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
         noExt DataDecl (typeRdrName $ unqual name)
-            (mkQTyVars vars)
+            (mkQTyVars (zip vars nothings))
             Prefix
             $ noExt HsDataDefn newOrData
                 (builtLoc []) Nothing

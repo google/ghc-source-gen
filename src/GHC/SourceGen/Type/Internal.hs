@@ -9,15 +9,19 @@ module GHC.SourceGen.Type.Internal where
 
 import HsTypes
 import SrcLoc (Located, unLoc)
+import Data.Bifunctor (bimap)
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name.Internal
 
-mkQTyVars :: [OccNameStr] -> LHsQTyVars'
+mkQTyVars :: [(OccNameStr, Maybe HsType')] -> LHsQTyVars'
 mkQTyVars vars =  withPlaceHolder
                 $ noExt (withPlaceHolder HsQTvs)
-                $ map (builtLoc . noExt UserTyVar . typeRdrName . UnqualStr)
+                $ map (builtLoc . noExt mkTyVar . bimap (typeRdrName . UnqualStr) (fmap builtLoc))
                     vars
+
+  where mkTyVar e (n, Nothing) = UserTyVar e n :: HsTyVarBndr'
+        mkTyVar e (n, Just k)  = KindedTyVar e n k
 
 sigType :: HsType' -> LHsSigType'
 sigType = implicitBndrs . builtLoc
@@ -64,3 +68,6 @@ sigWcType = noExt (withPlaceHolder HsTypes.HsWC) . sigType
 
 wcType :: HsType' -> LHsWcType'
 wcType = noExt (withPlaceHolder HsTypes.HsWC) . builtLoc
+
+nothings :: [Maybe a]
+nothings = repeat Nothing
