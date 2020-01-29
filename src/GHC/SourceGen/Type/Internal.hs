@@ -17,11 +17,11 @@ import GHC.SourceGen.Name.Internal
 mkQTyVars :: [(OccNameStr, Maybe HsType')] -> LHsQTyVars'
 mkQTyVars vars =  withPlaceHolder
                 $ noExt (withPlaceHolder HsQTvs)
-                $ map (builtLoc . noExt mkTyVar . bimap (typeRdrName . UnqualStr) (fmap builtLoc))
+                $ map (builtLoc . mkTyVar . bimap (typeRdrName . UnqualStr) (fmap builtLoc))
                     vars
 
-  where mkTyVar e (n, Nothing) = UserTyVar e n :: HsTyVarBndr'
-        mkTyVar e (n, Just k)  = KindedTyVar e n k
+  where mkTyVar (n, Nothing) = noExt UserTyVar n :: HsTyVarBndr'
+        mkTyVar (n, Just k)  = noExt KindedTyVar n k
 
 sigType :: HsType' -> LHsSigType'
 sigType = implicitBndrs . builtLoc
