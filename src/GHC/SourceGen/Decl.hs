@@ -11,7 +11,9 @@ module GHC.SourceGen.Decl
       -- * Type declarations
     , type'
     , newtype'
+    , newtype''
     , data'
+    , data''
       -- ** Data constructors
     , ConDecl'
     , prefixCon
@@ -257,14 +259,14 @@ type' name vars t =
 newOrDataType
     :: NewOrData
     -> OccNameStr
-    -> [OccNameStr]
+    -> [(OccNameStr, Maybe HsType')]
     -> [ConDecl']
     -> [HsDerivingClause']
     -> HsDecl'
 newOrDataType newOrData name vars conDecls derivs
     = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
         noExt DataDecl (typeRdrName $ unqual name)
-            (mkQTyVars (zip vars nothings))
+            (mkQTyVars vars)
             Prefix
             $ noExt HsDataDefn newOrData
                 (builtLoc []) Nothing
@@ -280,7 +282,17 @@ newOrDataType newOrData name vars conDecls derivs
 -- >    (conDecl "Const" [var "a"])
 -- >    [var "Show"]
 newtype' :: OccNameStr -> [OccNameStr] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
-newtype' name vars conD = newOrDataType NewType name vars [conD]
+newtype' name vars conD = newOrDataType NewType name (zip vars nothings) [conD]
+
+-- | A newtype declaration with optional kind annotations.
+--
+-- > newtype Const a (b :: Type) = Const a deriving Show
+-- > =====
+-- > newtype' "Const" [("a", Nothing), ("b", Just (var "Type"))]
+-- >    (conDecl "Const" [var "a"])
+-- >    [var "Show"]
+newtype'' :: OccNameStr -> [(OccNameStr, Maybe HsType')] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
+newtype'' name kvars conD = newOrDataType NewType name kvars [conD]
 
 -- | A data declaration.
 --
@@ -293,7 +305,20 @@ newtype' name vars conD = newOrDataType NewType name vars [conD]
 -- >   ]
 -- >   [var "Show"]
 data' :: OccNameStr -> [OccNameStr] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
-data' = newOrDataType DataType
+data' n = newOrDataType DataType n . flip zip nothings
+
+-- | A data declaration with optional kind annotations.
+--
+-- > data Either a (b :: Type) = Left a | Right b
+-- >    deriving Show
+-- > =====
+-- > data' "Either" [("a", Nothing), ("b", Just (var "Type"))]
+-- >   [ conDecl "Left" [var "a"]
+-- >   , conDecl "Right" [var "b"]
+-- >   ]
+-- >   [var "Show"]
+data'' :: OccNameStr -> [(OccNameStr, Maybe HsType')] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
+data'' = newOrDataType DataType
 
 -- | Declares a Haskell-98-style prefix constructor for a data or type
 -- declaration.
