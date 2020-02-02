@@ -16,6 +16,7 @@ module GHC.SourceGen.Type
     , forall'
     , HsTyVarBndr'
     , (==>)
+    , kindedVar
     ) where
 
 import Data.String (fromString)
@@ -71,3 +72,12 @@ forall' ts = noExt HsForAllTy (map builtLoc ts) . builtLoc
 (==>) cs = noExt HsQualTy (builtLoc (map builtLoc cs)) . builtLoc
 
 infixr 0 ==>
+
+-- | A type variable with a kind signature.
+--
+-- > x :: A
+-- > =====
+-- > kindedVar "x" (var "A")
+kindedVar :: OccNameStr -> HsType' -> HsTyVarBndr'
+kindedVar v t = noExt KindedTyVar (typeRdrName $  UnqualStr v)
+                        (builtLoc t)

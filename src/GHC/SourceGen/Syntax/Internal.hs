@@ -193,6 +193,9 @@ type IE' = IE RdrName
 
 -- | A type variable binding, as it is represented after the parsing step.
 --
+-- Construct with either 'GHC.SourceGen.Overloaded.bVar' (for regular type
+-- variables) or `GHC.SourceGen.Type.kindedVar` (for kind signatures).
+--
 -- Instances:
 --
 -- * 'GHC.SourceGen.Overloaded.BVar'

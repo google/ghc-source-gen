@@ -116,26 +116,26 @@ test3 = pprint $ module' Nothing Nothing []
     , typeSig "g" $ op (var "A" @@ var "x") "*"
                         (op (var "B" @@ var "y") "+"
                                  (var "C" @@ var "z"))
-    , class' [var "A" @@ var "a"] "B" ["b", "b'"]
+    , class' [var "A" @@ var "a"] "B" [bvar "b", bvar "b'"]
         [ typeSig "f" $ var "b" --> var "b'"
         , funBind "f" $ match [] $ var "id"
         ]
-    , class' [] "F" ["a", "b", "c"]
+    , class' [] "F" [bvar "a", bvar "b", bvar "c"]
         [ funDep ["a", "b"] ["c"]
         , funDep ["a"] ["b", "c"]
         ]
-    , class' [] "Ident" ["a", "b"]
+    , class' [] "Ident" [bvar "a", bvar "b"]
         [ funDep ["a"] ["b"]
         , funDep ["b"] ["a"]
         , typeSig "ident" $ var "a" --> var "b"
         ]
-    , type' "A" ["b", "c"] $ var "D"
-    , data' "A" ["b", "c"]
+    , type' "A" [bvar "b", bvar "c"] $ var "D"
+    , data' "A" [bvar "b", bvar "c"]
         [ prefixCon "A" [field (var "b"), field (var "c")]
         , prefixCon "D" []
         ]
         [deriving' [var "X", var "Y"]]
-    , newtype' "A" ["b", "c"] (prefixCon "A" [field (var "b")])
+    , newtype' "A" [bvar "b", bvar "c"] (prefixCon "A" [field (var "b")])
         [deriving' [var "X", var "Y"]]
     , instance' (var "A" @@ var "b" @@ var "c")
         [ typeSig "f" $ var "b" --> var "c"
@@ -145,7 +145,7 @@ test3 = pprint $ module' Nothing Nothing []
       in class'
            [var "Real" @@ a, var "Enum" @@ a]
            "Integral"
-           ["a"]
+           [bvar "a"]
            [ typeSig "divMod" $ a --> a --> tuple [a, a]
            , typeSig "div" $ a --> a --> a
            , funBind "div"
@@ -159,7 +159,7 @@ test3 = pprint $ module' Nothing Nothing []
             , match [conP "False" []] $ string "False"
             ]
         ]
-    , data' "X" ["b"]
+    , data' "X" [bvar "b"]
         [ prefixCon "X"
             [ field $ var "A" @@ var "b"
             , strict $ field $ var "A" @@ var "b"
