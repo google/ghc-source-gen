@@ -279,6 +279,28 @@ declsTest dflags = testGroup "Decls"
         [ "pattern F a b = G b a"
             :~ patSynBind "F" ["a", "b"] $ conP "G" [bvar "b", bvar "a"]
         ]
+   , test "dataDecl"
+        [ "data Either a b\n  = Left a | Right b\n  deriving Show"
+            :~ data' "Either" [bvar "a", bvar "b"]
+               [ prefixCon "Left" [field $ var "a"]
+               , prefixCon "Right" [field $ var "b"]
+               ] $ [deriving' [var "Show"]]
+        , "data Either a (b :: Type)\n  = Left a | Right b\n  deriving Show"
+            :~ data' "Either" [bvar "a", kindedVar "b" (var "Type")]
+               [ prefixCon "Left" [field $ var "a"]
+               , prefixCon "Right" [field $ var "b"]
+               ] $ [deriving' [var "Show"]]
+        ]
+    , test "newtypeDecl"
+        [ "newtype Const a b\n  = Const a\n  deriving Show"
+            :~ newtype' "Const" [bvar "a", bvar "b"]
+               (prefixCon "Const" [field $ var "a"])
+               $ [deriving' [var "Show"]]
+        , "newtype Const a (b :: Type)\n  = Const a\n  deriving Show"
+            :~ newtype' "Const" [bvar "a", kindedVar "b" (var "Type")]
+               (prefixCon "Const" [field $ var "a"])
+               [deriving' [var "Show"]]
+        ]
     ]
   where
     test = testDecls dflags

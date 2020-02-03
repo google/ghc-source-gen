@@ -11,13 +11,11 @@ import HsTypes
 import SrcLoc (Located, unLoc)
 
 import GHC.SourceGen.Syntax.Internal
-import GHC.SourceGen.Name.Internal
 
-mkQTyVars :: [OccNameStr] -> LHsQTyVars'
+mkQTyVars :: [HsTyVarBndr'] -> LHsQTyVars'
 mkQTyVars vars =  withPlaceHolder
                 $ noExt (withPlaceHolder HsQTvs)
-                $ map (builtLoc . noExt UserTyVar . typeRdrName . UnqualStr)
-                    vars
+                $ map builtLoc vars
 
 sigType :: HsType' -> LHsSigType'
 sigType = implicitBndrs . builtLoc

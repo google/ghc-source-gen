@@ -1,5 +1,16 @@
 # Changelog for haskell-syntax
 
+# 0.4.0.0
+
+## Breaking Changes
+- Functions defining types and classes now take their
+  type parameters as `HsTyVarBndr'` rather than `OccNameStr`.
+  To construct a `HsTyVarBndr'`, use either `bvar` or `kindedVar`.
+  Affects: `class'`, `type'`, `newtype'`, and `data'`.
+
+## Other Changes
+- Add `kindedVar`.
+
 ## 0.3.0.0
 - Add `occNameToStr` and `nameToStr` to convert from the GHC types.
 - Make `listPromotedTy` emit the promoted form `'[..]`,

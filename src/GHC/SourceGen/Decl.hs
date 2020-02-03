@@ -128,7 +128,7 @@ funDep = ClassFunDep
 -- > in class'
 -- >      [var "Real" @@ a, var "Enum" @@ a]
 -- >      "Integral"
--- >      ["a"]
+-- >      [bvar "a"]
 -- >      [ typeSig "divMod" $ a --> a --> tuple [a, a]
 -- >      , typeSig "div" $ a --> a --> a
 -- >      , funBind "div"
@@ -138,7 +138,7 @@ funDep = ClassFunDep
 class'
     :: [HsType'] -- ^ Context
     -> OccNameStr -- ^ Class name
-    -> [OccNameStr] -- ^ Type parameters
+    -> [HsTyVarBndr'] -- ^ Type parameters
     -> [ClassDecl] -- ^ Class declarations
     -> HsDecl'
 class' context name vars decls
@@ -246,8 +246,8 @@ tyFamInst name params ty = tyFamInstD
 --
 -- > type A a b = B b a
 -- > =====
--- > type' "A" ["a", "b"] $ var "B" @@ var "b" @@ var "a"
-type' :: OccNameStr -> [OccNameStr] -> HsType' -> HsDecl'
+-- > type' "A" [bvar "a", bvar "b"] $ var "B" @@ var "b" @@ var "a"
+type' :: OccNameStr -> [HsTyVarBndr'] -> HsType' -> HsDecl'
 type' name vars t =
     noExt TyClD $ withPlaceHolder $ noExt SynDecl (typeRdrName $ unqual name)
         (mkQTyVars vars)
@@ -257,7 +257,7 @@ type' name vars t =
 newOrDataType
     :: NewOrData
     -> OccNameStr
-    -> [OccNameStr]
+    -> [HsTyVarBndr']
     -> [ConDecl']
     -> [HsDerivingClause']
     -> HsDecl'
@@ -276,10 +276,10 @@ newOrDataType newOrData name vars conDecls derivs
 --
 -- > newtype Const a b = Const a deriving Eq
 -- > =====
--- > newtype' "Const" ["a", "b"]
+-- > newtype' "Const" [bvar "a", bvar "b"]
 -- >    (conDecl "Const" [var "a"])
 -- >    [var "Show"]
-newtype' :: OccNameStr -> [OccNameStr] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
+newtype' :: OccNameStr -> [HsTyVarBndr'] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
 newtype' name vars conD = newOrDataType NewType name vars [conD]
 
 -- | A data declaration.
@@ -287,12 +287,12 @@ newtype' name vars conD = newOrDataType NewType name vars [conD]
 -- > data Either a b = Left a | Right b
 -- >    deriving Show
 -- > =====
--- > data' "Either" ["a", "b"]
+-- > data' "Either" [bvar "a", bvar "b"]
 -- >   [ conDecl "Left" [var "a"]
 -- >   , conDecl "Right" [var "b"]
 -- >   ]
 -- >   [var "Show"]
-data' :: OccNameStr -> [OccNameStr] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
+data' :: OccNameStr -> [HsTyVarBndr'] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
 data' = newOrDataType DataType
 
 -- | Declares a Haskell-98-style prefix constructor for a data or type
