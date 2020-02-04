@@ -47,7 +47,7 @@ listPromotedTy :: [HsType'] -> HsType'
 listPromotedTy = withPlaceHolder (noExt HsExplicitListTy promoted) . map builtLoc
 
 tuplePromotedTy :: [HsType'] -> HsType'
-tuplePromotedTy = withPlaceHolder (noExt HsExplicitTupleTy) . map builtLoc
+tuplePromotedTy = withPlaceHolders (noExt HsExplicitTupleTy) . map builtLoc
 
 -- | A function type.
 --
