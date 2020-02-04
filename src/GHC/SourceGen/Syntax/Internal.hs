@@ -77,6 +77,9 @@ noExtOrPlaceHolder = noExt
 withPlaceHolder :: a -> a
 withPlaceHolder = id
 
+withPlaceHolders :: a -> a
+withPlaceHolders = id
+
 #else
 
 noExt :: a -> a
@@ -87,6 +90,9 @@ noExtOrPlaceHolder = withPlaceHolder
 
 withPlaceHolder :: (PlaceHolder -> a) -> a
 withPlaceHolder = ($ PlaceHolder)
+
+withPlaceHolders :: ([PlaceHolder] -> a) -> a
+withPlaceHolders = ($ [])
 
 #endif
 
