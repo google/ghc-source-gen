@@ -99,12 +99,19 @@ typesTest dflags = testGroup "Type"
         , "123" :~ numTy 123
         ]
     , test "unit"
-        [ "()" :~ unit ]
+        [ "()" :~ unit
+        , "(# #)" :~ unboxedTuple []
+        ]
    , test "list"
         [ "[x]" :~ listTy (var "x")
         , "'[]" :~ listPromotedTy []
         , "'[x]" :~ listPromotedTy [var "x"]
         , "'[y, z]" :~ listPromotedTy [var "y", var "z"]
+        ]
+    , test "tuple"
+        [ "(a, b)" :~ tuple [(var "a"), (var "b")]
+        , "(# a, b #)" :~ unboxedTuple [(var "a"), (var "b")]
+        , "'(a, b)" :~ tuplePromotedTy [(var "a"), (var "b")]
         ]
     , test "tyPromotedVar"
         -- For some reason, older GHC pretty-printed an extra space.

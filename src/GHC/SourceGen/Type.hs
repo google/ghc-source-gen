@@ -12,6 +12,7 @@ module GHC.SourceGen.Type
     , numTy
     , listTy
     , listPromotedTy
+    , tuplePromotedTy
     , (-->)
     , forall'
     , HsTyVarBndr'
@@ -44,6 +45,9 @@ listPromotedTy :: [HsType'] -> HsType'
 -- Lists of two or more elements don't need the explicit tick (`'`).
 -- But for consistency, just always add it.
 listPromotedTy = withPlaceHolder (noExt HsExplicitListTy promoted) . map builtLoc
+
+tuplePromotedTy :: [HsType'] -> HsType'
+tuplePromotedTy = withPlaceHolder (noExt HsExplicitTupleTy) . map builtLoc
 
 -- | A function type.
 --

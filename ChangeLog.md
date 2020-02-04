@@ -10,6 +10,7 @@
 
 ## Other Changes
 - Add `kindedVar`.
+- Add `tuplePromotedTy`.
 
 ## 0.3.0.0
 - Add `occNameToStr` and `nameToStr` to convert from the GHC types.
