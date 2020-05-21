@@ -21,9 +21,9 @@ import BasicTypes (FractionalLit(..))
 #if MIN_VERSION_ghc(8,4,0)
 import BasicTypes(IntegralLit(..), SourceText(..))
 #endif
-import HsLit
-import HsExpr (noExpr, noSyntaxExpr, HsExpr(..))
-import HsPat (Pat(..))
+import GHC.Hs.Lit
+import GHC.Hs.Expr (noExpr, noSyntaxExpr, HsExpr(..))
+import GHC.Hs.Pat (Pat(..))
 import FastString (fsLit)
 
 import GHC.SourceGen.Lit.Internal

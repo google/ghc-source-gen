@@ -30,7 +30,7 @@ description: |
 
 dependencies:
 - base >= 4.7 && < 5
-- ghc >= 8.2 && < 8.9
+- ghc >= 8.2 && < 8.11
 
 default-extensions:
 - DataKinds
@@ -38,6 +38,22 @@ default-extensions:
 - TypeSynonymInstances
 
 library:
+  when:
+  # GHC-8.10 introduced hierarchical modules.
+  # For compatibility, define wrapper modules for older GHC versions.
+  - condition: impl(ghc<8.10)
+    source-dirs: compat
+    other-modules:
+    - GHC.Hs
+    - GHC.Hs.Binds
+    - GHC.Hs.Decls
+    - GHC.Hs.Expr
+    - GHC.Hs.Extension
+    - GHC.Hs.ImpExp
+    - GHC.Hs.Lit
+    - GHC.Hs.Pat
+    - GHC.Hs.Types
+
   source-dirs: src
   other-modules:
   - GHC.SourceGen.Binds.Internal

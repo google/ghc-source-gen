@@ -18,8 +18,8 @@ module GHC.SourceGen.Pat
     , sigP
     ) where
 
-import HsTypes
-import HsPat hiding (LHsRecField')
+import GHC.Hs.Types
+import GHC.Hs.Pat hiding (LHsRecField')
 
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Pat.Internal
@@ -92,7 +92,7 @@ lazyP = noExt LazyPat . builtPat . parenthesize
 -- > sigPat (bvar "x") (var "y")
 sigP :: Pat' -> HsType' -> Pat'
 #if MIN_VERSION_ghc(8,8,0)
-sigP p t = noExt SigPat p (sigWcType t)
+sigP p t = noExt SigPat (builtPat p) (sigWcType t)
 #elif MIN_VERSION_ghc(8,6,0)
 sigP p t = SigPat (sigWcType t) (builtPat p)
 #else

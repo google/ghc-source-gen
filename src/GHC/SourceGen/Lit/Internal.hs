@@ -11,7 +11,7 @@ import BasicTypes (SourceText(NoSourceText), FractionalLit(..))
 #if MIN_VERSION_ghc(8,4,0)
 import BasicTypes (IntegralLit(..))
 #endif
-import HsLit
+import GHC.Hs.Lit
 import GHC.SourceGen.Syntax.Internal
 
 noSourceText :: (SourceText -> a) -> a

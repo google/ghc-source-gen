@@ -7,7 +7,7 @@
 {-# LANGUAGE CPP #-}
 module GHC.SourceGen.Expr.Internal where
 
-import HsExpr
+import GHC.Hs.Expr
 import SrcLoc (Located, unLoc)
 
 import GHC.SourceGen.Lit.Internal

@@ -9,9 +9,9 @@ module GHC.SourceGen.Binds.Internal where
 
 import BasicTypes (Origin(Generated))
 import Bag (listToBag)
-import HsBinds
-import HsDecls
-import HsExpr (MatchGroup(..), Match(..), GRHSs(..))
+import GHC.Hs.Binds
+import GHC.Hs.Decls
+import GHC.Hs.Expr (MatchGroup(..), Match(..), GRHSs(..))
 import SrcLoc (Located)
 
 #if !MIN_VERSION_ghc(8,6,0)
