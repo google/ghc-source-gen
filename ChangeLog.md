@@ -1,5 +1,6 @@
 # Changelog for haskell-syntax
 
+
 # 0.4.0.0
 
 ## Breaking Changes
@@ -7,6 +8,7 @@
   type parameters as `HsTyVarBndr'` rather than `OccNameStr`.
   To construct a `HsTyVarBndr'`, use either `bvar` or `kindedVar`.
   Affects: `class'`, `type'`, `newtype'`, and `data'`.
+- Remove support for ghc-8.2.*.
 
 ## Other Changes
 - Add `kindedVar`.
