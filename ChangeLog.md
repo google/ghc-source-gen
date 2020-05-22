@@ -7,6 +7,7 @@
   type parameters as `HsTyVarBndr'` rather than `OccNameStr`.
   To construct a `HsTyVarBndr'`, use either `bvar` or `kindedVar`.
   Affects: `class'`, `type'`, `newtype'`, and `data'`.
+- Remove support for ghc-8.2.*.
 
 ## Other Changes
 - Add support for ghc-8.10.

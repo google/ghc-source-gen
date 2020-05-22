@@ -58,11 +58,7 @@ main = do
     result <- parseModule f
     print $ gPrint result
 
-#if MIN_VERSION_ghc(8,4,0)
 parseModule :: FilePath -> IO (GHC.HsModule GHC.GhcPs)
-#else
-parseModule :: FilePath -> IO (GHC.HsModule GHC.RdrName)
-#endif
 parseModule f = GHC.runGhc (Just libdir) $ do
     dflags <- GHC.getDynFlags
     contents <- GHC.liftIO $ GHC.stringToStringBuffer <$> readFile f
@@ -78,11 +74,9 @@ parseModule f = GHC.runGhc (Just libdir) $ do
                 exitFailure
 #else
         GHC.PFailed
-#if MIN_VERSION_ghc(8,4,0)
             -- Note: using printBagOfErrors on the messages doesn't produce any
             -- useful output on older GHCs; so instead print the docs directly.
             _messages
-#endif
             loc docs ->
             error $ GHC.showPpr dflags loc ++ ": " ++ GHC.showSDoc dflags docs
 #endif

@@ -65,9 +65,7 @@ import GHC.Hs.Extension (NoExt(NoExt))
 import PlaceHolder(PlaceHolder(..))
 #endif
 
-#if MIN_VERSION_ghc(8,4,0)
 import GHC.Hs.Extension (GhcPs)
-#endif
 
 #if MIN_VERSION_ghc(8,6,0)
 #if MIN_VERSION_ghc(8,10,0)
@@ -147,11 +145,7 @@ notPromoted = NotPromoted
 -- * 'GHC.SourceGen.Overloaded.Par'
 -- * 'GHC.SourceGen.Overloaded.App'
 -- * 'GHC.SourceGen.Overloaded.HasTuple'
-#if MIN_VERSION_ghc(8,4,0)
 type HsType' = HsType GhcPs
-#else
-type HsType' = HsType RdrName
-#endif
 
 -- | A Haskell pattern, as it is represented after the parsing step.
 --
@@ -162,11 +156,7 @@ type HsType' = HsType RdrName
 -- * 'GHC.SourceGen.Overloaded.HasTuple'
 -- * 'GHC.SourceGen.Overloaded.HasList'
 -- * 'GHC.SourceGen.Lit.HasLit'
-#if MIN_VERSION_ghc(8,4,0)
 type Pat' = Pat GhcPs
-#else
-type Pat' = Pat RdrName
-#endif
 
 -- | A Haskell expression, as it is represented after the parsing step.
 --
@@ -179,11 +169,7 @@ type Pat' = Pat RdrName
 -- * 'GHC.SourceGen.Overloaded.HasTuple'
 -- * 'GHC.SourceGen.Overloaded.HasList'
 -- * 'GHC.SourceGen.Lit.HasLit'
-#if MIN_VERSION_ghc(8,4,0)
 type HsExpr' = HsExpr GhcPs
-#else
-type HsExpr' = HsExpr RdrName
-#endif
 
 -- | A Haskell declaration, as it is represented after the parsing step.
 --
@@ -191,11 +177,7 @@ type HsExpr' = HsExpr RdrName
 --
 -- * 'GHC.SourceGen.Binds.HasValBind'
 -- * 'GHC.SourceGen.Binds.HasPatBind'
-#if MIN_VERSION_ghc(8,4,0)
 type HsDecl' = HsDecl GhcPs
-#else
-type HsDecl' = HsDecl RdrName
-#endif
 
 -- | An imported or exported entity, as it is represented after the parsing step.
 --
@@ -203,11 +185,7 @@ type HsDecl' = HsDecl RdrName
 --
 -- * 'GHC.SourceGen.Overloaded.BVar'
 -- * 'GHC.SourceGen.Overloaded.Var'
-#if MIN_VERSION_ghc(8,4,0)
 type IE' = IE GhcPs
-#else
-type IE' = IE RdrName
-#endif
 
 
 -- | A type variable binding, as it is represented after the parsing step.
@@ -218,13 +196,8 @@ type IE' = IE RdrName
 -- Instances:
 --
 -- * 'GHC.SourceGen.Overloaded.BVar'
-#if MIN_VERSION_ghc(8,4,0)
 type HsTyVarBndr' = HsTyVarBndr GhcPs
-#else
-type HsTyVarBndr' = HsTyVarBndr RdrName
-#endif
 
-#if MIN_VERSION_ghc(8,4,0)
 type HsLit' = HsLit GhcPs
 type HsModule' = HsModule GhcPs
 type HsBind' = HsBind GhcPs
@@ -251,36 +224,6 @@ type LHsRecUpdField' = LHsRecUpdField GhcPs
 type LPat' = LPat GhcPs
 type HsImplicitBndrs' = HsImplicitBndrs GhcPs
 type TyFamInstDecl' = TyFamInstDecl GhcPs
-
-#else
-type HsLit' = HsLit
-type HsModule' = HsModule RdrName
-type HsBind' = HsBind RdrName
-type HsLocalBinds' = HsLocalBinds RdrName
-type HsValBinds' = HsValBinds RdrName
-type Sig' = Sig RdrName
-type HsMatchContext' = HsMatchContext RdrName
-type Match' = Match RdrName
-type MatchGroup' = MatchGroup RdrName
-type GRHS' = GRHS RdrName
-type GRHSs' = GRHSs RdrName
-type Stmt' = Stmt RdrName (Located HsExpr')
-type HsOverLit' = HsOverLit RdrName
-type LHsQTyVars' = LHsQTyVars RdrName
-type ConDecl' = ConDecl RdrName
-type HsConDeclDetails' = HsConDeclDetails RdrName
-type LHsSigType' = LHsSigType RdrName
-type ImportDecl' = ImportDecl RdrName
-type LHsSigWcType' = LHsSigWcType RdrName
-type LHsWcType' = LHsWcType RdrName
-type HsDerivingClause' = HsDerivingClause RdrName
-type LHsRecField' arg = LHsRecField RdrName arg
-type LHsRecUpdField' = LHsRecUpdField RdrName
-type LPat' = LPat RdrName
-type HsImplicitBndrs' = HsImplicitBndrs RdrName
-type TyFamInstDecl' = TyFamInstDecl RdrName
-
-#endif
 
 #if MIN_VERSION_ghc(8,6,0)
 type DerivStrategy' = DerivStrategy GhcPs

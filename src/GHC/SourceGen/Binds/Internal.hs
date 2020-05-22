@@ -88,11 +88,6 @@ matchGroup context matches =
     mkMatch :: RawMatch -> Match' (Located HsExpr')
     mkMatch r = noExt Match context
                     (map builtPat $ map parenthesize $ rawMatchPats r)
-#if !MIN_VERSION_ghc(8,4,0)
-                    -- The GHC docs say: "A type signature for the result of the match."
-                    -- The parsing step produces 'Nothing' for this field.
-                    Nothing
-#endif
                     (mkGRHSs $ rawMatchGRHSs r)
 
 mkGRHSs :: RawGRHSs -> GRHSs' (Located HsExpr')

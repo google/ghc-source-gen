@@ -4,7 +4,6 @@
 -- license that can be found in the LICENSE file or at
 -- https://developers.google.com/open-source/licenses/bsd
 
-{-# LANGUAGE CPP #-}
 -- | This module provides combinators for constructing Haskell literals,
 -- which may be used in either patterns or expressions.
 module GHC.SourceGen.Lit
@@ -18,9 +17,7 @@ module GHC.SourceGen.Lit
     ) where
 
 import BasicTypes (FractionalLit(..))
-#if MIN_VERSION_ghc(8,4,0)
 import BasicTypes(IntegralLit(..), SourceText(..))
-#endif
 import GHC.Hs.Lit
 import GHC.Hs.Expr (noExpr, noSyntaxExpr, HsExpr(..))
 import GHC.Hs.Pat (Pat(..))
@@ -52,19 +49,11 @@ string = lit . noSourceText HsString . fsLit
 int :: HasLit e => Integer -> e
 int n = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit il) noExpr
   where
-#if MIN_VERSION_ghc(8,4,0)
     il = HsIntegral $ noSourceText IL (n < 0) n
-#else
-    il = noSourceText HsIntegral n
-#endif
 
 -- | Note: this is an *overloaded* rational, e.g., a decimal number.
 frac :: HasLit e => Rational -> e
 frac x = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit $ HsFractional il) noExpr
   where
-#if MIN_VERSION_ghc(8,4,0)
     il = FL (SourceText s) (x < 0) x
-#else
-    il = FL s x
-#endif
     s = show (fromRational x :: Double)

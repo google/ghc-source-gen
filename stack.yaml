@@ -4,7 +4,7 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-resolver: lts-13.23
+resolver: lts-15.13
 packages:
 - .
 - ghc-show-ast

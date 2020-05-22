@@ -1,22 +1,6 @@
 version: 2
 
 jobs:
-  build-11.22:
-    docker:
-    - image: circleci/rust:1.36-stretch
-    steps:
-    - checkout
-    - restore_cache:
-        keys:
-            - stack-cache-v2-11.22-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-11.22-{{ arch }}-master
-    - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --resolver=lts-11.22
-    - save_cache:
-            key: stack-cache-v2-11.22-{{ arch }}-{{ .Branch }}-{{ epoch }}
-            paths:
-                - ~/.stack
-                - .stack-work
   build-12.8:
     docker:
     - image: circleci/rust:1.36-stretch
@@ -50,19 +34,19 @@ jobs:
                 - ~/.stack
                 - .stack-work
 
-  build-ghc-8.8:
+  build-15.13:
     docker:
     - image: circleci/rust:1.36-stretch
     steps:
     - checkout
     - restore_cache:
         keys:
-            - stack-cache-v2-ghc-8.8-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-ghc-8.8-{{ arch }}-master
+            - stack-cache-v2-ghc-15.13-{{ arch }}-{{ .Branch }}
+            - stack-cache-v2-ghc-15.13-{{ arch }}-master
     - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --stack-yaml=stack-8.8.yaml
+    - run: stack test --no-terminal --resolver=lts-15.13
     - save_cache:
-            key: stack-cache-v2-ghc-8.8-{{ arch }}-{{ .Branch }}-{{ epoch }}
+            key: stack-cache-v2-ghc-15.13-{{ arch }}-{{ .Branch }}-{{ epoch }}
             paths:
                 - ~/.stack
                 - .stack-work
@@ -96,15 +80,13 @@ workflows:
   version: 2
   build-and-test:
       jobs:
-        - build-11.22
         - build-12.8
         - build-13.23
-        - build-ghc-8.8
+        - build-15.13
         - build-ghc-8.10
         - build-success:
             requires:
-            - build-11.22
             - build-12.8
             - build-13.23
-            - build-ghc-8.8
+            - build-15.13
             - build-ghc-8.10
