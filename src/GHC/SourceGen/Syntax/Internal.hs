@@ -111,12 +111,10 @@ builtSpan = mkGeneralSrcSpan "<ghc-source-gen>"
 builtLoc :: e -> Located e
 builtLoc = L builtSpan
 
--- In GHC-8.8, source locations for Pat aren't stored in each node, and
--- LPat is a synonym for Pat.
+-- In GHC-8.8.* (but not >=8.10 or <=8.6), source locations for Pat aren't
+-- stored in each node, and LPat is a synonym for Pat.
 builtPat :: Pat' -> LPat'
-#if MIN_VERSION_ghc(8,10,0)
-builtPat = builtLoc
-#elif MIN_VERSION_ghc(8,8,0)
+#if MIN_VERSION_ghc(8,8,0) && !MIN_VERSION_ghc(8,10,0)
 builtPat = id
 #else
 builtPat = builtLoc
