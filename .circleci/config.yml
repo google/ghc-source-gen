@@ -68,8 +68,6 @@ jobs:
                 - ~/.stack
                 - .stack-work
 
-
-
   build-success:
     docker:
     - image: circleci/rust:1.36-stretch
