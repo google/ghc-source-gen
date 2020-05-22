@@ -1,6 +1,5 @@
 # Changelog for haskell-syntax
 
-
 # 0.4.0.0
 
 ## Breaking Changes
