@@ -10,6 +10,7 @@
 - Remove support for ghc-8.2.*.
 
 ## Other Changes
+- Add support for ghc-8.10.
 - Add `kindedVar`.
 - Add `tuplePromotedTy`.
 

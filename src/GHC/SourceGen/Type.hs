@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- Copyright 2019 Google LLC
 --
 -- Use of this source code is governed by a BSD-style
@@ -21,7 +22,7 @@ module GHC.SourceGen.Type
     ) where
 
 import Data.String (fromString)
-import HsTypes
+import GHC.Hs.Types
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
@@ -65,7 +66,11 @@ infixr 0 -->
 -- > =====
 -- > forall' [bvar "a"] $ var "T" @@ var "a"
 forall' :: [HsTyVarBndr'] -> HsType' -> HsType'
-forall' ts = noExt HsForAllTy (map builtLoc ts) . builtLoc
+forall' ts = noExt HsForAllTy
+#if MIN_VERSION_ghc(8,10,0)
+        ForallInvis  -- "Invisible" forall, i.e., with a dot
+#endif
+        (map builtLoc ts) . builtLoc
 
 -- | Qualify a type with constraints.
 --

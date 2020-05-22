@@ -9,7 +9,7 @@
 module GHC.SourceGen.Syntax.Internal where
 
 
-import HsSyn
+import GHC.Hs
     ( HsDecl
     , HsExpr(..)
     , HsLit
@@ -40,37 +40,48 @@ import HsSyn
     , LHsRecUpdField
 #endif
     )
-import HsBinds (Sig, HsLocalBinds)
+import GHC.Hs.Binds (Sig, HsLocalBinds)
 #if MIN_VERSION_ghc(8,6,0)
-import HsDecls (DerivStrategy)
+import GHC.Hs.Decls (DerivStrategy)
 #else
 import BasicTypes (DerivStrategy)
 #endif
-import HsDecls (HsDerivingClause)
-import HsPat
+import GHC.Hs.Decls (HsDerivingClause)
+import GHC.Hs.Pat
 import RdrName (RdrName)
 import SrcLoc (SrcSpan, Located, GenLocated(..), mkGeneralSrcSpan)
 
 #if MIN_VERSION_ghc(8,8,0)
 import BasicTypes (PromotionFlag(..))
 #else
-import HsTypes (Promoted(..))
+import GHC.Hs.Types (Promoted(..))
 #endif
 
-#if MIN_VERSION_ghc(8,6,0)
-import HsExtension (NoExt(NoExt))
+#if MIN_VERSION_ghc(8,10,0)
+import GHC.Hs.Extension (NoExtField(NoExtField))
+#elif MIN_VERSION_ghc(8,6,0)
+import GHC.Hs.Extension (NoExt(NoExt))
 #else
 import PlaceHolder(PlaceHolder(..))
 #endif
 
-import HsExtension (GhcPs)
+import GHC.Hs.Extension (GhcPs)
 
 #if MIN_VERSION_ghc(8,6,0)
+#if MIN_VERSION_ghc(8,10,0)
+noExt :: (NoExtField -> a) -> a
+noExt = ($ NoExtField)
+
+noExtOrPlaceHolder :: (NoExtField -> a) -> a
+noExtOrPlaceHolder = noExt
+
+#else
 noExt :: (NoExt -> a) -> a
 noExt = ($ NoExt)
 
 noExtOrPlaceHolder :: (NoExt -> a) -> a
 noExtOrPlaceHolder = noExt
+#endif
 
 withPlaceHolder :: a -> a
 withPlaceHolder = id
@@ -100,10 +111,10 @@ builtSpan = mkGeneralSrcSpan "<ghc-source-gen>"
 builtLoc :: e -> Located e
 builtLoc = L builtSpan
 
--- In GHC-8.8, source locations for Pat aren't stored in each node, and
--- LPat is a synonym for Pat.
+-- In GHC-8.8.* (but not >=8.10 or <=8.6), source locations for Pat aren't
+-- stored in each node, and LPat is a synonym for Pat.
 builtPat :: Pat' -> LPat'
-#if MIN_VERSION_ghc(8,8,0)
+#if MIN_VERSION_ghc(8,8,0) && !MIN_VERSION_ghc(8,10,0)
 builtPat = id
 #else
 builtPat = builtLoc

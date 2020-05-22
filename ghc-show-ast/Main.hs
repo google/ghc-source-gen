@@ -39,12 +39,18 @@ import qualified FastString as GHC
 import qualified GHC as GHC
 import qualified GhcMonad as GHC
 import qualified HeaderInfo as GHC
-import qualified Outputable as GHC
 import qualified Lexer as GHC
 import qualified Parser as Parser
 import qualified SrcLoc as GHC
 import qualified StringBuffer as GHC
 import GHC.Paths (libdir)
+#if MIN_VERSION_ghc(8,10,0)
+import System.Exit (exitFailure)
+import GhcMonad (liftIO)
+import qualified ErrUtils
+#else
+import qualified Outputable as GHC
+#endif
 
 main :: IO ()
 main = do
@@ -61,10 +67,19 @@ parseModule f = GHC.runGhc (Just libdir) $ do
     let state = GHC.mkPState dflags' contents (GHC.mkRealSrcLoc (GHC.fsLit f) 1 1)
     case GHC.unP Parser.parseModule state of
         GHC.POk _state m -> return $ GHC.unLoc m
+#if MIN_VERSION_ghc(8,10,0)
+        GHC.PFailed s -> liftIO $ do
+                let (_warnings, errors) = GHC.messages s dflags
+                ErrUtils.printBagOfErrors dflags errors
+                exitFailure
+#else
         GHC.PFailed
-            _message
+            -- Note: using printBagOfErrors on the messages doesn't produce any
+            -- useful output on older GHCs; so instead print the docs directly.
+            _messages
             loc docs ->
-            error $ GHC.showPpr dflags loc ++ GHC.showSDoc dflags docs
+            error $ GHC.showPpr dflags loc ++ ": " ++ GHC.showSDoc dflags docs
+#endif
 
 gPrint :: Data a => a -> Doc
 gPrint x

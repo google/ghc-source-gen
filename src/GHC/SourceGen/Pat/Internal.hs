@@ -1,8 +1,8 @@
 {-# LANGUAGE CPP #-}
 module GHC.SourceGen.Pat.Internal where
 
-import HsPat (Pat(..))
-import HsTypes (HsConDetails(..))
+import GHC.Hs.Pat (Pat(..))
+import GHC.Hs.Types (HsConDetails(..))
 
 import GHC.SourceGen.Lit.Internal (litNeedsParen, overLitNeedsParen)
 import GHC.SourceGen.Syntax.Internal

@@ -45,9 +45,9 @@ module GHC.SourceGen.Binds
     ) where
 
 import BasicTypes (LexicalFixity(..))
-import HsBinds
-import HsExpr
-import HsTypes
+import GHC.Hs.Binds
+import GHC.Hs.Expr
+import GHC.Hs.Types
 import TcEvidence (HsWrapper(WpHole))
 
 import GHC.SourceGen.Binds.Internal

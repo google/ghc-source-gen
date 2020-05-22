@@ -7,7 +7,7 @@
 {-# LANGUAGE CPP #-}
 module GHC.SourceGen.Type.Internal where
 
-import HsTypes
+import GHC.Hs.Types as Types
 import SrcLoc (Located, unLoc)
 
 import GHC.SourceGen.Syntax.Internal
@@ -21,7 +21,7 @@ sigType :: HsType' -> LHsSigType'
 sigType = implicitBndrs . builtLoc
 
 implicitBndrs :: t -> HsImplicitBndrs' t
-implicitBndrs = withPlaceHolder . noExt (withPlaceHolder HsTypes.HsIB)
+implicitBndrs = withPlaceHolder . noExt (withPlaceHolder Types.HsIB)
 
 
 -- TODO: GHC >= 8.6 provides parenthesizeHsType.  For consistency with
@@ -58,7 +58,7 @@ parTy :: Located HsType' -> Located HsType'
 parTy = builtLoc . noExt HsParTy
 
 sigWcType :: HsType' -> LHsSigWcType'
-sigWcType = noExt (withPlaceHolder HsTypes.HsWC) . sigType
+sigWcType = noExt (withPlaceHolder Types.HsWC) . sigType
 
 wcType :: HsType' -> LHsWcType'
-wcType = noExt (withPlaceHolder HsTypes.HsWC) . builtLoc
+wcType = noExt (withPlaceHolder Types.HsWC) . builtLoc

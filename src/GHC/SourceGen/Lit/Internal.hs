@@ -8,7 +8,7 @@ module GHC.SourceGen.Lit.Internal where
 
 import BasicTypes (SourceText(NoSourceText), FractionalLit(..))
 import BasicTypes (IntegralLit(..))
-import HsLit
+import GHC.Hs.Lit
 import GHC.SourceGen.Syntax.Internal
 
 noSourceText :: (SourceText -> a) -> a

@@ -18,9 +18,9 @@ module GHC.SourceGen.Lit
 
 import BasicTypes (FractionalLit(..))
 import BasicTypes(IntegralLit(..), SourceText(..))
-import HsLit
-import HsExpr (noExpr, noSyntaxExpr, HsExpr(..))
-import HsPat (Pat(..))
+import GHC.Hs.Lit
+import GHC.Hs.Expr (noExpr, noSyntaxExpr, HsExpr(..))
+import GHC.Hs.Pat (Pat(..))
 import FastString (fsLit)
 
 import GHC.SourceGen.Lit.Internal

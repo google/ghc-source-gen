@@ -23,9 +23,9 @@ module GHC.SourceGen.Expr
     , recordUpd
     ) where
 
-import HsExpr
-import HsPat (HsRecField'(..), HsRecFields(..))
-import HsTypes (FieldOcc(..), AmbiguousFieldOcc(..))
+import GHC.Hs.Expr
+import GHC.Hs.Pat (HsRecField'(..), HsRecFields(..))
+import GHC.Hs.Types (FieldOcc(..), AmbiguousFieldOcc(..))
 import Data.String (fromString)
 import SrcLoc (unLoc, GenLocated(..), Located)
 

@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 -- Copyright 2019 Google LLC
 --
 -- Use of this source code is governed by a BSD-style
@@ -25,10 +26,13 @@ module GHC.SourceGen.Module
     , moduleContents
     )  where
 
-import HsImpExp (LIEWrappedName, IEWildcard(..), IEWrappedName(..), IE(..))
-import HsSyn
+import GHC.Hs.ImpExp (LIEWrappedName, IEWildcard(..), IEWrappedName(..), IE(..))
+import GHC.Hs
     ( HsModule(..)
     , ImportDecl(..)
+#if MIN_VERSION_ghc(8,10,0)
+    , ImportDeclQualifiedStyle(..)
+#endif
     )
 import RdrName (RdrName)
 
@@ -53,7 +57,13 @@ module' name exports imports decls = HsModule
     }
 
 qualified' :: ImportDecl' -> ImportDecl'
-qualified' d = d { ideclQualified = True }
+qualified' d = d { ideclQualified =
+#if MIN_VERSION_ghc(8,10,0)
+    QualifiedPre
+#else
+    True
+#endif
+}
 
 as' :: ImportDecl' -> ModuleNameStr -> ImportDecl'
 as' d m = d { ideclAs = Just (builtLoc $ unModuleNameStr m) }
@@ -61,7 +71,13 @@ as' d m = d { ideclAs = Just (builtLoc $ unModuleNameStr m) }
 import' :: ModuleNameStr -> ImportDecl'
 import' m = noSourceText (noExt ImportDecl)
             (builtLoc $ unModuleNameStr m)
-            Nothing False False False False Nothing Nothing
+            Nothing False False
+#if MIN_VERSION_ghc(8,10,0)
+            NotQualified
+#else
+            False
+#endif
+            False Nothing Nothing
 
 exposing :: ImportDecl' -> [IE'] -> ImportDecl'
 exposing d ies = d

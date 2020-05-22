@@ -19,16 +19,16 @@ module GHC.SourceGen.Overloaded
     ) where
 
 import BasicTypes (Boxity(..))
-import HsTypes
+import GHC.Hs.Types
     ( HsType(..)
     , HsTyVarBndr(..)
     )
-import HsSyn (IE(..), IEWrappedName(..))
+import GHC.Hs (IE(..), IEWrappedName(..))
 #if !MIN_VERSION_ghc(8,6,0)
 import PlaceHolder(PlaceHolder(..))
 #endif
 
-import HsSyn
+import GHC.Hs
     ( HsExpr(..)
     , Pat(..)
     , HsTupArg(..)

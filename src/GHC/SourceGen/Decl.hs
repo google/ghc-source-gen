@@ -50,9 +50,9 @@ import BasicTypes (LexicalFixity(Prefix))
 import BasicTypes (DerivStrategy(..))
 #endif
 import Bag (listToBag)
-import HsBinds
-import HsDecls
-import HsTypes
+import GHC.Hs.Binds
+import GHC.Hs.Decls
+import GHC.Hs.Types
     ( ConDeclField(..)
     , FieldOcc(..)
     , HsConDetails(..)
@@ -66,8 +66,10 @@ import HsTypes
     )
 import SrcLoc (Located)
 
-#if MIN_VERSION_ghc(8,6,0)
-import HsExtension (NoExt(NoExt))
+#if MIN_VERSION_ghc(8,10,0)
+import GHC.Hs.Extension (NoExtField(NoExtField))
+#elif MIN_VERSION_ghc(8,6,0)
+import GHC.Hs.Extension (NoExt(NoExt))
 #else
 import PlaceHolder (PlaceHolder(..))
 #endif
@@ -144,7 +146,9 @@ class'
 class' context name vars decls
     = noExt TyClD $ ClassDecl
             { tcdCtxt = builtLoc $ map builtLoc context
-#if MIN_VERSION_ghc(8,6,0)
+#if MIN_VERSION_ghc(8,10,0)
+            , tcdCExt = NoExtField
+#elif MIN_VERSION_ghc(8,6,0)
             , tcdCExt = NoExt
 #else
             , tcdFVs = PlaceHolder
@@ -193,7 +197,9 @@ instance HasValBind RawInstDecl where
 instance' :: HsType' -> [RawInstDecl] -> HsDecl'
 instance' ty decls = noExt InstD  $ noExt ClsInstD $ ClsInstDecl
     { cid_poly_ty = sigType ty
-#if MIN_VERSION_ghc(8,6,0)
+#if MIN_VERSION_ghc(8,10,0)
+    , cid_ext = NoExtField
+#elif MIN_VERSION_ghc(8,6,0)
     , cid_ext = NoExt
 #endif
     , cid_binds = listToBag [builtLoc b | InstBind b <- decls]
