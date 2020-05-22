@@ -52,11 +52,7 @@ main = do
     result <- parseModule f
     print $ gPrint result
 
-#if MIN_VERSION_ghc(8,4,0)
 parseModule :: FilePath -> IO (GHC.HsModule GHC.GhcPs)
-#else
-parseModule :: FilePath -> IO (GHC.HsModule GHC.RdrName)
-#endif
 parseModule f = GHC.runGhc (Just libdir) $ do
     dflags <- GHC.getDynFlags
     contents <- GHC.liftIO $ GHC.stringToStringBuffer <$> readFile f
@@ -66,9 +62,7 @@ parseModule f = GHC.runGhc (Just libdir) $ do
     case GHC.unP Parser.parseModule state of
         GHC.POk _state m -> return $ GHC.unLoc m
         GHC.PFailed
-#if MIN_VERSION_ghc(8,4,0)
             _message
-#endif
             loc docs ->
             error $ GHC.showPpr dflags loc ++ GHC.showSDoc dflags docs
 

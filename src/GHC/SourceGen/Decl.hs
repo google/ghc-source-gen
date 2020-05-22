@@ -222,7 +222,6 @@ instance HasTyFamInst RawInstDecl where
 -- > tyFamInst "Elt" [var "String"] (var "Char")
 tyFamInst :: HasTyFamInst t => RdrNameStr -> [HsType'] -> HsType' -> t
 tyFamInst name params ty = tyFamInstD
-#if MIN_VERSION_ghc(8,4,0)
         $ TyFamInstDecl
         $ implicitBndrs
         $ noExt FamEqn (typeRdrName name)
@@ -234,13 +233,6 @@ tyFamInst name params ty = tyFamInstD
 #endif
             Prefix
             (builtLoc ty)
-#else
-        $ withPlaceHolder $ TyFamInstDecl
-        $ builtLoc $ TyFamEqn (typeRdrName name)
-                        (implicitBndrs $ map builtLoc params)
-                        Prefix
-                        (builtLoc ty)
-#endif
 
 -- | Declares a type synonym.
 --
@@ -441,12 +433,7 @@ patSynSig n = patSynSigs [n]
 patSynBind :: OccNameStr -> [OccNameStr] -> Pat' -> HsDecl'
 patSynBind n ns p = bindB $ noExt PatSynBind
                     $ withPlaceHolder (noExt PSB (valueRdrName $ unqual n))
-#if MIN_VERSION_ghc(8,4,0)
-                        (PrefixCon
-#else
-                        (PrefixPatSyn
-#endif
-                            (map (valueRdrName . unqual) ns))
+                        (PrefixCon (map (valueRdrName . unqual) ns))
                         (builtPat p)
                         ImplicitBidirectional
 

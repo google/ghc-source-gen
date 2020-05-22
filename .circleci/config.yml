@@ -1,22 +1,6 @@
 version: 2
 
 jobs:
-  build-11.22:
-    docker:
-    - image: circleci/rust:1.36-stretch
-    steps:
-    - checkout
-    - restore_cache:
-        keys:
-            - stack-cache-v2-11.22-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-11.22-{{ arch }}-master
-    - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --resolver=lts-11.22
-    - save_cache:
-            key: stack-cache-v2-11.22-{{ arch }}-{{ .Branch }}-{{ epoch }}
-            paths:
-                - ~/.stack
-                - .stack-work
   build-12.8:
     docker:
     - image: circleci/rust:1.36-stretch
@@ -77,13 +61,11 @@ workflows:
   version: 2
   build-and-test:
       jobs:
-        - build-11.22
         - build-12.8
         - build-13.23
         - build-15.13
         - build-success:
             requires:
-            - build-11.22
             - build-12.8
             - build-13.23
             - build-15.13

@@ -30,7 +30,7 @@ description: |
 
 dependencies:
 - base >= 4.7 && < 5
-- ghc >= 8.2 && < 8.9
+- ghc >= 8.4 && < 8.9
 
 default-extensions:
 - DataKinds
