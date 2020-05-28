@@ -227,6 +227,16 @@ exprsTest dflags = testGroup "Expr"
         , "[a .. b]" :~ fromTo (var "a") (var "b")
         , "[a, b .. c]" :~ fromThenTo (var "a") (var "b") (var "c")
         ]
+    , test "list comprehension"
+        [ "[x | x <- [1 .. 10]]" :~
+            listComp (bvar "x") [bvar "x" <-- fromTo (int 1) (int 10)]
+        , "[x + y | x <- [1 .. 10], y <- [11 .. 20], even y]" :~
+            listComp (op (bvar "x") "+" (bvar "y"))
+                     [ bvar "x" <-- fromTo (int 1) (int 10)
+                     , bvar "y" <-- fromTo (int 11) (int 20)
+                     , stmt $ var "even" @@ bvar "y"
+                     ]
+        ]
     ]
   where
     test = testExprs dflags
