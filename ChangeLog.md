@@ -13,6 +13,8 @@
 - Add support for ghc-8.10.
 - Add `kindedVar`.
 - Add `tuplePromotedTy`.
+- Add `from`, `fromTo`, `fromThen`, `fromThenTo`.
+- Add `listComp`.
 
 ## 0.3.0.0
 - Add `occNameToStr` and `nameToStr` to convert from the GHC types.
