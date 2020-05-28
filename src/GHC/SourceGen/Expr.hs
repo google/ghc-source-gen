@@ -16,6 +16,7 @@ module GHC.SourceGen.Expr
     , if'
     , multiIf
     , do'
+    , listComp
     , Stmt'
     , (@::@)
     , tyApp
@@ -108,6 +109,20 @@ do' = withPlaceHolder . noExt HsDo DoExpr
         = BodyStmt (parExpr e) x y tc
 #endif
     parenthesizeIfLet s = s
+
+-- | A list comprehension expression.
+--
+-- > [x * 2 | x <- [1 .. 10], even x]
+-- > =====
+-- > listComp (op (bvar "x") "*" (int 2))
+-- >          [ bvar "x" <-- fromTo (int 1) (int 10)
+-- >          , stmt $ var "even" @@ bvar "x"
+-- >          ]
+listComp :: HsExpr' -> [Stmt'] -> HsExpr'
+listComp lastExpr stmts =
+    let lastStmt = noExt LastStmt (builtLoc lastExpr) False noSyntaxExpr
+     in withPlaceHolder . noExt HsDo ListComp . builtLoc . map builtLoc $
+            stmts ++ [lastStmt]
 
 -- | A type constraint on an expression.
 --
