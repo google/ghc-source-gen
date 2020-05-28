@@ -21,6 +21,10 @@ module GHC.SourceGen.Expr
     , tyApp
     , recordConE
     , recordUpd
+    , from
+    , fromThen
+    , fromTo
+    , fromThenTo
     ) where
 
 import GHC.Hs.Expr
@@ -187,3 +191,40 @@ recordUpd e fs =
             }
     withPlaceHolder4 = withPlaceHolder . withPlaceHolder . withPlaceHolder
                             . withPlaceHolder
+
+-- | An arithmetic sequence expression with a start value.
+--
+-- > [a ..]
+-- > =====
+-- > from (var "a")
+from :: HsExpr' -> HsExpr'
+from from' =
+    noExt ArithSeq Nothing $ From (builtLoc from')
+
+-- | An arithmetic sequence expression with a start and a step values.
+--
+-- > [a, b ..]
+-- > =====
+-- > fromThen (var "a") (var "b")
+fromThen :: HsExpr' -> HsExpr' -> HsExpr'
+fromThen from' then' =
+    noExt ArithSeq Nothing $ FromThen (builtLoc from') (builtLoc then')
+
+-- | An arithmetic sequence expression with a start and an end values.
+--
+-- > [a .. b]
+-- > =====
+-- > fromTo (var "a") (var "b")
+fromTo :: HsExpr' -> HsExpr' -> HsExpr'
+fromTo from' to =
+    noExt ArithSeq Nothing $ FromTo (builtLoc from') (builtLoc to)
+
+-- | An arithmetic sequence expression with a start, a step, and an end values.
+--
+-- > [a, b .. c]
+-- > =====
+-- > fromThenTo (var "a") (var "b") (var "c")
+fromThenTo :: HsExpr' -> HsExpr' -> HsExpr' -> HsExpr'
+fromThenTo from' then' to =
+    noExt ArithSeq Nothing $
+        FromThenTo (builtLoc from') (builtLoc then') (builtLoc to)

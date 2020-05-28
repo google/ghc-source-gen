@@ -221,6 +221,12 @@ exprsTest dflags = testGroup "Expr"
         -- TODO: add more tests.
         [ "do (let x = 1 in x)" :~ do' [stmt $ let' [valBind "x" (int 1)] (var "x")]
         ]
+    , test "arithSeq"
+        [ "[a .. ]" :~ from (var "a")
+        , "[a, b .. ]" :~ fromThen (var "a") (var "b")
+        , "[a .. b]" :~ fromTo (var "a") (var "b")
+        , "[a, b .. c]" :~ fromThenTo (var "a") (var "b") (var "c")
+        ]
     ]
   where
     test = testExprs dflags
