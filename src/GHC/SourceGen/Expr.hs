@@ -28,6 +28,7 @@ module GHC.SourceGen.Expr
     ) where
 
 import GHC.Hs.Expr
+import GHC.Hs.Extension (GhcPs)
 import GHC.Hs.Pat (HsRecField'(..), HsRecFields(..))
 import GHC.Hs.Types (FieldOcc(..), AmbiguousFieldOcc(..))
 import Data.String (fromString)
@@ -192,14 +193,21 @@ recordUpd e fs =
     withPlaceHolder4 = withPlaceHolder . withPlaceHolder . withPlaceHolder
                             . withPlaceHolder
 
+arithSeq :: ArithSeqInfo GhcPs -> HsExpr'
+arithSeq =
+#if !MIN_VERSION_ghc(8,6,0)
+    ArithSeq noPostTcExpr Nothing
+#else
+    noExt ArithSeq Nothing
+#endif
+
 -- | An arithmetic sequence expression with a start value.
 --
 -- > [a ..]
 -- > =====
 -- > from (var "a")
 from :: HsExpr' -> HsExpr'
-from from' =
-    noExt ArithSeq Nothing $ From (builtLoc from')
+from from' = arithSeq $ From (builtLoc from')
 
 -- | An arithmetic sequence expression with a start and a step values.
 --
@@ -207,8 +215,7 @@ from from' =
 -- > =====
 -- > fromThen (var "a") (var "b")
 fromThen :: HsExpr' -> HsExpr' -> HsExpr'
-fromThen from' then' =
-    noExt ArithSeq Nothing $ FromThen (builtLoc from') (builtLoc then')
+fromThen from' then' = arithSeq $ FromThen (builtLoc from') (builtLoc then')
 
 -- | An arithmetic sequence expression with a start and an end values.
 --
@@ -216,8 +223,7 @@ fromThen from' then' =
 -- > =====
 -- > fromTo (var "a") (var "b")
 fromTo :: HsExpr' -> HsExpr' -> HsExpr'
-fromTo from' to =
-    noExt ArithSeq Nothing $ FromTo (builtLoc from') (builtLoc to)
+fromTo from' to = arithSeq $ FromTo (builtLoc from') (builtLoc to)
 
 -- | An arithmetic sequence expression with a start, a step, and an end values.
 --
@@ -226,5 +232,4 @@ fromTo from' to =
 -- > fromThenTo (var "a") (var "b") (var "c")
 fromThenTo :: HsExpr' -> HsExpr' -> HsExpr' -> HsExpr'
 fromThenTo from' then' to =
-    noExt ArithSeq Nothing $
-        FromThenTo (builtLoc from') (builtLoc then') (builtLoc to)
+    arithSeq $ FromThenTo (builtLoc from') (builtLoc then') (builtLoc to)
