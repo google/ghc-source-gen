@@ -22,7 +22,11 @@ module GHC.SourceGen.Type
     ) where
 
 import Data.String (fromString)
-import GHC.Hs.Types
+import GHC.Hs.Type
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Parser.Annotation
+import GHC.Types.Var (Specificity(..))
+#endif
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
@@ -56,7 +60,11 @@ tuplePromotedTy = withPlaceHolders (noExt HsExplicitTupleTy) . map builtLoc
 -- > =====
 -- > var "a" --> var "b"
 (-->) :: HsType' -> HsType' -> HsType'
-a --> b = noExt HsFunTy (parenthesizeTypeForFun $ builtLoc a) (builtLoc b)
+a --> b = noExt HsFunTy
+#if MIN_VERSION_ghc(9,0,0)
+         (HsUnrestrictedArrow NormalSyntax)
+#endif
+         (parenthesizeTypeForFun $ builtLoc a) (builtLoc b)
 
 infixr 0 -->
 
@@ -65,12 +73,15 @@ infixr 0 -->
 -- > forall a . T a
 -- > =====
 -- > forall' [bvar "a"] $ var "T" @@ var "a"
-forall' :: [HsTyVarBndr'] -> HsType' -> HsType'
+forall' :: [HsTyVarBndrS'] -> HsType' -> HsType'
 forall' ts = noExt HsForAllTy
-#if MIN_VERSION_ghc(8,10,0)
+#if MIN_VERSION_ghc(9,0,0)
+        (mkHsForAllInvisTele (map builtLoc ts))
+#elif MIN_VERSION_ghc(8,10,0)
         ForallInvis  -- "Invisible" forall, i.e., with a dot
+        (map builtLoc ts)
 #endif
-        (map builtLoc ts) . builtLoc
+        . builtLoc
 
 -- | Qualify a type with constraints.
 --
@@ -87,6 +98,9 @@ infixr 0 ==>
 -- > x :: A
 -- > =====
 -- > kindedVar "x" (var "A")
-kindedVar :: OccNameStr -> HsType' -> HsTyVarBndr'
-kindedVar v t = noExt KindedTyVar (typeRdrName $  UnqualStr v)
-                        (builtLoc t)
+kindedVar :: OccNameStr -> HsType' -> HsTyVarBndrS'
+kindedVar v t = noExt KindedTyVar
+#if MIN_VERSION_ghc(9,0,0)
+                SpecifiedSpec
+#endif
+                (typeRdrName $ UnqualStr v) (builtLoc t)

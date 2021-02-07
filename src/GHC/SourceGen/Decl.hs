@@ -49,14 +49,21 @@ module GHC.SourceGen.Decl
     , patSynBind
     ) where
 
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Types.Basic (LexicalFixity(Prefix))
+import GHC.Data.Bag (listToBag)
+import GHC.Types.SrcLoc (Located, LayoutInfo(..))
+#else
 import BasicTypes (LexicalFixity(Prefix))
+import Bag (listToBag)
+import SrcLoc (Located)
+#endif
 #if !MIN_VERSION_ghc(8,6,0)
 import BasicTypes (DerivStrategy(..))
 #endif
-import Bag (listToBag)
 import GHC.Hs.Binds
 import GHC.Hs.Decls
-import GHC.Hs.Types
+import GHC.Hs.Type
     ( ConDeclField(..)
     , FieldOcc(..)
     , HsConDetails(..)
@@ -71,8 +78,10 @@ import GHC.Hs.Types
 #endif
     , SrcStrictness(..)
     , SrcUnpackedness(..)
+#if MIN_VERSION_ghc(9,0,0)
+    , hsUnrestricted
+#endif
     )
-import SrcLoc (Located)
 
 #if MIN_VERSION_ghc(8,10,0)
 import GHC.Hs.Extension (NoExtField(NoExtField))
@@ -154,7 +163,9 @@ class'
 class' context name vars decls
     = noExt TyClD $ ClassDecl
             { tcdCtxt = builtLoc $ map builtLoc context
-#if MIN_VERSION_ghc(8,10,0)
+#if MIN_VERSION_ghc(9,0,0)
+            , tcdCExt = NoLayoutInfo
+#elif MIN_VERSION_ghc(8,10,0)
             , tcdCExt = NoExtField
 #elif MIN_VERSION_ghc(8,6,0)
             , tcdCExt = NoExt
@@ -306,10 +317,10 @@ data' = newOrDataType DataType
 --
 -- > Foo a Int
 -- > =====
--- > conDecl "Foo" [field (var "a"), field (var "Int")]
+-- > prefixCon "Foo" [field (var "a"), field (var "Int")]
 prefixCon :: OccNameStr -> [Field] -> ConDecl'
 prefixCon name fields = renderCon98Decl name
-    $ PrefixCon $ map renderField fields
+    $ PrefixCon $ map (hsUnrestricted . renderField) fields
 
 -- | Declares a Haskell-98-style infix constructor for a data or type
 -- declaration.
@@ -319,7 +330,7 @@ prefixCon name fields = renderCon98Decl name
 -- > infixCon (field (var "A" @@ var "b")) ":+:" (field (Var "C" @@ var "d"))
 infixCon :: Field -> OccNameStr -> Field -> ConDecl'
 infixCon f name f' = renderCon98Decl name
-    $ InfixCon (renderField f) (renderField f')
+    $ InfixCon (hsUnrestricted $ renderField f) (hsUnrestricted $ renderField f')
 
 -- | Declares Haskell-98-style record constructor for a data or type
 -- declaration.
@@ -370,6 +381,11 @@ strict f = f { strictness = SrcStrict }
 -- > strict $ field $ var "A" @@ var "b"
 lazy :: Field -> Field
 lazy f = f { strictness = SrcLazy }
+
+#if !MIN_VERSION_ghc(9,0,0)
+hsUnrestricted :: a -> a
+hsUnrestricted = id
+#endif
 
 renderField :: Field -> Located HsType'
 -- TODO: parenthesizeTypeForApp is an overestimate in the case of

@@ -4,16 +4,25 @@
 -- license that can be found in the LICENSE file or at
 -- https://developers.google.com/open-source/licenses/bsd
 
+{-# LANGUAGE CPP #-}
 module GHC.SourceGen.Name.Internal where
 
 import Data.Char (isAlphaNum, isUpper)
 import Data.List (intercalate)
 import Data.String (IsString(..))
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Data.FastString (FastString, fsLit)
+import GHC.Unit.Module (mkModuleNameFS, ModuleName, moduleNameString)
+import GHC.Types.Name.Occurrence
+import GHC.Types.Name.Reader
+import GHC.Types.SrcLoc (Located)
+#else
 import FastString (FastString, fsLit)
 import Module (mkModuleNameFS, ModuleName, moduleNameString)
-import RdrName
 import OccName
+import RdrName
 import SrcLoc (Located)
+#endif
 
 import GHC.SourceGen.Syntax.Internal (builtLoc)
 

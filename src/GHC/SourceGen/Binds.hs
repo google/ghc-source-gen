@@ -4,6 +4,7 @@
 -- license that can be found in the LICENSE file or at
 -- https://developers.google.com/open-source/licenses/bsd
 
+{-# LANGUAGE CPP #-}
 -- | This module provides combinators for constructing Haskell declarations.
 module GHC.SourceGen.Binds
     (  -- * Bindings
@@ -53,6 +54,7 @@ import GHC.Hs.Expr
 import GHC.Hs.Types
 import GhcPlugins (isSymOcc)
 import TcEvidence (HsWrapper(WpHole))
+#endif
 
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Name
@@ -288,7 +290,10 @@ stmt e =
 -- > =====
 -- > bvar "x" <-- var "act"
 (<--) :: Pat' -> HsExpr' -> Stmt'
-p <-- e = withPlaceHolder $ noExt BindStmt (builtPat p) (builtLoc e) noSyntaxExpr noSyntaxExpr
+p <-- e = withPlaceHolder $ noExt BindStmt (builtPat p) (builtLoc e)
+#if !MIN_VERSION_ghc(9,0,0)
+         noSyntaxExpr noSyntaxExpr
+#endif
 infixl 1 <--
 
 -- | Syntax types which can declare/define pattern bindings.
