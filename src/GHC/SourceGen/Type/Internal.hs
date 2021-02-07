@@ -7,8 +7,13 @@
 {-# LANGUAGE CPP #-}
 module GHC.SourceGen.Type.Internal where
 
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Hs.Type as Types
+import GHC.Types.SrcLoc (Located, unLoc)
+#else
 import GHC.Hs.Types as Types
 import SrcLoc (Located, unLoc)
+#endif
 
 import GHC.SourceGen.Syntax.Internal
 
@@ -62,3 +67,10 @@ sigWcType = noExt (withPlaceHolder Types.HsWC) . sigType
 
 wcType :: HsType' -> LHsWcType'
 wcType = noExt (withPlaceHolder Types.HsWC) . builtLoc
+
+patSigType :: HsType' -> HsPatSigType'
+#if MIN_VERSION_ghc(9,0,0)
+patSigType = mkHsPatSigType . builtLoc
+#else
+patSigType = sigWcType
+#endif

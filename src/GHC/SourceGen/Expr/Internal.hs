@@ -8,7 +8,11 @@
 module GHC.SourceGen.Expr.Internal where
 
 import GHC.Hs.Expr
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Types.SrcLoc (Located, unLoc)
+#else
 import SrcLoc (Located, unLoc)
+#endif
 
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal

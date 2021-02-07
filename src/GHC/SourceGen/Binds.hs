@@ -4,6 +4,7 @@
 -- license that can be found in the LICENSE file or at
 -- https://developers.google.com/open-source/licenses/bsd
 
+{-# LANGUAGE CPP #-}
 -- | This module provides combinators for constructing Haskell declarations.
 module GHC.SourceGen.Binds
     (  -- * Bindings
@@ -44,11 +45,16 @@ module GHC.SourceGen.Binds
     , (<--)
     ) where
 
-import BasicTypes (LexicalFixity(..))
 import GHC.Hs.Binds
 import GHC.Hs.Expr
-import GHC.Hs.Types
+import GHC.Hs.Type
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Types.Basic (LexicalFixity(..))
+import GHC.Tc.Types.Evidence (HsWrapper(WpHole))
+#else
+import BasicTypes (LexicalFixity(..))
 import TcEvidence (HsWrapper(WpHole))
+#endif
 
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Name
@@ -94,7 +100,11 @@ typeSig n = typeSigs [n]
 funBinds :: HasValBind t => OccNameStr -> [RawMatch] -> t
 funBinds name matches = bindB $ withPlaceHolder
         (noExt FunBind name'
-            (matchGroup context matches) WpHole)
+            (matchGroup context matches)
+#if !MIN_VERSION_ghc(9,0,0)
+            WpHole
+#endif
+        )
         []
   where
     name' = valueRdrName $ unqual name
@@ -265,7 +275,10 @@ stmt e =
 -- > =====
 -- > bvar "x" <-- var "act"
 (<--) :: Pat' -> HsExpr' -> Stmt'
-p <-- e = withPlaceHolder $ noExt BindStmt (builtPat p) (builtLoc e) noSyntaxExpr noSyntaxExpr
+p <-- e = withPlaceHolder $ noExt BindStmt (builtPat p) (builtLoc e)
+#if !MIN_VERSION_ghc(9,0,0)
+         noSyntaxExpr noSyntaxExpr
+#endif
 infixl 1 <--
 
 -- | Syntax types which can declare/define pattern bindings.
