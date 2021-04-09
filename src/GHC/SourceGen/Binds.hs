@@ -15,6 +15,7 @@ module GHC.SourceGen.Binds
       -- * Functions
     , funBind
     , funBinds
+    , funBindsWithFixity
       -- * Values
     , valBind
     , valBindGRHSs
@@ -45,9 +46,12 @@ module GHC.SourceGen.Binds
     ) where
 
 import BasicTypes (LexicalFixity(..))
+import Data.Bool (bool)
+import Data.Maybe (fromMaybe)
 import GHC.Hs.Binds
 import GHC.Hs.Expr
 import GHC.Hs.Types
+import GhcPlugins (isSymOcc)
 import TcEvidence (HsWrapper(WpHole))
 
 import GHC.SourceGen.Binds.Internal
@@ -74,6 +78,31 @@ typeSigs names t =
 typeSig :: HasValBind t => OccNameStr -> HsType' -> t
 typeSig n = typeSigs [n]
 
+-- | Defines a function or value, with an explicit fixity. When given
+-- 'Nothing', use infix notation iff the given name is symbolic.
+--
+-- > id x = x
+-- > =====
+-- > funBindsWithFixity (Just Prefix) "id" [match [var "x"] (var "x")]
+--
+-- > True && True = True
+-- > True && False = False
+-- > =====
+-- > funBindsWithFixity Nothing "not"
+-- >   [ match [conP "True" []] (var "False")
+-- >   , match [conP "False" []] (var "True")
+-- >   ]
+funBindsWithFixity :: HasValBind t => Maybe LexicalFixity -> OccNameStr -> [RawMatch] -> t
+funBindsWithFixity fixity name matches = bindB $ withPlaceHolder
+        (noExt FunBind name'
+            (matchGroup context matches) WpHole)
+        []
+  where
+    name' = valueRdrName $ unqual name
+    occ = valueOccName name
+    fixity' = fromMaybe (bool Prefix Infix $ isSymOcc occ) fixity
+    context = FunRhs name' fixity' NoSrcStrict
+
 -- | Defines a function or value.
 --
 -- > f = x
@@ -92,13 +121,7 @@ typeSig n = typeSigs [n]
 -- >   , match [conP "False" []] (var "True")
 -- >   ]
 funBinds :: HasValBind t => OccNameStr -> [RawMatch] -> t
-funBinds name matches = bindB $ withPlaceHolder
-        (noExt FunBind name'
-            (matchGroup context matches) WpHole)
-        []
-  where
-    name' = valueRdrName $ unqual name
-    context = FunRhs name' Prefix NoSrcStrict
+funBinds = funBindsWithFixity (Just Prefix)
 
 -- | Defines a function that has a single case.
 --
