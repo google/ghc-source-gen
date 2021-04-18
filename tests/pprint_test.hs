@@ -279,6 +279,11 @@ declsTest dflags = testGroup "Decls"
                 [ match [bvar "True"] (var "False")
                 , match [bvar "False"] (var "True")
                 ]
+        , "True && True = True\nTrue && False = False" :~
+             funBindsWithFixity Nothing "&&"
+                [ match [bvar "True", bvar "True"] (var "True")
+                , match [bvar "True", bvar "False"] (var "False")
+                ]
         , "not x\n  | x = False\n  | otherwise = True" :~
             funBind "not"
                 $ matchGRHSs [bvar "x"] $ guardedRhs
