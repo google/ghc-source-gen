@@ -329,6 +329,18 @@ declsTest dflags = testGroup "Decls"
                (prefixCon "Const" [field $ var "a"])
                [deriving' [var "Show"]]
         ]
+    , test "standaloneDeriving"
+        [ "deriving instance Show Int"
+            :~ standaloneDeriving (var "Show" @@ var "Int")
+        , "deriving instance Show a => Show (Maybe a)"
+            :~ standaloneDeriving ([var "Show" @@ var "a"] ==> var "Show" @@ (var "Maybe" @@ var "a"))
+        , "deriving stock instance Show Int"
+            :~ standaloneDerivingStock (var "Show" @@ var "Int")
+        , "deriving newtype instance Show a => Show (Identity a)"
+            :~ standaloneDerivingNewtype ([var "Show" @@ var "a"] ==> var "Show" @@ (var "Identity" @@ var "a"))
+        , "deriving anyclass instance Show Person"
+            :~ standaloneDerivingAnyclass (var "Show" @@ var "Person")
+        ]
     ]
   where
     test = testDecls dflags
