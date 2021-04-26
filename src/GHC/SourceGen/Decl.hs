@@ -63,7 +63,9 @@ import GHC.Hs.Types
     , HsImplicitBndrs (..)
     , HsSrcBang(..)
     , HsType(..)
+#if MIN_VERSION_ghc(8,6,0)
     , HsWildCardBndrs (..)
+#endif
 #if MIN_VERSION_ghc(8,8,0)
     , HsArg(..)
 #endif
