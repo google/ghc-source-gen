@@ -30,6 +30,10 @@ module GHC.SourceGen.Decl
 #if MIN_VERSION_ghc(8,6,0)
     , derivingVia
 #endif
+    , standaloneDeriving
+    , standaloneDerivingStock
+    , standaloneDerivingNewtype
+    , standaloneDerivingAnyclass
       -- * Class declarations
     , class'
     , ClassDecl
@@ -56,8 +60,12 @@ import GHC.Hs.Types
     ( ConDeclField(..)
     , FieldOcc(..)
     , HsConDetails(..)
+    , HsImplicitBndrs (..)
     , HsSrcBang(..)
     , HsType(..)
+#if MIN_VERSION_ghc(8,6,0)
+    , HsWildCardBndrs (..)
+#endif
 #if MIN_VERSION_ghc(8,8,0)
     , HsArg(..)
 #endif
@@ -409,6 +417,31 @@ derivingAnyclass = derivingWay (Just AnyclassStrategy)
 -- Available with @ghc>=8.6@.
 derivingVia :: HsType' -> [HsType'] -> HsDerivingClause'
 derivingVia t = derivingWay (Just $ ViaStrategy $ sigType t)
+#endif
+
+standaloneDeriving :: HsType' -> HsDecl'
+standaloneDeriving = standaloneDerivingWay Nothing
+
+standaloneDerivingStock :: HsType' -> HsDecl'
+standaloneDerivingStock = standaloneDerivingWay (Just StockStrategy)
+
+standaloneDerivingNewtype :: HsType' -> HsDecl'
+standaloneDerivingNewtype = standaloneDerivingWay (Just NewtypeStrategy)
+
+standaloneDerivingAnyclass :: HsType' -> HsDecl'
+standaloneDerivingAnyclass = standaloneDerivingWay (Just AnyclassStrategy)
+
+standaloneDerivingWay :: Maybe DerivStrategy' -> HsType' -> HsDecl'
+standaloneDerivingWay way ty = noExt DerivD derivDecl
+  where derivDecl =
+          noExt DerivDecl (hsWC hsIB) (fmap builtLoc way) Nothing
+        hsIB =
+          withPlaceHolder $ noExtOrPlaceHolder HsIB (builtLoc ty)
+        hsWC =
+#if MIN_VERSION_ghc(8,6,0)
+          noExt HsWC
+#else
+          id
 #endif
 
 -- | Declares multiple pattern signatures of the same type.
