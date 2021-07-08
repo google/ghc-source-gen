@@ -1,5 +1,9 @@
 # Changelog for haskell-syntax
 
+# 0.4.1.0
+- Add `funBindsWithFixity`.
+- Add `standaloneDeriving`.
+
 # 0.4.0.0
 
 ## Breaking Changes
