@@ -2,18 +2,11 @@
 module GHC.SourceGen.Pat.Internal where
 
 import GHC.Hs.Pat (Pat(..))
-
+import GHC.Hs.Type (HsConDetails(..))
 
 import GHC.SourceGen.Lit.Internal (litNeedsParen, overLitNeedsParen)
 import GHC.SourceGen.Syntax.Internal
-
-#if MIN_VERSION_ghc(9,0,1)
-import GHC.Hs.Type (HsConDetails(..))
 import GHC.Types.SrcLoc (unLoc)
-#else
-import GHC.Hs.Types (HsConDetails(..))
-import SrcLoc (unLoc)
-#endif
 
 -- Note: GHC>=8.6 inserts parentheses automatically when pretty-printing patterns.
 -- When we stop supporting lower versions, we may be able to simplify this.
@@ -31,15 +24,8 @@ needsPar (NPat _ l _ _) = overLitNeedsParen $ unLoc l
 needsPar (LitPat l) = litNeedsParen l
 needsPar (NPat l _ _ _) = overLitNeedsParen $ unLoc l
 #endif
-#if MIN_VERSION_ghc(9,0,1)
--- Think this is correct; can't be sure - AF
 needsPar (ConPat _ _ (PrefixCon xs)) = not $ null xs
 needsPar (ConPat _ _ (InfixCon _ _)) = True
-#else
-needsPar (ConPatIn _ (PrefixCon xs)) = not $ null xs
-needsPar (ConPatIn _ (InfixCon _ _)) = True
-needsPar ConPatOut{} = True
-#endif
 #if MIN_VERSION_ghc(8,6,0)
 needsPar SigPat{} = True
 #else

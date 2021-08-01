@@ -31,14 +31,9 @@ module GHC.SourceGen.Expr
 import GHC.Hs.Expr
 import GHC.Hs.Extension (GhcPs)
 import GHC.Hs.Pat (HsRecField'(..), HsRecFields(..))
-import Data.String (fromString)
-#if MIN_VERSION_ghc(9,0,1)
 import GHC.Hs.Type (FieldOcc(..), AmbiguousFieldOcc(..))
+import Data.String (fromString)
 import GHC.Types.SrcLoc (unLoc, GenLocated(..), Located)
-#else
-import GHC.Hs.Types (FieldOcc(..), AmbiguousFieldOcc(..))
-import SrcLoc (unLoc, GenLocated(..), Located)
-#endif
 
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Binds
@@ -73,14 +68,7 @@ lambdaCase :: [RawMatch] -> HsExpr'
 lambdaCase = noExt HsLamCase . matchGroup CaseAlt
 
 if' :: HsExpr' -> HsExpr' -> HsExpr' -> HsExpr'
-if' x y z =
-    noExt HsIf
-#if !MIN_VERSION_ghc(9,0,1)
-    Nothing 
-#endif
-    (builtLoc x)
-    (builtLoc y)
-    (builtLoc z)
+if' x y z = noExt HsIf (builtLoc x) (builtLoc y) (builtLoc z)
 
 -- | A MultiWayIf expression.
 --
@@ -106,16 +94,8 @@ multiIf = noExtOrPlaceHolder HsMultiIf . map builtLoc
 -- > =====
 -- > do' [bvar "x" <-- var "act", stmt $ var "return" @@ var "x"]
 do' :: [Stmt'] -> HsExpr'
-do' =
-    withPlaceHolder
-        . noExt HsDo
-#if MIN_VERSION_ghc(9,0,1)
-            (DoExpr Nothing)
-#else
-            DoExpr
-#endif
-            . builtLoc
-                . map (builtLoc . parenthesizeIfLet)
+do' = withPlaceHolder . noExt HsDo (DoExpr Nothing)
+        . builtLoc . map (builtLoc . parenthesizeIfLet)
   where
   -- Put parentheses around a "let" in a do-binding, to avoid:
   --   do let x = ...
@@ -140,15 +120,7 @@ do' =
 -- >          ]
 listComp :: HsExpr' -> [Stmt'] -> HsExpr'
 listComp lastExpr stmts =
-    let lastStmt =
-            noExt LastStmt
-                (builtLoc lastExpr)
-#if MIN_VERSION_ghc(9,0,1)
-                (Just False)
-#else
-                False
-#endif
-                noSyntaxExpr
+    let lastStmt = noExt LastStmt (builtLoc lastExpr) (Just False) noSyntaxExpr
      in withPlaceHolder . noExt HsDo ListComp . builtLoc . map builtLoc $
             stmts ++ [lastStmt]
 

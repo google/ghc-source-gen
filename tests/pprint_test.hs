@@ -3,18 +3,11 @@
 
 module Main(main) where
 
-#if MIN_VERSION_ghc(9,0,1)
 import GHC.Driver.Session (getDynFlags)
 import GHC.Driver.Monad (liftIO)
-import GHC.Utils.Outputable (Outputable)
-#else
-import DynFlags (getDynFlags)
-import GhcMonad (liftIO)
-import Outputable (Outputable)
-#endif
-
 import GHC.Paths (libdir)
 import GHC (runGhc, DynFlags)
+import GHC.Utils.Outputable (Outputable)
 
 import Test.Tasty
 import Test.Tasty.HUnit
@@ -44,7 +37,7 @@ testDecls = testCases
 testPats :: DynFlags ->  String -> [TestCase Pat'] -> TestTree
 testPats = testCases
 
-testModule :: DynFlags -> String -> [TestCase HsModule'] -> TestTree
+testModule :: DynFlags -> String -> [TestCase HsModule] -> TestTree
 testModule = testCases
 
 main :: IO ()

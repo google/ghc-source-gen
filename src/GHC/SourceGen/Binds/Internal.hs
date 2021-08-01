@@ -7,19 +7,12 @@
 {-# LANGUAGE CPP #-}
 module GHC.SourceGen.Binds.Internal where
 
-
+import GHC.Types.Basic (Origin(Generated))
+import GHC.Data.Bag (listToBag)
 import GHC.Hs.Binds
 import GHC.Hs.Decls
 import GHC.Hs.Expr (MatchGroup(..), Match(..), GRHSs(..))
-#if MIN_VERSION_ghc(9,0,1)
-import GHC.Types.Basic (Origin(Generated))
-import GHC.Data.Bag (listToBag)
 import GHC.Types.SrcLoc (Located)
-#else
-import BasicTypes (Origin(Generated))
-import Bag (listToBag)
-import SrcLoc (Located)
-#endif
 
 #if !MIN_VERSION_ghc(8,6,0)
 import PlaceHolder (PlaceHolder(..))

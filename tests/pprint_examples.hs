@@ -12,12 +12,7 @@ module Main (main) where
 
 import GHC.Paths (libdir)
 import GHC (runGhc)
-
-#if MIN_VERSION_ghc(9,0,1)
 import GHC.Utils.Outputable (Outputable)
-#else
-import Outputable (Outputable)
-#endif
 
 import GHC.SourceGen
 
@@ -222,7 +217,7 @@ test5 = pprint $ module' (Just "M") (Just exports) imports []
               , import' "E" `hiding` [var "e"]
               ]
 
-constModule :: HsModule'
+constModule :: HsModule
 constModule = module' (Just "Const") (Just [var "const"]) []
     [ typeSig "const" $ a --> b --> a
     , funBind "const" $ match [wildP, x] x
