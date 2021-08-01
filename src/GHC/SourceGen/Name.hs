@@ -27,11 +27,11 @@ module GHC.SourceGen.Name
     , moduleNameStrToString
     ) where
 
-import FastString (unpackFS)
-import Module (moduleNameString)
+import GHC.Data.FastString (unpackFS)
+import GHC.Unit.Module.Name (moduleNameString)
 import GHC.SourceGen.Name.Internal
-import OccName (OccName, occNameFS, occNameSpace, isVarNameSpace)
-import Name (Name, nameOccName)
+import GHC.Types.Name.Occurrence (OccName, occNameFS, occNameSpace, isVarNameSpace)
+import GHC.Types.Name (Name, nameOccName)
 
 unqual :: OccNameStr -> RdrNameStr
 unqual = UnqualStr

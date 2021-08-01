@@ -16,12 +16,12 @@ module GHC.SourceGen.Lit
     , frac
     ) where
 
-import BasicTypes (FractionalLit(..))
-import BasicTypes(IntegralLit(..), SourceText(..))
+import GHC.Types.Basic (FractionalLit(..))
+import GHC.Types.Basic(IntegralLit(..), SourceText(..))
 import GHC.Hs.Lit
 import GHC.Hs.Expr (noExpr, noSyntaxExpr, HsExpr(..))
 import GHC.Hs.Pat (Pat(..))
-import FastString (fsLit)
+import GHC.Data.FastString (fsLit)
 
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal

@@ -8,7 +8,7 @@
 module GHC.SourceGen.Expr.Internal where
 
 import GHC.Hs.Expr
-import SrcLoc (Located, unLoc)
+import GHC.Types.SrcLoc (Located, unLoc)
 
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal

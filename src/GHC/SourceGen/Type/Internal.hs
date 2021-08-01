@@ -7,12 +7,13 @@
 {-# LANGUAGE CPP #-}
 module GHC.SourceGen.Type.Internal where
 
-import GHC.Hs.Types as Types
-import SrcLoc (Located, unLoc)
+import GHC.Hs.Type as Types
+import GHC.Types.SrcLoc (Located, unLoc)
+import GHC.Hs.Extension (GhcPs)
 
 import GHC.SourceGen.Syntax.Internal
 
-mkQTyVars :: [HsTyVarBndr'] -> LHsQTyVars'
+mkQTyVars :: [HsTyVarBndr () GhcPs] -> LHsQTyVars'
 mkQTyVars vars =  withPlaceHolder
                 $ noExt (withPlaceHolder HsQTvs)
                 $ map builtLoc vars
@@ -62,3 +63,6 @@ sigWcType = noExt (withPlaceHolder Types.HsWC) . sigType
 
 wcType :: HsType' -> LHsWcType'
 wcType = noExt (withPlaceHolder Types.HsWC) . builtLoc
+
+patSigType :: HsType' -> HsPatSigType'
+patSigType = noExt HsPS . builtLoc

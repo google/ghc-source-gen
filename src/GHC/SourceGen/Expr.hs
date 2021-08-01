@@ -31,9 +31,9 @@ module GHC.SourceGen.Expr
 import GHC.Hs.Expr
 import GHC.Hs.Extension (GhcPs)
 import GHC.Hs.Pat (HsRecField'(..), HsRecFields(..))
-import GHC.Hs.Types (FieldOcc(..), AmbiguousFieldOcc(..))
+import GHC.Hs.Type (FieldOcc(..), AmbiguousFieldOcc(..))
 import Data.String (fromString)
-import SrcLoc (unLoc, GenLocated(..), Located)
+import GHC.Types.SrcLoc (unLoc, GenLocated(..), Located)
 
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Binds
@@ -68,7 +68,7 @@ lambdaCase :: [RawMatch] -> HsExpr'
 lambdaCase = noExt HsLamCase . matchGroup CaseAlt
 
 if' :: HsExpr' -> HsExpr' -> HsExpr' -> HsExpr'
-if' x y z = noExt HsIf Nothing (builtLoc x) (builtLoc y) (builtLoc z)
+if' x y z = noExt HsIf (builtLoc x) (builtLoc y) (builtLoc z)
 
 -- | A MultiWayIf expression.
 --
@@ -94,7 +94,7 @@ multiIf = noExtOrPlaceHolder HsMultiIf . map builtLoc
 -- > =====
 -- > do' [bvar "x" <-- var "act", stmt $ var "return" @@ var "x"]
 do' :: [Stmt'] -> HsExpr'
-do' = withPlaceHolder . noExt HsDo DoExpr
+do' = withPlaceHolder . noExt HsDo (DoExpr Nothing)
         . builtLoc . map (builtLoc . parenthesizeIfLet)
   where
   -- Put parentheses around a "let" in a do-binding, to avoid:
@@ -120,7 +120,7 @@ do' = withPlaceHolder . noExt HsDo DoExpr
 -- >          ]
 listComp :: HsExpr' -> [Stmt'] -> HsExpr'
 listComp lastExpr stmts =
-    let lastStmt = noExt LastStmt (builtLoc lastExpr) False noSyntaxExpr
+    let lastStmt = noExt LastStmt (builtLoc lastExpr) (Just False) noSyntaxExpr
      in withPlaceHolder . noExt HsDo ListComp . builtLoc . map builtLoc $
             stmts ++ [lastStmt]
 

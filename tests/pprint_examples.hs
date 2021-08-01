@@ -11,7 +11,7 @@ module Main (main) where
 
 import GHC.Paths (libdir)
 import GHC (runGhc)
-import Outputable (Outputable)
+import GHC.Utils.Outputable (Outputable)
 
 import GHC.SourceGen
 
@@ -216,7 +216,7 @@ test5 = pprint $ module' (Just "M") (Just exports) imports []
               , import' "E" `hiding` [var "e"]
               ]
 
-constModule :: HsModule'
+constModule :: HsModule
 constModule = module' (Just "Const") (Just [var "const"]) []
     [ typeSig "const" $ a --> b --> a
     , funBind "const" $ match [wildP, x] x

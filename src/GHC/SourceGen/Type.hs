@@ -16,18 +16,21 @@ module GHC.SourceGen.Type
     , tuplePromotedTy
     , (-->)
     , forall'
-    , HsTyVarBndr'
     , (==>)
     , kindedVar
     ) where
 
 import Data.String (fromString)
-import GHC.Hs.Types
+import GHC.Hs.Type
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Type.Internal
+import GHC.Parser.Annotation (IsUnicodeSyntax(NormalSyntax))
+import GHC.Types.Var (Specificity(SpecifiedSpec))
+
+import GHC.Hs.Extension (GhcPs)
 
 -- | A promoted name, for example from the @DataKinds@ extension.
 tyPromotedVar :: RdrNameStr -> HsType'
@@ -56,7 +59,7 @@ tuplePromotedTy = withPlaceHolders (noExt HsExplicitTupleTy) . map builtLoc
 -- > =====
 -- > var "a" --> var "b"
 (-->) :: HsType' -> HsType' -> HsType'
-a --> b = noExt HsFunTy (parenthesizeTypeForFun $ builtLoc a) (builtLoc b)
+a --> b = noExt HsFunTy (HsUnrestrictedArrow NormalSyntax) (parenthesizeTypeForFun $ builtLoc a) (builtLoc b)
 
 infixr 0 -->
 
@@ -65,12 +68,8 @@ infixr 0 -->
 -- > forall a . T a
 -- > =====
 -- > forall' [bvar "a"] $ var "T" @@ var "a"
-forall' :: [HsTyVarBndr'] -> HsType' -> HsType'
-forall' ts = noExt HsForAllTy
-#if MIN_VERSION_ghc(8,10,0)
-        ForallInvis  -- "Invisible" forall, i.e., with a dot
-#endif
-        (map builtLoc ts) . builtLoc
+forall' :: [HsTyVarBndr Specificity GhcPs] -> HsType' -> HsType'
+forall' ts = noExt HsForAllTy (noExt HsForAllInvis (map builtLoc ts)) . builtLoc
 
 -- | Qualify a type with constraints.
 --
@@ -87,6 +86,6 @@ infixr 0 ==>
 -- > x :: A
 -- > =====
 -- > kindedVar "x" (var "A")
-kindedVar :: OccNameStr -> HsType' -> HsTyVarBndr'
-kindedVar v t = noExt KindedTyVar (typeRdrName $  UnqualStr v)
+kindedVar :: OccNameStr -> HsType' -> HsTyVarBndr Specificity GhcPs
+kindedVar v t = noExt KindedTyVar SpecifiedSpec (typeRdrName $  UnqualStr v)
                         (builtLoc t)

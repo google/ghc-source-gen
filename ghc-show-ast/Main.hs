@@ -13,8 +13,8 @@ import Data.Typeable (cast)
 import System.Environment (getArgs)
 import Text.PrettyPrint
 
-import FastString
-import Name
+import GHC.Data.FastString
+import GHC.Types.Name
     ( Name
     , isExternalName
     , isInternalName
@@ -23,7 +23,7 @@ import Name
     , nameOccName
     , nameUnique
     )
-import OccName
+import GHC.Types.Name.Occurrence
     ( OccName
     , occNameSpace
     , occNameString
@@ -34,20 +34,20 @@ import OccName
     , tcClsName
     )
 
-import qualified DynFlags as GHC
-import qualified FastString as GHC
+import qualified GHC.Driver.Session as GHC
+import qualified GHC.Data.FastString as GHC
 import qualified GHC as GHC
-import qualified GhcMonad as GHC
-import qualified HeaderInfo as GHC
-import qualified Lexer as GHC
-import qualified Parser as Parser
-import qualified SrcLoc as GHC
-import qualified StringBuffer as GHC
+import qualified GHC.Driver.Monad as GHC
+import qualified GHC.Parser.Header as GHC
+import qualified GHC.Parser.Lexer as GHC
+import qualified GHC.Parser as Parser
+import qualified GHC.Types.SrcLoc as GHC
+import qualified GHC.Data.StringBuffer as GHC
 import GHC.Paths (libdir)
 #if MIN_VERSION_ghc(8,10,0)
 import System.Exit (exitFailure)
-import GhcMonad (liftIO)
-import qualified ErrUtils
+import GHC.Driver.Monad (liftIO)
+import qualified GHC.Utils.Error as Error
 #else
 import qualified Outputable as GHC
 #endif
@@ -58,7 +58,7 @@ main = do
     result <- parseModule f
     print $ gPrint result
 
-parseModule :: FilePath -> IO (GHC.HsModule GHC.GhcPs)
+parseModule :: FilePath -> IO GHC.HsModule
 parseModule f = GHC.runGhc (Just libdir) $ do
     dflags <- GHC.getDynFlags
     contents <- GHC.liftIO $ GHC.stringToStringBuffer <$> readFile f
@@ -70,7 +70,7 @@ parseModule f = GHC.runGhc (Just libdir) $ do
 #if MIN_VERSION_ghc(8,10,0)
         GHC.PFailed s -> liftIO $ do
                 let (_warnings, errors) = GHC.messages s dflags
-                ErrUtils.printBagOfErrors dflags errors
+                Error.printBagOfErrors dflags errors
                 exitFailure
 #else
         GHC.PFailed

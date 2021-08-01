@@ -6,8 +6,8 @@
 
 module GHC.SourceGen.Lit.Internal where
 
-import BasicTypes (SourceText(NoSourceText), FractionalLit(..))
-import BasicTypes (IntegralLit(..))
+import GHC.Types.Basic (SourceText(NoSourceText), FractionalLit(..))
+import GHC.Types.Basic (IntegralLit(..))
 import GHC.Hs.Lit
 import GHC.SourceGen.Syntax.Internal
 

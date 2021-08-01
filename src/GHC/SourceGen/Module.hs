@@ -8,8 +8,8 @@
 -- | This module provides combinators for constructing Haskell modules,
 -- including import and export statements.
 module GHC.SourceGen.Module
-    ( -- * HsModule'
-      HsModule'
+    ( -- * HsModule
+      HsModule
     , module'
       -- * Import declarations
     , ImportDecl'
@@ -34,21 +34,24 @@ import GHC.Hs
     , ImportDeclQualifiedStyle(..)
 #endif
     )
-import RdrName (RdrName)
+import GHC.Types.Name.Reader (RdrName)
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
+import GHC.Plugins (IsBootInterface(NotBoot), LayoutInfo (NoLayoutInfo))
+import GHC.Unit.Types (IsBootInterface(IsBoot))
 
 module'
     :: Maybe ModuleNameStr
     -> Maybe [IE'] -- ^ Exports
     -> [ImportDecl']
     -> [HsDecl']
-    -> HsModule'
+    -> HsModule
 module' name exports imports decls = HsModule
-    { hsmodName = fmap (builtLoc . unModuleNameStr) name
+    { hsmodLayout = NoLayoutInfo 
+    , hsmodName = fmap (builtLoc . unModuleNameStr) name
     , hsmodExports = fmap (builtLoc . map builtLoc) exports
     , hsmodImports = map builtLoc imports
     , hsmodDecls = fmap builtLoc decls
@@ -71,7 +74,7 @@ as' d m = d { ideclAs = Just (builtLoc $ unModuleNameStr m) }
 import' :: ModuleNameStr -> ImportDecl'
 import' m = noSourceText (noExt ImportDecl)
             (builtLoc $ unModuleNameStr m)
-            Nothing False False
+            Nothing NotBoot False
 #if MIN_VERSION_ghc(8,10,0)
             NotQualified
 #else
@@ -89,7 +92,7 @@ hiding d ies = d
 
 -- | Adds the @{-# SOURCE #-}@ pragma to an import.
 source :: ImportDecl' -> ImportDecl'
-source d = d { ideclSource = True }
+source d = d { ideclSource = IsBoot }
 
 -- | Exports all methods and/or constructors.
 --

@@ -18,13 +18,14 @@ module GHC.SourceGen.Pat
     , sigP
     ) where
 
-import GHC.Hs.Types
+import GHC.Hs.Type
 import GHC.Hs.Pat hiding (LHsRecField')
 
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Pat.Internal
 import GHC.SourceGen.Syntax.Internal
-import GHC.SourceGen.Type.Internal (sigWcType)
+import GHC.SourceGen.Type.Internal (patSigType)
+import GHC.Hs.Extension (NoExtField(NoExtField))
 
 -- | A wild pattern (@_@).
 wildP :: Pat'
@@ -44,7 +45,7 @@ v `asP` p = noExt AsPat (valueRdrName v) $ builtPat $ parenthesize p
 -- > =====
 -- > conP "A" [bvar "b", bvar "c"]
 conP :: RdrNameStr -> [Pat'] -> Pat'
-conP c xs = ConPatIn (valueRdrName c) $ PrefixCon
+conP c xs = ConPat NoExtField (valueRdrName c) $ PrefixCon
                 $ map (builtPat . parenthesize) xs
 
 -- | A pattern constructor with no arguments.
@@ -57,7 +58,7 @@ conP_ c = conP c []
 
 recordConP :: RdrNameStr -> [(RdrNameStr, Pat')] -> Pat'
 recordConP c fs
-    = ConPatIn (valueRdrName c)
+    = ConPat NoExtField (valueRdrName c)
         $ RecCon $ HsRecFields (map mkRecField fs) Nothing -- No ".."
   where
     mkRecField :: (RdrNameStr, Pat') -> LHsRecField' LPat'
@@ -92,7 +93,7 @@ lazyP = noExt LazyPat . builtPat . parenthesize
 -- > sigPat (bvar "x") (var "y")
 sigP :: Pat' -> HsType' -> Pat'
 #if MIN_VERSION_ghc(8,8,0)
-sigP p t = noExt SigPat (builtPat p) (sigWcType t)
+sigP p t = noExt SigPat (builtPat p) (patSigType t)
 #elif MIN_VERSION_ghc(8,6,0)
 sigP p t = SigPat (sigWcType t) (builtPat p)
 #else

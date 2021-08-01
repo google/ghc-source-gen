@@ -11,15 +11,15 @@ module GHC.SourceGen.Pretty
     , hPutPpr
     ) where
 
-import DynFlags
-import GhcMonad
-import Outputable
+import GHC.Driver.Session
+import GHC.Driver.Monad
+import GHC.Utils.Outputable
 import System.IO
 
 hPutPpr :: Outputable a => Handle -> a -> Ghc ()
 hPutPpr h x = do
     dflags <- getDynFlags
-    liftIO $ printForUser dflags h neverQualify $ ppr x
+    liftIO $ printForUser dflags h neverQualify AllTheWay $ ppr x
 
 putPpr :: Outputable a => a -> Ghc ()
 putPpr = hPutPpr stdout

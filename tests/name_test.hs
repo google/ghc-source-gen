@@ -3,7 +3,7 @@ module Main (main) where
 
 import GHC.SourceGen.Name
 
-import OccName
+import GHC.Types.Name.Occurrence
 
 import Data.List (intercalate)
 import Data.String (fromString)

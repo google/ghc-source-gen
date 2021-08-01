@@ -9,11 +9,11 @@ module GHC.SourceGen.Name.Internal where
 import Data.Char (isAlphaNum, isUpper)
 import Data.List (intercalate)
 import Data.String (IsString(..))
-import FastString (FastString, fsLit)
-import Module (mkModuleNameFS, ModuleName, moduleNameString)
-import RdrName
-import OccName
-import SrcLoc (Located)
+import GHC.Data.FastString (FastString, fsLit)
+import GHC.Unit.Module.Name (mkModuleNameFS, ModuleName, moduleNameString)
+import GHC.Types.Name.Reader
+import GHC.Types.Name.Occurrence
+import GHC.Types.SrcLoc (Located)
 
 import GHC.SourceGen.Syntax.Internal (builtLoc)
 

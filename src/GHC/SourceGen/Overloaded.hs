@@ -18,8 +18,8 @@ module GHC.SourceGen.Overloaded
     , BVar(..)
     ) where
 
-import BasicTypes (Boxity(..))
-import GHC.Hs.Types
+import GHC.Types.Basic (Boxity(..))
+import GHC.Hs.Type
     ( HsType(..)
     , HsTyVarBndr(..)
     )
@@ -32,17 +32,18 @@ import GHC.Hs
     ( HsExpr(..)
     , Pat(..)
     , HsTupArg(..)
-    , HsTupleSort(..)
+    , HsTupleSort(..), GhcPs
     )
-import DataCon (dataConName)
-import RdrName (RdrName(..), nameRdrName)
-import SrcLoc (Located)
-import TysWiredIn (consDataCon_RDR, nilDataCon, unitDataCon)
+import GHC.Core.DataCon (dataConName)
+import GHC.Types.Name.Reader (RdrName(..), nameRdrName)
+import GHC.Types.SrcLoc (Located)
+import GHC.Builtin.Types (consDataCon_RDR, nilDataCon, unitDataCon)
 
 import GHC.SourceGen.Expr.Internal
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
+import GHC.Types.Var (Specificity(SpecifiedSpec))
 
 -- | A class for wrapping terms in parentheses.
 class Par e where
@@ -241,9 +242,11 @@ instance Var HsType' where
 instance BVar HsType' where
     bvar = var . UnqualStr
 
-instance BVar HsTyVarBndr' where
-    bvar = noExt UserTyVar . typeRdrName . UnqualStr
+instance BVar (HsTyVarBndr Specificity GhcPs) where
+    bvar = noExt UserTyVar SpecifiedSpec . typeRdrName . UnqualStr
 
+instance BVar (HsTyVarBndr () GhcPs) where
+    bvar = noExt UserTyVar () . typeRdrName . UnqualStr
 instance Var IE' where
     var n = noExt IEVar $ builtLoc $ IEName $ exportRdrName n
 
