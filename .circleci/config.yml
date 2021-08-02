@@ -73,10 +73,10 @@ jobs:
     - image: circleci/rust:1.36-stretch
     steps:
     - checkout
-    # - restore_cache:
-    #     keys:
-    #         - stack-cache-v2-ghc-9.0-{{ arch }}-{{ .Branch }}
-    #         - stack-cache-v2-ghc-9.0-{{ arch }}-master
+    - restore_cache:
+        keys:
+            - stack-cache-v2-ghc-9.0-{{ arch }}-{{ .Branch }}
+            - stack-cache-v2-ghc-9.0-{{ arch }}-master
     - run: .circleci/install-stack.sh
     - run: stack test --no-terminal --resolver=ghc-9.0.1
     - save_cache:
