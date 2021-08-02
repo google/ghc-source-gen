@@ -105,4 +105,5 @@ workflows:
             - build-12.8
             - build-13.23
             - build-15.13
+            - build-ghc-8.10
             - build-ghc-9.0
