@@ -29,11 +29,19 @@ module GHC.SourceGen.Name
     , moduleNameStrToString
     ) where
 
+#if MIN_VERSION_ghc(9,0,1)
 import GHC.Data.FastString (unpackFS)
 import GHC.Unit.Module.Name (moduleNameString)
 import GHC.SourceGen.Name.Internal
 import GHC.Types.Name.Occurrence (OccName, occNameFS, occNameSpace, isVarNameSpace)
 import GHC.Types.Name (Name, nameOccName)
+#else
+import FastString (unpackFS)
+import Module (moduleNameString)
+import GHC.SourceGen.Name.Internal
+import OccName (OccName, occNameFS, occNameSpace, isVarNameSpace)
+import Name (Name, nameOccName)
+#endif
 
 unqual :: OccNameStr -> RdrNameStr
 unqual = UnqualStr

@@ -49,14 +49,27 @@ module GHC.SourceGen.Decl
     , patSynBind
     ) where
 
+#if MIN_VERSION_ghc(9,0,1)
 import GHC.Types.Basic (LexicalFixity(Prefix))
-#if !MIN_VERSION_ghc(8,6,0)
-import GHC.Types.Basic (DerivStrategy(..))
-#endif
 import GHC.Data.Bag (listToBag)
+import GHC.Types.SrcLoc (Located, LayoutInfo(NoLayoutInfo))
+import GHC.Parser.Annotation (IsUnicodeSyntax(NormalSyntax))
+#else
+import BasicTypes (LexicalFixity(Prefix))
+import Bag (listToBag)
+import SrcLoc (Located)
+#endif
+
+#if !MIN_VERSION_ghc(8,6,0)
+import BasicTypes (DerivStrategy(..))
+#endif
 import GHC.Hs.Binds
 import GHC.Hs.Decls
+#if MIN_VERSION_ghc(9,0,1)
 import GHC.Hs.Type
+#else
+import GHC.Hs.Types
+#endif
     ( ConDeclField(..)
     , FieldOcc(..)
     , HsConDetails(..)
@@ -70,10 +83,12 @@ import GHC.Hs.Type
     , HsArg(..)
 
     , SrcStrictness(..)
-    , SrcUnpackedness(..), HsScaled (HsScaled), HsArrow (HsUnrestrictedArrow)
-    , HsTyVarBndr
+    , SrcUnpackedness(..)
+#if MIN_VERSION_ghc(9,0,1)
+    , HsScaled (HsScaled)
+    , HsArrow (HsUnrestrictedArrow)
+#endif
     )
-import GHC.Types.SrcLoc (Located, LayoutInfo(NoLayoutInfo))
 
 #if MIN_VERSION_ghc(8,10,0)
 import GHC.Hs.Extension (NoExtField(NoExtField))
@@ -89,9 +104,6 @@ import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
-import GHC.Parser.Annotation (IsUnicodeSyntax(NormalSyntax))
-
-import GHC.Hs.Extension (GhcPs)
 
 -- | A definition that can appear in the body of a @class@ declaration.
 --
@@ -152,7 +164,7 @@ funDep = ClassFunDep
 class'
     :: [HsType'] -- ^ Context
     -> OccNameStr -- ^ Class name
-    -> [HsTyVarBndr () GhcPs] -- ^ Type parameters
+    -> [HsTyVarBndrUnit'] -- ^ Type parameters
     -> [ClassDecl] -- ^ Class declarations
     -> HsDecl'
 class' context name vars decls
@@ -257,7 +269,7 @@ tyFamInst name params ty = tyFamInstD
 -- > type A a b = B b a
 -- > =====
 -- > type' "A" [bvar "a", bvar "b"] $ var "B" @@ var "b" @@ var "a"
-type' :: OccNameStr -> [HsTyVarBndr () GhcPs] -> HsType' -> HsDecl'
+type' :: OccNameStr -> [HsTyVarBndrUnit'] -> HsType' -> HsDecl'
 type' name vars t =
     noExt TyClD $ withPlaceHolder $ noExt SynDecl (typeRdrName $ unqual name)
         (mkQTyVars vars)
@@ -267,7 +279,7 @@ type' name vars t =
 newOrDataType
     :: NewOrData
     -> OccNameStr
-    -> [HsTyVarBndr () GhcPs]
+    -> [HsTyVarBndrUnit']
     -> [ConDecl']
     -> [HsDerivingClause']
     -> HsDecl'
@@ -289,7 +301,7 @@ newOrDataType newOrData name vars conDecls derivs
 -- > newtype' "Const" [bvar "a", bvar "b"]
 -- >    (conDecl "Const" [var "a"])
 -- >    [var "Show"]
-newtype' :: OccNameStr -> [HsTyVarBndr () GhcPs] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
+newtype' :: OccNameStr -> [HsTyVarBndrUnit'] -> ConDecl' -> [HsDerivingClause'] -> HsDecl'
 newtype' name vars conD = newOrDataType NewType name vars [conD]
 
 -- | A data declaration.
@@ -302,7 +314,7 @@ newtype' name vars conD = newOrDataType NewType name vars [conD]
 -- >   , conDecl "Right" [var "b"]
 -- >   ]
 -- >   [var "Show"]
-data' :: OccNameStr -> [HsTyVarBndr () GhcPs] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
+data' :: OccNameStr -> [HsTyVarBndrUnit'] -> [ConDecl'] -> [HsDerivingClause'] -> HsDecl'
 data' = newOrDataType DataType
 
 -- | Declares a Haskell-98-style prefix constructor for a data or type
@@ -312,8 +324,16 @@ data' = newOrDataType DataType
 -- > =====
 -- > conDecl "Foo" [field (var "a"), field (var "Int")]
 prefixCon :: OccNameStr -> [Field] -> ConDecl'
-prefixCon name fields = renderCon98Decl name
-    $ PrefixCon $ map (HsScaled (HsUnrestrictedArrow NormalSyntax) . renderField) fields
+prefixCon name fields =
+    renderCon98Decl
+        name
+            $ PrefixCon
+#if MIN_VERSION_ghc(9,0,1)
+                $ map (HsScaled (HsUnrestrictedArrow NormalSyntax) . renderField)
+#else
+                $ map renderField
+#endif
+                     fields
 
 -- | Declares a Haskell-98-style infix constructor for a data or type
 -- declaration.
@@ -324,8 +344,18 @@ prefixCon name fields = renderCon98Decl name
 infixCon :: Field -> OccNameStr -> Field -> ConDecl'
 infixCon f name f' = renderCon98Decl name
     $ InfixCon
-        (HsScaled (HsUnrestrictedArrow NormalSyntax) $ renderField f)
-        (HsScaled (HsUnrestrictedArrow NormalSyntax) $ renderField f')
+        (
+#if MIN_VERSION_ghc(9,0,1)
+            HsScaled (HsUnrestrictedArrow NormalSyntax) $
+#endif
+                renderField f
+        )
+        (
+#if MIN_VERSION_ghc(9,0,1)
+            HsScaled (HsUnrestrictedArrow NormalSyntax) $ 
+#endif
+                renderField f'
+        )
 
 -- | Declares Haskell-98-style record constructor for a data or type
 -- declaration.

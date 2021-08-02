@@ -47,13 +47,21 @@ module GHC.SourceGen.Binds
     , (<--)
     ) where
 
-import GHC.Types.Basic (LexicalFixity(..))
 import Data.Bool (bool)
 import Data.Maybe (fromMaybe)
 import GHC.Hs.Binds
 import GHC.Hs.Expr
+
+#if MIN_VERSION_ghc(9,0,1)
+import GHC.Types.Basic (LexicalFixity(..))
 import GHC.Hs.Type
 import GHC.Plugins (isSymOcc)
+#else
+import BasicTypes (LexicalFixity(..))
+import GHC.Hs.Types
+import GhcPlugins (isSymOcc)
+import TcEvidence (HsWrapper(WpHole))
+#endif
 
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Name
@@ -95,7 +103,13 @@ typeSig n = typeSigs [n]
 -- >   ]
 funBindsWithFixity :: HasValBind t => Maybe LexicalFixity -> OccNameStr -> [RawMatch] -> t
 funBindsWithFixity fixity name matches = bindB $ withPlaceHolder
-        (noExt FunBind name' (matchGroup context matches))
+        (noExt FunBind
+          name'
+          (matchGroup context matches)
+#if !MIN_VERSION_ghc(9,0,1)
+          WpHole
+#endif
+        )
         []
   where
     name' = valueRdrName $ unqual name
@@ -288,7 +302,15 @@ stmt e =
 -- > =====
 -- > bvar "x" <-- var "act"
 (<--) :: Pat' -> HsExpr' -> Stmt'
-p <-- e = withPlaceHolder $ noExt BindStmt (builtPat p) (builtLoc e) 
+p <-- e =
+  withPlaceHolder $
+    noExt BindStmt
+      (builtPat p)
+      (builtLoc e) 
+#if !MIN_VERSION_ghc(9,0,1)
+      noSyntaxExpr
+      noSyntaxExpr
+#endif
 infixl 1 <--
 
 -- | Syntax types which can declare/define pattern bindings.
