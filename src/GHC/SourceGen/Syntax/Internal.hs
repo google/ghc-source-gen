@@ -13,8 +13,10 @@ import GHC.Hs
     ( HsDecl
     , HsExpr(..)
     , HsLit
+    , HsModule
     , HsType(..)
     , HsBind
+    , HsTyVarBndr
     , HsOverLit
     , HsValBinds
     , HsMatchContext
@@ -32,26 +34,36 @@ import GHC.Hs
     , LHsSigWcType
     , LHsWcType
     , HsImplicitBndrs
-    , TyFamInstDecl, HsPatSigType
-
-
-
-
+    , TyFamInstDecl
+#if MIN_VERSION_ghc(9,0,1)
+    , HsPatSigType
+#endif
+#if !MIN_VERSION_ghc(8,8,0)
+    , LHsRecField
+    , LHsRecUpdField
+#endif
     )
 import GHC.Hs.Binds (Sig, HsLocalBinds)
 #if MIN_VERSION_ghc(8,6,0)
 import GHC.Hs.Decls (DerivStrategy)
 #else
-import GHC.Types.Basic (DerivStrategy)
+import BasicTypes (DerivStrategy)
 #endif
 import GHC.Hs.Decls (HsDerivingClause)
 import GHC.Hs.Pat
+#if MIN_VERSION_ghc(9,0,1)
 import GHC.Types.SrcLoc (SrcSpan, Located, GenLocated(..), mkGeneralSrcSpan)
-
-#if MIN_VERSION_ghc(8,8,0)
-import GHC.Types.Basic (PromotionFlag(..))
 #else
-import GHC.Hs.Type (Promoted(..))
+import RdrName (RdrName)
+import SrcLoc (SrcSpan, Located, GenLocated(..), mkGeneralSrcSpan)
+#endif
+
+#if MIN_VERSION_ghc(9,0,1)
+import GHC.Types.Basic (PromotionFlag(..))
+#elif MIN_VERSION_ghc(8,8,0)
+import BasicTypes (PromotionFlag(..))
+#else
+import GHC.Hs.Types (Promoted(..))
 #endif
 
 #if MIN_VERSION_ghc(8,10,0)
@@ -63,6 +75,9 @@ import PlaceHolder(PlaceHolder(..))
 #endif
 
 import GHC.Hs.Extension (GhcPs)
+#if MIN_VERSION_ghc(9,0,1)
+import GHC.Types.Var (Specificity)
+#endif
 
 #if MIN_VERSION_ghc(8,6,0)
 #if MIN_VERSION_ghc(8,10,0)
@@ -191,12 +206,29 @@ type IE' = IE GhcPs
 -- Instances:
 --
 -- * 'GHC.SourceGen.Overloaded.BVar'
+#if MIN_VERSION_ghc(9,0,1)
+type HsTyVarBndrSpec' = HsTyVarBndr Specificity GhcPs
+type HsTyVarBndrUnit' = HsTyVarBndr () GhcPs
+#else
+type HsTyVarBndrSpec' = HsTyVarBndr GhcPs
+type HsTyVarBndrUnit' = HsTyVarBndr GhcPs 
+#endif
+
 type HsLit' = HsLit GhcPs
+#if MIN_VERSION_ghc(9,0,1)
+type HsModule' = HsModule
+#else
+type HsModule' = HsModule GhcPs
+#endif
 type HsBind' = HsBind GhcPs
 type HsLocalBinds' = HsLocalBinds GhcPs
 type HsValBinds' = HsValBinds GhcPs
 type Sig' = Sig GhcPs
+#if MIN_VERSION_ghc(9,0,1)
 type HsMatchContext' = HsMatchContext GhcPs
+#else
+type HsMatchContext' = HsMatchContext RdrName
+#endif
 type Match' = Match GhcPs
 type MatchGroup' = MatchGroup GhcPs
 type GRHS' = GRHS GhcPs
@@ -210,7 +242,9 @@ type LHsSigType' = LHsSigType GhcPs
 type ImportDecl' = ImportDecl GhcPs
 type LHsSigWcType' = LHsSigWcType GhcPs
 type LHsWcType' = LHsWcType GhcPs
+#if MIN_VERSION_ghc(9,0,1)
 type HsPatSigType' = HsPatSigType GhcPs
+#endif
 type HsDerivingClause' = HsDerivingClause GhcPs
 type LHsRecField' arg = LHsRecField GhcPs arg
 type LHsRecUpdField' = LHsRecUpdField GhcPs

@@ -4,10 +4,17 @@
 -- license that can be found in the LICENSE file or at
 -- https://developers.google.com/open-source/licenses/bsd
 
+{-# LANGUAGE CPP #-}
+
 module GHC.SourceGen.Lit.Internal where
 
+#if MIN_VERSION_ghc(9,0,1)
 import GHC.Types.Basic (SourceText(NoSourceText), FractionalLit(..))
 import GHC.Types.Basic (IntegralLit(..))
+#else
+import BasicTypes (SourceText(NoSourceText), FractionalLit(..))
+import BasicTypes (IntegralLit(..))
+#endif
 import GHC.Hs.Lit
 import GHC.SourceGen.Syntax.Internal
 

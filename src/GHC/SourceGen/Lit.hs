@@ -4,6 +4,8 @@
 -- license that can be found in the LICENSE file or at
 -- https://developers.google.com/open-source/licenses/bsd
 
+{-# LANGUAGE CPP #-}
+
 -- | This module provides combinators for constructing Haskell literals,
 -- which may be used in either patterns or expressions.
 module GHC.SourceGen.Lit
@@ -16,12 +18,19 @@ module GHC.SourceGen.Lit
     , frac
     ) where
 
-import GHC.Types.Basic (FractionalLit(..))
-import GHC.Types.Basic(IntegralLit(..), SourceText(..))
+
 import GHC.Hs.Lit
 import GHC.Hs.Expr (noExpr, noSyntaxExpr, HsExpr(..))
 import GHC.Hs.Pat (Pat(..))
+#if MIN_VERSION_ghc(9,0,1)
+import GHC.Types.Basic (FractionalLit(..))
+import GHC.Types.Basic(IntegralLit(..), SourceText(..))
 import GHC.Data.FastString (fsLit)
+#else
+import BasicTypes (FractionalLit(..))
+import BasicTypes(IntegralLit(..), SourceText(..))
+import FastString (fsLit)
+#endif
 
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal

@@ -18,8 +18,13 @@ module GHC.SourceGen.Overloaded
     , BVar(..)
     ) where
 
+#if MIN_VERSION_ghc(9,0,1)
 import GHC.Types.Basic (Boxity(..))
 import GHC.Hs.Type
+#else
+import BasicTypes (Boxity(..))
+import GHC.Hs.Types
+#endif
     ( HsType(..)
     , HsTyVarBndr(..)
     )
@@ -32,18 +37,29 @@ import GHC.Hs
     ( HsExpr(..)
     , Pat(..)
     , HsTupArg(..)
-    , HsTupleSort(..), GhcPs
+    , HsTupleSort(..)
+#if !MIN_VERSION_ghc(9,0,1)
+    , GhcPs
+#endif
     )
-import GHC.Core.DataCon (dataConName)
-import GHC.Types.Name.Reader (RdrName(..), nameRdrName)
-import GHC.Types.SrcLoc (Located)
-import GHC.Builtin.Types (consDataCon_RDR, nilDataCon, unitDataCon)
 
 import GHC.SourceGen.Expr.Internal
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
+
+#if MIN_VERSION_ghc(9,0,1)
+import GHC.Core.DataCon (dataConName)
+import GHC.Types.Name.Reader (RdrName(..), nameRdrName)
+import GHC.Types.SrcLoc (Located)
+import GHC.Builtin.Types (consDataCon_RDR, nilDataCon, unitDataCon)
 import GHC.Types.Var (Specificity(SpecifiedSpec))
+#else
+import DataCon (dataConName)
+import RdrName (RdrName(..), nameRdrName)
+import SrcLoc (Located)
+import TysWiredIn (consDataCon_RDR, nilDataCon, unitDataCon)
+#endif
 
 -- | A class for wrapping terms in parentheses.
 class Par e where
@@ -242,11 +258,17 @@ instance Var HsType' where
 instance BVar HsType' where
     bvar = var . UnqualStr
 
-instance BVar (HsTyVarBndr Specificity GhcPs) where
+#if MIN_VERSION_ghc(9,0,1)
+instance BVar HsTyVarBndrSpec' where
     bvar = noExt UserTyVar SpecifiedSpec . typeRdrName . UnqualStr
 
-instance BVar (HsTyVarBndr () GhcPs) where
+instance BVar HsTyVarBndrUnit' where
     bvar = noExt UserTyVar () . typeRdrName . UnqualStr
+#else
+instance BVar (HsTyVarBndr GhcPs) where
+    bvar = noExt UserTyVar . typeRdrName . UnqualStr
+#endif
+
 instance Var IE' where
     var n = noExt IEVar $ builtLoc $ IEName $ exportRdrName n
 

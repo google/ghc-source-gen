@@ -9,7 +9,7 @@
 -- including import and export statements.
 module GHC.SourceGen.Module
     ( -- * HsModule
-      HsModule
+      HsModule'
     , module'
       -- * Import declarations
     , ImportDecl'
@@ -34,24 +34,31 @@ import GHC.Hs
     , ImportDeclQualifiedStyle(..)
 #endif
     )
-import GHC.Types.Name.Reader (RdrName)
+
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
+#if MIN_VERSION_ghc(9,0,1)
+import GHC.Types.Name.Reader (RdrName)
 import GHC.Plugins (IsBootInterface(NotBoot), LayoutInfo (NoLayoutInfo))
 import GHC.Unit.Types (IsBootInterface(IsBoot))
+#else
+import RdrName (RdrName)
+#endif
 
 module'
     :: Maybe ModuleNameStr
     -> Maybe [IE'] -- ^ Exports
     -> [ImportDecl']
     -> [HsDecl']
-    -> HsModule
+    -> HsModule'
 module' name exports imports decls = HsModule
-    { hsmodLayout = NoLayoutInfo 
-    , hsmodName = fmap (builtLoc . unModuleNameStr) name
+    { hsmodName = fmap (builtLoc . unModuleNameStr) name
+#if MIN_VERSION_ghc(9,0,1)
+    , hsmodLayout = NoLayoutInfo 
+#endif
     , hsmodExports = fmap (builtLoc . map builtLoc) exports
     , hsmodImports = map builtLoc imports
     , hsmodDecls = fmap builtLoc decls
@@ -72,15 +79,25 @@ as' :: ImportDecl' -> ModuleNameStr -> ImportDecl'
 as' d m = d { ideclAs = Just (builtLoc $ unModuleNameStr m) }
 
 import' :: ModuleNameStr -> ImportDecl'
-import' m = noSourceText (noExt ImportDecl)
-            (builtLoc $ unModuleNameStr m)
-            Nothing NotBoot False
-#if MIN_VERSION_ghc(8,10,0)
-            NotQualified
+import' m =
+    noSourceText
+        (noExt ImportDecl)
+        (builtLoc $ unModuleNameStr m)
+        Nothing
+#if MIN_VERSION_ghc(9,0,1)
+        NotBoot
 #else
-            False
+        False
 #endif
-            False Nothing Nothing
+        False
+#if MIN_VERSION_ghc(8,10,0)
+        NotQualified
+#else
+        False
+#endif
+        False
+        Nothing
+        Nothing
 
 exposing :: ImportDecl' -> [IE'] -> ImportDecl'
 exposing d ies = d
@@ -92,7 +109,11 @@ hiding d ies = d
 
 -- | Adds the @{-# SOURCE #-}@ pragma to an import.
 source :: ImportDecl' -> ImportDecl'
+#if MIN_VERSION_ghc(9,0,1)
 source d = d { ideclSource = IsBoot }
+#else
+source d = d { ideclSource = True }
+#endif
 
 -- | Exports all methods and/or constructors.
 --
