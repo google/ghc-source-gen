@@ -12,8 +12,6 @@ packages:
 ghc-options:
   "$locals": -Wall -Werror
 
-allow-newer: true
-
 extra-deps:
 - ghc-paths-0.1.0.12@sha256:afdfdb6584f39e821b2b7130e12007bf3ad87401d86f5105eead059c150dc81d,657
 - QuickCheck-2.14.2@sha256:4ce29211223d5e6620ebceba34a3ca9ccf1c10c0cf387d48aea45599222ee5aa,7736
