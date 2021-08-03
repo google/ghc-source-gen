@@ -30,7 +30,6 @@ import GHC.SourceGen.Type.Internal
 #if MIN_VERSION_ghc(9,0,1)
 import GHC.Hs.Type
 import GHC.Parser.Annotation (IsUnicodeSyntax(NormalSyntax))
-import GHC.Types.Var (Specificity(SpecifiedSpec))
 #else
 import GHC.Hs.Types
 #endif
@@ -112,11 +111,11 @@ infixr 0 ==>
 -- > x :: A
 -- > =====
 -- > kindedVar "x" (var "A")
-kindedVar :: OccNameStr -> HsType' -> HsTyVarBndrSpec'
+kindedVar :: OccNameStr -> HsType' -> HsTyVarBndrUnit' 
 kindedVar v t =
     noExt KindedTyVar
 #if MIN_VERSION_ghc(9,0,1)
-    SpecifiedSpec
+    ()
 #endif
     (typeRdrName $  UnqualStr v)
     (builtLoc t)
