@@ -61,7 +61,7 @@ jobs:
             - stack-cache-v2-ghc-8.10-{{ arch }}-{{ .Branch }}
             - stack-cache-v2-ghc-8.10-{{ arch }}-master
     - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --resolver=lts-15.13
+    - run: stack test --no-terminal --resolver=lts-18.5
     - save_cache:
             key: stack-cache-v2-ghc-8.10-{{ arch }}-{{ .Branch }}-{{ epoch }}
             paths:
