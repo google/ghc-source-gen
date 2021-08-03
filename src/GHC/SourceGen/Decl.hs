@@ -172,7 +172,7 @@ class' context name vars decls
             { tcdCtxt = builtLoc $ map builtLoc context
 #if MIN_VERSION_ghc(9,0,1)
             , tcdCExt = NoLayoutInfo
-#elif MIN_VERSIN_ghc(8,10,0)
+#elif MIN_VERSION_ghc(8,10,0)
             , tcdCExt = NoExtField 
 #elif MIN_VERSION_ghc(8,6,0)
             , tcdCExt = NoExt
