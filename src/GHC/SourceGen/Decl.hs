@@ -170,8 +170,10 @@ class'
 class' context name vars decls
     = noExt TyClD $ ClassDecl
             { tcdCtxt = builtLoc $ map builtLoc context
-#if MIN_VERSION_ghc(8,10,0)
-            , tcdCExt = NoLayoutInfo 
+#if MIN_VERSION_ghc(9,0,1)
+            , tcdCExt = NoLayoutInfo
+#elif MIN_VERSIN_ghc(8,10,0)
+            , tcdCExt = NoExtField 
 #elif MIN_VERSION_ghc(8,6,0)
             , tcdCExt = NoExt
 #else
