@@ -61,19 +61,6 @@ import SrcLoc (Located)
 import TysWiredIn (consDataCon_RDR, nilDataCon, unitDataCon)
 #endif
 
-#if MIN_VERSION_ghc(9,0,1)
-import GHC.Core.DataCon (dataConName)
-import GHC.Types.Name.Reader (RdrName(..), nameRdrName)
-import GHC.Types.SrcLoc (Located)
-import GHC.Builtin.Types (consDataCon_RDR, nilDataCon, unitDataCon)
-import GHC.Types.Var (Specificity(SpecifiedSpec))
-#else
-import DataCon (dataConName)
-import RdrName (RdrName(..), nameRdrName)
-import SrcLoc (Located)
-import TysWiredIn (consDataCon_RDR, nilDataCon, unitDataCon)
-#endif
-
 -- | A class for wrapping terms in parentheses.
 class Par e where
     par :: e -> e

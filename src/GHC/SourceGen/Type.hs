@@ -34,14 +34,6 @@ import GHC.Parser.Annotation (IsUnicodeSyntax(NormalSyntax))
 import GHC.Hs.Types
 #endif
 
-#if MIN_VERSION_ghc(9,0,1)
-import GHC.Hs.Type
-import GHC.Parser.Annotation (IsUnicodeSyntax(NormalSyntax))
-import GHC.Types.Var (Specificity(SpecifiedSpec))
-#else
-import GHC.Hs.Types
-#endif
-
 -- | A promoted name, for example from the @DataKinds@ extension.
 tyPromotedVar :: RdrNameStr -> HsType'
 tyPromotedVar = noExt HsTyVar promoted . typeRdrName
