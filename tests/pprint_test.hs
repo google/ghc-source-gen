@@ -1,11 +1,11 @@
 {-# LANGUAGE OverloadedStrings #-}
 module Main(main) where
 
-import DynFlags (getDynFlags)
-import GhcMonad (liftIO)
+import GHC.Driver.Session (getDynFlags)
+import GHC.Driver.Monad (liftIO)
 import GHC.Paths (libdir)
 import GHC (runGhc, DynFlags)
-import Outputable (Outputable)
+import GHC.Utils.Outputable (Outputable)
 
 import Test.Tasty
 import Test.Tasty.HUnit

@@ -6,6 +6,7 @@
 
 -- | This module provides combinators for constructing Haskell literals,
 -- which may be used in either patterns or expressions.
+{-# LANGUAGE CPP #-}
 module GHC.SourceGen.Lit
     ( HsLit'
     , HsOverLit'
@@ -16,12 +17,16 @@ module GHC.SourceGen.Lit
     , frac
     ) where
 
-import BasicTypes (FractionalLit(..))
-import BasicTypes(IntegralLit(..), SourceText(..))
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Types.Basic (FractionalLit(..), IntegralLit(..), SourceText(..))
+import GHC.Data.FastString (fsLit)
+#else
+import BasicTypes (FractionalLit(..), IntegralLit(..), SourceText(..))
+import FastString (fsLit)
+#endif
 import GHC.Hs.Lit
 import GHC.Hs.Expr (noExpr, noSyntaxExpr, HsExpr(..))
 import GHC.Hs.Pat (Pat(..))
-import FastString (fsLit)
 
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal

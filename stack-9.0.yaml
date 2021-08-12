@@ -1,0 +1,34 @@
+# Copyright 2019 Google LLC
+#
+# Use of this source code is governed by a BSD-style
+# license that can be found in the LICENSE file or at
+# https://developers.google.com/open-source/licenses/bsd
+
+resolver: ghc-9.0.1
+packages:
+- .
+- ghc-show-ast
+
+allow-newer: true
+
+ghc-options:
+  "$locals": -Wall -Werror
+
+extra-deps:
+- QuickCheck-2.14.2@sha256:4ce29211223d5e6620ebceba34a3ca9ccf1c10c0cf387d48aea45599222ee5aa,7736
+- ghc-paths-0.1.0.12@sha256:afdfdb6584f39e821b2b7130e12007bf3ad87401d86f5105eead059c150dc81d,657
+- tasty-1.4.1@sha256:69e90e965543faf0fc2c8e486d6c1d8cf81fd108e2c4541234c41490f392f94f,2638
+- tasty-hunit-0.10.0.3@sha256:ba774024f3a26100c559dbef41e030bdf443408ed848691f7b9aa85b6fb218c3,1545
+- tasty-quickcheck-0.10.1.2@sha256:45c8125e5de19570359784def5946dec759b7431e3beccc61cd09d661daf19ed,1613
+- ansi-terminal-0.11@sha256:97470250c92aae14c4c810d7f664c532995ba8910e2ad797b29f22ad0d2d0194,3307
+- call-stack-0.4.0@sha256:ac44d2c00931dc20b01750da8c92ec443eb63a7231e8550188cb2ac2385f7feb,1200
+- clock-0.8.2@sha256:473ffd59765cc67634bdc55b63c699a85addf3a024089073ec2a862881e83e2a,4313
+- optparse-applicative-0.16.1.0@sha256:16ebd7054b2265c1aad16c1d19dc503695fbfc67b35203d9952fd577d08c0110,4982
+- random-1.2.0@sha256:195506fedaa7c31c1fa2a747e9b49b4a5d1f0b09dd8f1291f23a771656faeec3,6097
+- splitmix-0.1.0.3@sha256:fc3aae74c467f4b608050bef53aec17904a618731df9407e655d8f3bf8c32d5c,6049
+- tagged-0.8.6.1@sha256:29c67d98a4404607f024750ab9c7210dadcbbef4e1944c48c52902f2071b2662,2874
+- unbounded-delays-0.1.1.1@sha256:d7a2a49f15bdff2a8bdbd76f9d204580ea4be5a9def500c6371d51d8111cbcbe,1209
+- wcwidth-0.0.2@sha256:77531eb6683c505c22ab3fa11bbc43d3ce1e7dac21401d4d5a19677d348bb5f3,1998
+- ansi-wl-pprint-0.6.9@sha256:20d30674f137d43aa0279c2c2cc5e45a5f1c3c57e301852494906158b6313bf7,2388
+- colour-2.3.6@sha256:ebdcbf15023958838a527e381ab3c3b1e99ed12d1b25efeb7feaa4ad8c37664a,2378
+- transformers-compat-0.7@sha256:c4cc2d01c4e490ba680e9a0b607a1a790137856a6b3af12f8bdc7788a567bcf5,5572

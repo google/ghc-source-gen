@@ -11,7 +11,7 @@ module Main (main) where
 
 import GHC.Paths (libdir)
 import GHC (runGhc)
-import Outputable (Outputable)
+import GHC.Utils.Outputable (Outputable)
 
 import GHC.SourceGen
 

@@ -30,7 +30,7 @@ description: |
 
 dependencies:
 - base >= 4.7 && < 5
-- ghc >= 8.4 && < 8.11
+- ghc >= 8.4 && < 9.2
 
 default-extensions:
 - DataKinds
@@ -52,8 +52,26 @@ library:
     - GHC.Hs.ImpExp
     - GHC.Hs.Lit
     - GHC.Hs.Pat
-    - GHC.Hs.Types
+    - GHC.Hs.Type
+    - GHC.Hs.Utils
+    - GHC.Driver.Monad
+    - GHC.Driver.Session
+    - GHC.Utils.Outputable
+    - GHC.Types.Basic
+    - GHC.Plugins
+    - GHC.Tc.Types.Evidence
 
+  - condition: impl(ghc>=8.10) && impl(ghc<9.0)
+    source-dirs: compat-8.10
+    other-modules:
+    - GHC.Hs.Type
+    - GHC.Driver.Monad
+    - GHC.Driver.Session
+    - GHC.Utils.Outputable
+    - GHC.Types.Basic
+    - GHC.Plugins
+    - GHC.Tc.Types.Evidence
+    
   source-dirs: src
   other-modules:
   - GHC.SourceGen.Binds.Internal
@@ -73,6 +91,12 @@ tests:
     - tasty >= 1.0 && < 1.5
     - tasty-hunit == 0.10.*
 
+    when:
+    - condition: impl(ghc<9.0)
+      source-dirs: compat
+      other-modules:
+      - GHC.Utils.Outputable
+
   # TODO: Fill out this test, and use it to replace pprint_examples.
   pprint_test:
     main: pprint_test.hs
@@ -82,6 +106,14 @@ tests:
     - ghc-paths == 0.1.*
     - tasty >= 1.0 && < 1.5
     - tasty-hunit == 0.10.*
+
+    when:
+    - condition: impl(ghc<9.0)
+      source-dirs: compat
+      other-modules:
+      - GHC.Driver.Monad
+      - GHC.Driver.Session
+      - GHC.Utils.Outputable
 
   name_test:
     main: name_test.hs

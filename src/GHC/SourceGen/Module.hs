@@ -34,7 +34,13 @@ import GHC.Hs
     , ImportDeclQualifiedStyle(..)
 #endif
     )
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Types.SrcLoc (LayoutInfo(..))
+import GHC.Unit.Module (IsBootInterface(..))
+import GHC.Types.Name.Reader (RdrName)
+#else
 import RdrName (RdrName)
+#endif
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name
@@ -54,6 +60,9 @@ module' name exports imports decls = HsModule
     , hsmodDecls = fmap builtLoc decls
     , hsmodDeprecMessage = Nothing
     , hsmodHaddockModHeader = Nothing
+#if MIN_VERSION_ghc(9,0,0)
+    , hsmodLayout = NoLayoutInfo
+#endif
     }
 
 qualified' :: ImportDecl' -> ImportDecl'
@@ -71,7 +80,13 @@ as' d m = d { ideclAs = Just (builtLoc $ unModuleNameStr m) }
 import' :: ModuleNameStr -> ImportDecl'
 import' m = noSourceText (noExt ImportDecl)
             (builtLoc $ unModuleNameStr m)
-            Nothing False False
+            Nothing
+#if MIN_VERSION_ghc(9,0,0)
+            NotBoot
+#else
+            False
+#endif
+            False
 #if MIN_VERSION_ghc(8,10,0)
             NotQualified
 #else
@@ -89,7 +104,13 @@ hiding d ies = d
 
 -- | Adds the @{-# SOURCE #-}@ pragma to an import.
 source :: ImportDecl' -> ImportDecl'
-source d = d { ideclSource = True }
+source d = d { ideclSource =
+#if MIN_VERSION_ghc(9,0,0)
+    IsBoot
+#else
+    True
+#endif
+}
 
 -- | Exports all methods and/or constructors.
 --

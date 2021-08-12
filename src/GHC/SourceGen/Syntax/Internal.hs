@@ -39,6 +39,9 @@ import GHC.Hs
     , LHsRecField
     , LHsRecUpdField
 #endif
+#if MIN_VERSION_ghc(9,0,0)
+    , HsPatSigType
+#endif
     )
 import GHC.Hs.Binds (Sig, HsLocalBinds)
 #if MIN_VERSION_ghc(8,6,0)
@@ -48,13 +51,19 @@ import BasicTypes (DerivStrategy)
 #endif
 import GHC.Hs.Decls (HsDerivingClause)
 import GHC.Hs.Pat
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Types.SrcLoc (SrcSpan, Located, GenLocated(..), mkGeneralSrcSpan)
+#else
 import RdrName (RdrName)
 import SrcLoc (SrcSpan, Located, GenLocated(..), mkGeneralSrcSpan)
+#endif
 
-#if MIN_VERSION_ghc(8,8,0)
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Types.Basic (PromotionFlag(..))
+#elif MIN_VERSION_ghc(8,8,0)
 import BasicTypes (PromotionFlag(..))
 #else
-import GHC.Hs.Types (Promoted(..))
+import GHC.Hs.Type (Promoted(..))
 #endif
 
 #if MIN_VERSION_ghc(8,10,0)
@@ -63,6 +72,10 @@ import GHC.Hs.Extension (NoExtField(NoExtField))
 import GHC.Hs.Extension (NoExt(NoExt))
 #else
 import PlaceHolder(PlaceHolder(..))
+#endif
+
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Types.Var (Specificity)
 #endif
 
 import GHC.Hs.Extension (GhcPs)
@@ -194,15 +207,29 @@ type IE' = IE GhcPs
 -- Instances:
 --
 -- * 'GHC.SourceGen.Overloaded.BVar'
+#if MIN_VERSION_ghc(9,0,0)
+type HsTyVarBndr' = HsTyVarBndr () GhcPs
+type HsTyVarBndrS' = HsTyVarBndr Specificity GhcPs
+#else
 type HsTyVarBndr' = HsTyVarBndr GhcPs
+type HsTyVarBndrS' = HsTyVarBndr GhcPs
+#endif
 
 type HsLit' = HsLit GhcPs
+#if MIN_VERSION_ghc(9,0,0)
+type HsModule' = HsModule
+#else
 type HsModule' = HsModule GhcPs
+#endif
 type HsBind' = HsBind GhcPs
 type HsLocalBinds' = HsLocalBinds GhcPs
 type HsValBinds' = HsValBinds GhcPs
 type Sig' = Sig GhcPs
+#if MIN_VERSION_ghc(9,0,0)
+type HsMatchContext' = HsMatchContext GhcPs
+#else
 type HsMatchContext' = HsMatchContext RdrName
+#endif
 type Match' = Match GhcPs
 type MatchGroup' = MatchGroup GhcPs
 type GRHS' = GRHS GhcPs
@@ -227,4 +254,10 @@ type TyFamInstDecl' = TyFamInstDecl GhcPs
 type DerivStrategy' = DerivStrategy GhcPs
 #else
 type DerivStrategy' = DerivStrategy
+#endif
+
+#if MIN_VERSION_ghc(9,0,0)
+type HsPatSigType' = HsPatSigType GhcPs
+#else
+type HsPatSigType' = LHsSigWcType'
 #endif

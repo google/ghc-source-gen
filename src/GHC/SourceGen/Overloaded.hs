@@ -18,8 +18,7 @@ module GHC.SourceGen.Overloaded
     , BVar(..)
     ) where
 
-import BasicTypes (Boxity(..))
-import GHC.Hs.Types
+import GHC.Hs.Type
     ( HsType(..)
     , HsTyVarBndr(..)
     )
@@ -34,10 +33,20 @@ import GHC.Hs
     , HsTupArg(..)
     , HsTupleSort(..)
     )
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.Types.Basic (Boxity(..))
+import GHC.Core.DataCon (dataConName)
+import GHC.Types.Name.Reader (RdrName(..), nameRdrName)
+import GHC.Types.SrcLoc (Located)
+import GHC.Builtin.Types (consDataCon_RDR, nilDataCon, unitDataCon)
+import GHC.Types.Var (Specificity(..))
+#else
+import BasicTypes (Boxity(..))
 import DataCon (dataConName)
 import RdrName (RdrName(..), nameRdrName)
 import SrcLoc (Located)
 import TysWiredIn (consDataCon_RDR, nilDataCon, unitDataCon)
+#endif
 
 import GHC.SourceGen.Expr.Internal
 import GHC.SourceGen.Name.Internal
@@ -241,8 +250,16 @@ instance Var HsType' where
 instance BVar HsType' where
     bvar = var . UnqualStr
 
+#if MIN_VERSION_ghc(9,0,0)
+instance BVar HsTyVarBndr' where
+    bvar = noExt UserTyVar () . typeRdrName . UnqualStr
+
+instance BVar HsTyVarBndrS' where
+    bvar = noExt UserTyVar SpecifiedSpec . typeRdrName . UnqualStr
+#else
 instance BVar HsTyVarBndr' where
     bvar = noExt UserTyVar . typeRdrName . UnqualStr
+#endif
 
 instance Var IE' where
     var n = noExt IEVar $ builtLoc $ IEName $ exportRdrName n

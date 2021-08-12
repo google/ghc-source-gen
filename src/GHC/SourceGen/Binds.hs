@@ -4,6 +4,7 @@
 -- license that can be found in the LICENSE file or at
 -- https://developers.google.com/open-source/licenses/bsd
 
+{-# LANGUAGE CPP #-}
 -- | This module provides combinators for constructing Haskell declarations.
 module GHC.SourceGen.Binds
     (  -- * Bindings
@@ -45,15 +46,16 @@ module GHC.SourceGen.Binds
     , (<--)
     ) where
 
-import BasicTypes (LexicalFixity(..))
+import GHC.Types.Basic (LexicalFixity(..))
 import Data.Bool (bool)
 import Data.Maybe (fromMaybe)
 import GHC.Hs.Binds
 import GHC.Hs.Expr
-import GHC.Hs.Types
-import GhcPlugins (isSymOcc)
-import TcEvidence (HsWrapper(WpHole))
-
+import GHC.Hs.Type
+import GHC.Plugins (isSymOcc)
+#if !MIN_VERSION_ghc(9,0,1)
+import GHC.Tc.Types.Evidence (HsWrapper(WpHole))
+#endif
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
@@ -95,7 +97,11 @@ typeSig n = typeSigs [n]
 funBindsWithFixity :: HasValBind t => Maybe LexicalFixity -> OccNameStr -> [RawMatch] -> t
 funBindsWithFixity fixity name matches = bindB $ withPlaceHolder
         (noExt FunBind name'
-            (matchGroup context matches) WpHole)
+            (matchGroup context matches) 
+#if !MIN_VERSION_ghc(9,0,1)
+            WpHole
+#endif
+            )
         []
   where
     name' = valueRdrName $ unqual name
@@ -288,7 +294,10 @@ stmt e =
 -- > =====
 -- > bvar "x" <-- var "act"
 (<--) :: Pat' -> HsExpr' -> Stmt'
-p <-- e = withPlaceHolder $ noExt BindStmt (builtPat p) (builtLoc e) noSyntaxExpr noSyntaxExpr
+p <-- e = withPlaceHolder $ noExt BindStmt (builtPat p) (builtLoc e)
+#if !MIN_VERSION_ghc(9,0,0)
+         noSyntaxExpr noSyntaxExpr
+#endif
 infixl 1 <--
 
 -- | Syntax types which can declare/define pattern bindings.
