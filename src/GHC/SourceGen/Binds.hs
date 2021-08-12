@@ -46,16 +46,16 @@ module GHC.SourceGen.Binds
     , (<--)
     ) where
 
-import BasicTypes (LexicalFixity(..))
+import GHC.Types.Basic (LexicalFixity(..))
 import Data.Bool (bool)
 import Data.Maybe (fromMaybe)
 import GHC.Hs.Binds
 import GHC.Hs.Expr
-import GHC.Hs.Types
-import GhcPlugins (isSymOcc)
-import TcEvidence (HsWrapper(WpHole))
+import GHC.Hs.Type
+import GHC.Plugins (isSymOcc)
+#if !MIN_VERSION_ghc(9,0,1)
+import GHC.Tc.Types.Evidence (HsWrapper(WpHole))
 #endif
-
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
@@ -97,7 +97,11 @@ typeSig n = typeSigs [n]
 funBindsWithFixity :: HasValBind t => Maybe LexicalFixity -> OccNameStr -> [RawMatch] -> t
 funBindsWithFixity fixity name matches = bindB $ withPlaceHolder
         (noExt FunBind name'
-            (matchGroup context matches) WpHole)
+            (matchGroup context matches) 
+#if !MIN_VERSION_ghc(9,0,1)
+            WpHole
+#endif
+            )
         []
   where
     name' = valueRdrName $ unqual name

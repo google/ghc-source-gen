@@ -68,6 +68,23 @@ jobs:
                 - ~/.stack
                 - .stack-work
 
+  build-ghc-9.0:
+    docker:
+    - image: circleci/rust:1.36-stretch
+    steps:
+    - checkout
+    - restore_cache:
+        keys:
+            - stack-cache-v2-ghc-8.10-{{ arch }}-{{ .Branch }}
+            - stack-cache-v2-ghc-8.10-{{ arch }}-master
+    - run: .circleci/install-stack.sh
+    - run: stack test --no-terminal --stack-yaml stack-9.0.yaml
+    - save_cache:
+            key: stack-cache-v2-ghc-9.0-{{ arch }}-{{ .Branch }}-{{ epoch }}
+            paths:
+                - ~/.stack
+                - .stack-work
+
   build-success:
     docker:
     - image: circleci/rust:1.36-stretch
@@ -82,9 +99,11 @@ workflows:
         - build-13.23
         - build-15.13
         - build-ghc-8.10
+        - build-ghc-9.0
         - build-success:
             requires:
             - build-12.8
             - build-13.23
             - build-15.13
             - build-ghc-8.10
+            - build-ghc-9.0

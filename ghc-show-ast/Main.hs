@@ -13,6 +13,41 @@ import Data.Typeable (cast)
 import System.Environment (getArgs)
 import Text.PrettyPrint
 
+#if MIN_VERSION_ghc(9,0,1)
+import GHC.Data.FastString
+import GHC.Types.Name
+    ( Name
+    , isExternalName
+    , isInternalName
+    , isSystemName
+    , isWiredInName
+    , nameOccName
+    , nameUnique
+    )
+import GHC.Types.Name.Occurrence
+    ( OccName
+    , occNameSpace
+    , occNameString
+    , NameSpace
+    , varName
+    , dataName
+    , tvName
+    , tcClsName
+    )
+
+import qualified GHC.Driver.Session as GHC
+import qualified GHC.Data.FastString as GHC
+import qualified GHC as GHC
+import qualified GHC.Driver.Monad as GHC
+import qualified GHC.Parser.Header as GHC
+import qualified GHC.Parser.Lexer as GHC
+import qualified GHC.Parser as Parser
+import qualified GHC.Types.SrcLoc as GHC
+import qualified GHC.Data.StringBuffer as GHC
+import GHC.Paths (libdir)
+import qualified GHC.Utils.Error as Error
+import GHC.Driver.Monad (liftIO)
+#else
 import FastString
 import Name
     ( Name
@@ -45,11 +80,15 @@ import qualified SrcLoc as GHC
 import qualified StringBuffer as GHC
 import GHC.Paths (libdir)
 #if MIN_VERSION_ghc(8,10,0)
-import System.Exit (exitFailure)
 import GhcMonad (liftIO)
-import qualified ErrUtils
+import qualified ErrUtils as Error
 #else
 import qualified Outputable as GHC
+#endif
+#endif
+
+#if MIN_VERSION_ghc(8,10,0)
+import System.Exit (exitFailure)
 #endif
 
 main :: IO ()
@@ -58,7 +97,11 @@ main = do
     result <- parseModule f
     print $ gPrint result
 
+#if MIN_VERSION_ghc(9,0,1)
+parseModule :: FilePath -> IO GHC.HsModule
+#else
 parseModule :: FilePath -> IO (GHC.HsModule GHC.GhcPs)
+#endif
 parseModule f = GHC.runGhc (Just libdir) $ do
     dflags <- GHC.getDynFlags
     contents <- GHC.liftIO $ GHC.stringToStringBuffer <$> readFile f
@@ -70,7 +113,7 @@ parseModule f = GHC.runGhc (Just libdir) $ do
 #if MIN_VERSION_ghc(8,10,0)
         GHC.PFailed s -> liftIO $ do
                 let (_warnings, errors) = GHC.messages s dflags
-                ErrUtils.printBagOfErrors dflags errors
+                Error.printBagOfErrors dflags errors
                 exitFailure
 #else
         GHC.PFailed

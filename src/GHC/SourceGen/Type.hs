@@ -22,10 +22,11 @@ module GHC.SourceGen.Type
     ) where
 
 import Data.String (fromString)
-import GHC.Hs.Type
 #if MIN_VERSION_ghc(9,0,0)
+import GHC.Hs.Type
 import GHC.Parser.Annotation
-import GHC.Types.Var (Specificity(..))
+#else
+import GHC.Hs.Type
 #endif
 
 import GHC.SourceGen.Syntax.Internal
@@ -77,8 +78,10 @@ forall' :: [HsTyVarBndrS'] -> HsType' -> HsType'
 forall' ts = noExt HsForAllTy
 #if MIN_VERSION_ghc(9,0,0)
         (mkHsForAllInvisTele (map builtLoc ts))
-#elif MIN_VERSION_ghc(8,10,0)
+#else
+#if MIN_VERSION_ghc(8,10,0)
         ForallInvis  -- "Invisible" forall, i.e., with a dot
+#endif
         (map builtLoc ts)
 #endif
         . builtLoc
@@ -98,9 +101,9 @@ infixr 0 ==>
 -- > x :: A
 -- > =====
 -- > kindedVar "x" (var "A")
-kindedVar :: OccNameStr -> HsType' -> HsTyVarBndrS'
+kindedVar :: OccNameStr -> HsType' -> HsTyVarBndr'
 kindedVar v t = noExt KindedTyVar
 #if MIN_VERSION_ghc(9,0,0)
-                SpecifiedSpec
+                ()
 #endif
                 (typeRdrName $ UnqualStr v) (builtLoc t)

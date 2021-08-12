@@ -11,7 +11,7 @@ module GHC.SourceGen.Type.Internal where
 import GHC.Hs.Type as Types
 import GHC.Types.SrcLoc (Located, unLoc)
 #else
-import GHC.Hs.Types as Types
+import GHC.Hs.Type as Types
 import SrcLoc (Located, unLoc)
 #endif
 

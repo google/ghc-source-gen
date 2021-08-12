@@ -6,7 +6,7 @@ import GHC.Hs.Pat (Pat(..))
 import GHC.Hs.Type (HsConDetails(..))
 import GHC.Types.SrcLoc (unLoc)
 #else
-import GHC.Hs.Types (HsConDetails(..))
+import GHC.Hs.Type (HsConDetails(..))
 import SrcLoc (unLoc)
 #endif
 

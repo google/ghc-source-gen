@@ -52,7 +52,6 @@ import BasicTypes (DerivStrategy)
 import GHC.Hs.Decls (HsDerivingClause)
 import GHC.Hs.Pat
 #if MIN_VERSION_ghc(9,0,0)
-import GHC.Types.Name.Reader (RdrName)
 import GHC.Types.SrcLoc (SrcSpan, Located, GenLocated(..), mkGeneralSrcSpan)
 #else
 import RdrName (RdrName)
@@ -64,7 +63,7 @@ import GHC.Types.Basic (PromotionFlag(..))
 #elif MIN_VERSION_ghc(8,8,0)
 import BasicTypes (PromotionFlag(..))
 #else
-import GHC.Hs.Types (Promoted(..))
+import GHC.Hs.Type (Promoted(..))
 #endif
 
 #if MIN_VERSION_ghc(8,10,0)

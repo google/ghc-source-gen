@@ -63,6 +63,7 @@ import BasicTypes (DerivStrategy(..))
 #endif
 import GHC.Hs.Binds
 import GHC.Hs.Decls
+
 import GHC.Hs.Type
     ( ConDeclField(..)
     , FieldOcc(..)
