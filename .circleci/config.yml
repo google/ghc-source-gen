@@ -31,6 +31,9 @@ jobs:
             STACK_FLAGS+=(--resolver="${RESOLVER}")
           fi
           stack test "${STACK_FLAGS[@]}"
+    - run:
+        name: Check Cabal file up to date
+        command: git diff --exit-code *.cabal
     - save_cache:
         key: stack-cache-v2-<< parameters.resolver >>-{{ arch }}-{{ .Branch }}-{{ epoch }}
         paths:
