@@ -1,89 +1,41 @@
-version: 2
+version: 2.1
 
 jobs:
-  build-12.8:
-    docker:
-    - image: circleci/rust:1.36-stretch
-    steps:
-    - checkout
-    - restore_cache:
-        keys:
-            - stack-cache-v2-12.8-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-12.8-{{ arch }}-master
-    - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --resolver=lts-12.8
-    - save_cache:
-            key: stack-cache-v2-12.8-{{ arch }}-{{ .Branch }}-{{ epoch }}
-            paths:
-                - ~/.stack
-                - .stack-work
-  build-13.23:
-    docker:
-    - image: circleci/rust:1.36-stretch
-    steps:
-    - checkout
-    - restore_cache:
-        keys:
-            - stack-cache-v2-13.23-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-13.23-{{ arch }}-master
-    - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --resolver=lts-13.23
-    - save_cache:
-            key: stack-cache-v2-13.23-{{ arch }}-{{ .Branch }}-{{ epoch }}
-            paths:
-                - ~/.stack
-                - .stack-work
+  build:
+    parameters:
+      resolver:
+        type: string
+        default: ''
+      stack_yaml:
+        type: string
+        default: stack.yaml
 
-  build-15.13:
     docker:
     - image: circleci/rust:1.36-stretch
+    environment:
+      STACK_YAML: << parameters.stack_yaml >>
+      RESOLVER: << parameters.resolver >>
     steps:
     - checkout
     - restore_cache:
         keys:
-            - stack-cache-v2-ghc-15.13-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-ghc-15.13-{{ arch }}-master
+          - stack-cache-v2-<< parameters.resolver >>-{{ arch }}-{{ .Branch }}-{{ epoch }}
+          - stack-cache-v2-<< parameters.resolver >>-{{ arch }}-{{ .Branch }}
+          - stack-cache-v2-<< parameters.resolver >>-{{ arch }}-master
     - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --resolver=lts-15.13
+    - run:
+        name: Build + test
+        command: |
+          STACK_FLAGS=(--no-terminal)
+          if [[ -n "${RESOLVER}" ]]; then
+            STACK_FLAGS+=(--resolver="${RESOLVER}")
+          fi
+          stack test "${STACK_FLAGS[@]}"
     - save_cache:
-            key: stack-cache-v2-ghc-15.13-{{ arch }}-{{ .Branch }}-{{ epoch }}
-            paths:
-                - ~/.stack
-                - .stack-work
-
-  build-ghc-8.10:
-    docker:
-    - image: circleci/rust:1.36-stretch
-    steps:
-    - checkout
-    - restore_cache:
-        keys:
-            - stack-cache-v2-ghc-8.10-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-ghc-8.10-{{ arch }}-master
-    - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --resolver=lts-18.5
-    - save_cache:
-            key: stack-cache-v2-ghc-8.10-{{ arch }}-{{ .Branch }}-{{ epoch }}
-            paths:
-                - ~/.stack
-                - .stack-work
-
-  build-ghc-9.0:
-    docker:
-    - image: circleci/rust:1.36-stretch
-    steps:
-    - checkout
-    - restore_cache:
-        keys:
-            - stack-cache-v2-ghc-8.10-{{ arch }}-{{ .Branch }}
-            - stack-cache-v2-ghc-8.10-{{ arch }}-master
-    - run: .circleci/install-stack.sh
-    - run: stack test --no-terminal --stack-yaml stack-9.0.yaml
-    - save_cache:
-            key: stack-cache-v2-ghc-9.0-{{ arch }}-{{ .Branch }}-{{ epoch }}
-            paths:
-                - ~/.stack
-                - .stack-work
+        key: stack-cache-v2-<< parameters.resolver >>-{{ arch }}-{{ .Branch }}-{{ epoch }}
+        paths:
+          - ~/.stack
+          - .stack-work
 
   build-success:
     docker:
@@ -94,16 +46,19 @@ jobs:
 workflows:
   version: 2
   build-and-test:
-      jobs:
-        - build-12.8
-        - build-13.23
-        - build-15.13
-        - build-ghc-8.10
+    jobs:
+    - build:
+        matrix:
+          parameters:
+            resolver:
+            - lts-12.8
+            - lts-13.23
+            - lts-15.13
+            - lts-18.5
+    - build:
+        name: build-ghc-9.0
+        stack_yaml: stack-9.0.yaml
+    - build-success:
+        requires:
+        - build
         - build-ghc-9.0
-        - build-success:
-            requires:
-            - build-12.8
-            - build-13.23
-            - build-15.13
-            - build-ghc-8.10
-            - build-ghc-9.0
