@@ -1,0 +1,172 @@
+cabal-version: 1.12
+
+-- This file has been generated from package.yaml by hpack version 0.34.4.
+--
+-- see: https://github.com/sol/hpack
+
+name:           ghc-source-gen
+version:        0.4.1.0
+synopsis:       Constructs Haskell syntax trees for the GHC API.
+description:    @ghc-source-gen@ is a library for generating Haskell source code.
+                It uses the <https://hackage.haskell.org/package/ghc ghc> library
+                to support recent language extensions, and provides a simple, consistent
+                interface across several major versions of GHC.
+                .
+                To get started, take a look at the "GHC.SourceGen" module.
+                .
+                For more information, please see the <https://github.com/google/ghc-source-gen README>.
+category:       Development
+homepage:       https://github.com/google/ghc-source-gen#readme
+bug-reports:    https://github.com/google/ghc-source-gen/issues
+author:         Judah Jacobson
+maintainer:     judahjacobson@google.com
+copyright:      Google LLC
+license:        BSD3
+license-file:   LICENSE
+build-type:     Simple
+extra-source-files:
+    README.md
+    ChangeLog.md
+
+source-repository head
+  type: git
+  location: https://github.com/google/ghc-source-gen
+
+library
+  exposed-modules:
+      GHC.SourceGen
+      GHC.SourceGen.Binds
+      GHC.SourceGen.Decl
+      GHC.SourceGen.Expr
+      GHC.SourceGen.Lit
+      GHC.SourceGen.Module
+      GHC.SourceGen.Name
+      GHC.SourceGen.Overloaded
+      GHC.SourceGen.Pat
+      GHC.SourceGen.Pat.Internal
+      GHC.SourceGen.Pretty
+      GHC.SourceGen.Type
+  other-modules:
+      GHC.SourceGen.Binds.Internal
+      GHC.SourceGen.Expr.Internal
+      GHC.SourceGen.Lit.Internal
+      GHC.SourceGen.Name.Internal
+      GHC.SourceGen.Syntax.Internal
+      GHC.SourceGen.Type.Internal
+  hs-source-dirs:
+      src
+  default-extensions:
+      DataKinds
+      FlexibleInstances
+      TypeSynonymInstances
+  build-depends:
+      base >=4.7 && <5
+    , ghc >=8.4 && <9.2
+  if impl(ghc<8.10)
+    other-modules:
+        GHC.Hs
+        GHC.Hs.Binds
+        GHC.Hs.Decls
+        GHC.Hs.Expr
+        GHC.Hs.Extension
+        GHC.Hs.ImpExp
+        GHC.Hs.Lit
+        GHC.Hs.Pat
+        GHC.Hs.Type
+        GHC.Hs.Utils
+        GHC.Driver.Monad
+        GHC.Driver.Session
+        GHC.Utils.Outputable
+        GHC.Types.Basic
+        GHC.Plugins
+        GHC.Tc.Types.Evidence
+    hs-source-dirs:
+        compat
+  if impl(ghc>=8.10) && impl(ghc<9.0)
+    other-modules:
+        GHC.Hs.Type
+        GHC.Driver.Monad
+        GHC.Driver.Session
+        GHC.Utils.Outputable
+        GHC.Types.Basic
+        GHC.Plugins
+        GHC.Tc.Types.Evidence
+    hs-source-dirs:
+        compat-8.10
+  default-language: Haskell2010
+
+test-suite name_test
+  type: exitcode-stdio-1.0
+  main-is: name_test.hs
+  other-modules:
+      GhcVersion
+      Paths_ghc_source_gen
+  hs-source-dirs:
+      tests
+  default-extensions:
+      DataKinds
+      FlexibleInstances
+      TypeSynonymInstances
+  build-depends:
+      QuickCheck >=2.10 && <2.15
+    , base >=4.7 && <5
+    , ghc >=8.4 && <9.2
+    , ghc-source-gen
+    , tasty >=1.0 && <1.5
+    , tasty-hunit ==0.10.*
+    , tasty-quickcheck >=0.9 && <0.11
+  default-language: Haskell2010
+
+test-suite pprint_examples
+  type: exitcode-stdio-1.0
+  main-is: pprint_examples.hs
+  other-modules:
+      GhcVersion
+      Paths_ghc_source_gen
+  hs-source-dirs:
+      tests
+  default-extensions:
+      DataKinds
+      FlexibleInstances
+      TypeSynonymInstances
+  build-depends:
+      base >=4.7 && <5
+    , ghc >=8.4 && <9.2
+    , ghc-paths ==0.1.*
+    , ghc-source-gen
+    , tasty >=1.0 && <1.5
+    , tasty-hunit ==0.10.*
+  if impl(ghc<9.0)
+    other-modules:
+        GHC.Utils.Outputable
+    hs-source-dirs:
+        compat
+  default-language: Haskell2010
+
+test-suite pprint_test
+  type: exitcode-stdio-1.0
+  main-is: pprint_test.hs
+  other-modules:
+      GhcVersion
+      Paths_ghc_source_gen
+  hs-source-dirs:
+      tests
+  default-extensions:
+      DataKinds
+      FlexibleInstances
+      TypeSynonymInstances
+  build-depends:
+      base >=4.7 && <5
+    , ghc >=8.4 && <9.2
+    , ghc-paths ==0.1.*
+    , ghc-source-gen
+    , tasty >=1.0 && <1.5
+    , tasty-hunit ==0.10.*
+  if impl(ghc<9.0)
+    other-modules:
+        GHC.Driver.Monad
+        GHC.Driver.Session
+        GHC.Utils.Outputable
+    hs-source-dirs:
+        compat
+  default-language: Haskell2010
