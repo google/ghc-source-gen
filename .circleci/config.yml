@@ -59,9 +59,9 @@ workflows:
             - lts-15.13
             - lts-18.5
     - build:
-        name: build-ghc-9.0
-        stack_yaml: stack-9.0.yaml
+        name: build-ghc-9.2
+        stack_yaml: stack-9.2.yaml
     - build-success:
         requires:
         - build
-        - build-ghc-9.0
+        - build-ghc-9.2
