@@ -33,6 +33,9 @@ import GHC.Hs
 #if MIN_VERSION_ghc(8,10,0)
     , ImportDeclQualifiedStyle(..)
 #endif
+#if MIN_VERSION_ghc(9,2,0)
+    , EpAnn(..)
+#endif
     )
 #if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.SrcLoc (LayoutInfo(..))
@@ -54,14 +57,17 @@ module'
     -> [HsDecl']
     -> HsModule'
 module' name exports imports decls = HsModule
-    { hsmodName = fmap (builtLoc . unModuleNameStr) name
-    , hsmodExports = fmap (builtLoc . map builtLoc) exports
-    , hsmodImports = map builtLoc imports
-    , hsmodDecls = fmap builtLoc decls
+    { hsmodName = fmap (mkLocated . unModuleNameStr) name
+    , hsmodExports = fmap (mkLocated . map mkLocated) exports
+    , hsmodImports = map mkLocated imports
+    , hsmodDecls = fmap mkLocated decls
     , hsmodDeprecMessage = Nothing
     , hsmodHaddockModHeader = Nothing
 #if MIN_VERSION_ghc(9,0,0)
     , hsmodLayout = NoLayoutInfo
+#endif
+#if MIN_VERSION_ghc(9,2,0)
+    , hsmodAnn = EpAnnNotUsed
 #endif
     }
 
@@ -75,11 +81,11 @@ qualified' d = d { ideclQualified =
 }
 
 as' :: ImportDecl' -> ModuleNameStr -> ImportDecl'
-as' d m = d { ideclAs = Just (builtLoc $ unModuleNameStr m) }
+as' d m = d { ideclAs = Just (mkLocated $ unModuleNameStr m) }
 
 import' :: ModuleNameStr -> ImportDecl'
-import' m = noSourceText (noExt ImportDecl)
-            (builtLoc $ unModuleNameStr m)
+import' m = noSourceText (withEpAnnNotUsed ImportDecl)
+            (mkLocated $ unModuleNameStr m)
             Nothing
 #if MIN_VERSION_ghc(9,0,0)
             NotBoot
@@ -96,11 +102,11 @@ import' m = noSourceText (noExt ImportDecl)
 
 exposing :: ImportDecl' -> [IE'] -> ImportDecl'
 exposing d ies = d
-    { ideclHiding = Just (False, builtLoc $ map builtLoc ies) }
+    { ideclHiding = Just (False, mkLocated $ map mkLocated ies) }
 
 hiding :: ImportDecl' -> [IE'] -> ImportDecl'
 hiding d ies = d
-    { ideclHiding = Just (True, builtLoc $ map builtLoc ies) }
+    { ideclHiding = Just (True, mkLocated $ map mkLocated ies) }
 
 -- | Adds the @{-# SOURCE #-}@ pragma to an import.
 source :: ImportDecl' -> ImportDecl'
@@ -118,7 +124,7 @@ source d = d { ideclSource =
 -- > =====
 -- > thingAll "A"
 thingAll :: RdrNameStr -> IE'
-thingAll = noExt IEThingAll . wrappedName
+thingAll = withEpAnnNotUsed IEThingAll . wrappedName
 
 -- | Exports specific methods and/or constructors.
 --
@@ -126,17 +132,19 @@ thingAll = noExt IEThingAll . wrappedName
 -- > =====
 -- > thingWith "A" ["b", "C"]
 thingWith :: RdrNameStr -> [OccNameStr] -> IE'
-thingWith n cs = noExt IEThingWith (wrappedName n) NoIEWildcard
+thingWith n cs = withEpAnnNotUsed IEThingWith (wrappedName n) NoIEWildcard
                     (map (wrappedName . unqual) cs)
+#if !MIN_VERSION_ghc(9,2,0)
                     -- The parsing step leaves the list of fields empty
                     -- and lumps them all together with the above list of
                     -- constructors.
                     []
+#endif
 
 -- TODO: support "mixed" syntax with both ".." and explicit names.
 
 wrappedName :: RdrNameStr -> LIEWrappedName RdrName
-wrappedName = builtLoc . IEName . exportRdrName
+wrappedName = mkLocated . IEName . exportRdrName
 
 -- | Exports an entire module.
 --
@@ -146,4 +154,4 @@ wrappedName = builtLoc . IEName . exportRdrName
 -- > =====
 -- > moduleContents "M"
 moduleContents :: ModuleNameStr -> IE'
-moduleContents = noExt IEModuleContents . builtLoc . unModuleNameStr
+moduleContents = withEpAnnNotUsed IEModuleContents . mkLocated . unModuleNameStr

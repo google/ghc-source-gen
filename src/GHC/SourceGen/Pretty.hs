@@ -17,6 +17,10 @@ import GHC.Driver.Session
 import GHC.Utils.Outputable
 import System.IO
 
+#if MIN_VERSION_ghc(9,2,0)
+import GHC.Driver.Ppr (printForUser, showPpr)
+#endif
+
 hPutPpr :: Outputable a => Handle -> a -> Ghc ()
 hPutPpr h x = do
     dflags <- getDynFlags

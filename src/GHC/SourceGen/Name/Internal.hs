@@ -8,6 +8,7 @@
 module GHC.SourceGen.Name.Internal where
 
 import Data.Char (isAlphaNum, isUpper)
+import Data.Function (on)
 import Data.List (intercalate)
 import Data.String (IsString(..))
 #if MIN_VERSION_ghc(9,0,0)
@@ -15,16 +16,26 @@ import GHC.Data.FastString (FastString, fsLit)
 import GHC.Unit.Module (mkModuleNameFS, ModuleName, moduleNameString)
 import GHC.Types.Name.Occurrence
 import GHC.Types.Name.Reader
-import GHC.Types.SrcLoc (Located)
 #else
 import FastString (FastString, fsLit)
 import Module (mkModuleNameFS, ModuleName, moduleNameString)
 import OccName
 import RdrName
+#endif
+
+#if MIN_VERSION_ghc(9,2,0)
+import GHC.Data.FastString (LexicalFastString(..))
+#endif
+
+#if MIN_VERSION_ghc(9,2,0)
+import GHC.Parser.Annotation (LocatedN)
+#elif MIN_VERSION_ghc(9,0,0)
+import GHC.Types.SrcLoc (Located)
+#else
 import SrcLoc (Located)
 #endif
 
-import GHC.SourceGen.Syntax.Internal (builtLoc)
+import GHC.SourceGen.Syntax.Internal (mkLocated)
 
 -- | A string identifier referring to a name.
 --
@@ -39,7 +50,16 @@ import GHC.SourceGen.Syntax.Internal (builtLoc)
 -- makes it easier to implement an 'IsString' instance without the context
 -- where a name would be used.)
 data OccNameStr = OccNameStr !RawNameSpace !FastString
-    deriving (Show, Eq, Ord)
+    deriving (Show, Eq)
+
+instance Ord OccNameStr where
+    compare = compare `on` (\(OccNameStr n s) -> (n, fromFastString s))
+      where
+#if MIN_VERSION_ghc(9,2,0)
+        fromFastString = LexicalFastString
+#else
+        fromFastString = id
+#endif
 
 data RawNameSpace = Constructor | Value
     deriving (Show, Eq, Ord)
@@ -90,13 +110,17 @@ instance IsString ModuleNameStr where
 data RdrNameStr = UnqualStr OccNameStr | QualStr ModuleNameStr OccNameStr
     deriving (Show, Eq, Ord)
 
+#if !MIN_VERSION_ghc(9,2,0)
+type LocatedN e = Located e
+#endif
+
 -- GHC always wraps RdrName in a Located.  (Usually: 'Located (IdP pass)')
 -- So for convenience, these functions return a Located-wrapped value.
-valueRdrName, typeRdrName :: RdrNameStr -> Located RdrName
-valueRdrName (UnqualStr r) = builtLoc $ Unqual $ valueOccName r
-valueRdrName (QualStr (ModuleNameStr m) r) = builtLoc $ Qual m $ valueOccName r
-typeRdrName (UnqualStr r) = builtLoc $ Unqual $ typeOccName r
-typeRdrName (QualStr (ModuleNameStr m) r) = builtLoc $ Qual m $ typeOccName r
+valueRdrName, typeRdrName :: RdrNameStr -> LocatedN RdrName
+valueRdrName (UnqualStr r) = mkLocated $ Unqual $ valueOccName r
+valueRdrName (QualStr (ModuleNameStr m) r) = mkLocated $ Qual m $ valueOccName r
+typeRdrName (UnqualStr r) = mkLocated $ Unqual $ typeOccName r
+typeRdrName (QualStr (ModuleNameStr m) r) = mkLocated $ Qual m $ typeOccName r
 
 -- TODO: operators
 instance IsString RdrNameStr where
@@ -122,9 +146,9 @@ collectModuleName s = case span isVarChar s of
 -- E.g.: `import F(a, B)`
 -- The 'a' should be a value, but the 'B' should be a type/class.
 -- (Currently, GHC doesn't distinguish the class and type namespaces.)
-exportRdrName :: RdrNameStr -> Located RdrName
-exportRdrName (UnqualStr r) = builtLoc $ Unqual $ exportOccName r
-exportRdrName (QualStr (ModuleNameStr m) r) = builtLoc $ Qual m $ exportOccName r
+exportRdrName :: RdrNameStr -> LocatedN RdrName
+exportRdrName (UnqualStr r) = mkLocated $ Unqual $ exportOccName r
+exportRdrName (QualStr (ModuleNameStr m) r) = mkLocated $ Qual m $ exportOccName r
 
 exportOccName :: OccNameStr -> OccName
 exportOccName (OccNameStr Value s) = mkVarOccFS s

@@ -36,15 +36,13 @@ import GHC.Hs
 #if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic (Boxity(..))
 import GHC.Core.DataCon (dataConName)
-import GHC.Types.Name.Reader (RdrName(..), nameRdrName)
-import GHC.Types.SrcLoc (Located)
+import GHC.Types.Name.Reader (nameRdrName)
 import GHC.Builtin.Types (consDataCon_RDR, nilDataCon, unitDataCon)
 import GHC.Types.Var (Specificity(..))
 #else
 import BasicTypes (Boxity(..))
 import DataCon (dataConName)
-import RdrName (RdrName(..), nameRdrName)
-import SrcLoc (Located)
+import RdrName (nameRdrName)
 import TysWiredIn (consDataCon_RDR, nilDataCon, unitDataCon)
 #endif
 
@@ -58,13 +56,13 @@ class Par e where
     par :: e -> e
 
 instance Par HsExpr' where
-    par = noExt HsPar . builtLoc
+    par = withEpAnnNotUsed HsPar . mkLocated
 
 instance Par Pat' where
-    par = noExt ParPat . builtPat
+    par = withEpAnnNotUsed ParPat . builtPat
 
 instance Par HsType' where
-    par = noExt HsParTy . builtLoc
+    par = withEpAnnNotUsed HsParTy . mkLocated
 
 -- | A class for term application.
 --
@@ -129,24 +127,24 @@ infixl 2 @@
 
 instance App HsExpr' where
     op x o y
-        = noExt OpApp
-            (parenthesizeExprForOp $ builtLoc x)
-            (builtLoc $ var o)
+        = withEpAnnNotUsed OpApp
+            (parenthesizeExprForOp $ mkLocated x)
+            (mkLocated $ var o)
 #if !MIN_VERSION_ghc(8,6,0)
             PlaceHolder
 #endif
-            (parenthesizeExprForOp $ builtLoc y)
-    x @@ y = noExt HsApp (parenthesizeExprForOp $ builtLoc x)
-                (parenthesizeExprForApp $ builtLoc y)
+            (parenthesizeExprForOp $ mkLocated y)
+    x @@ y = withEpAnnNotUsed HsApp (parenthesizeExprForOp $ mkLocated x)
+                (parenthesizeExprForApp $ mkLocated y)
 
 instance App HsType' where
     op x o y
-        = noExt HsOpTy (parenthesizeTypeForOp $ builtLoc x)
+        = noExt HsOpTy (parenthesizeTypeForOp $ mkLocated x)
                 (typeRdrName o)
-                (parenthesizeTypeForOp $ builtLoc y)
+                (parenthesizeTypeForOp $ mkLocated y)
     x @@ y = noExt HsAppTy
-                (parenthesizeTypeForOp $ builtLoc x)
-                (parenthesizeTypeForApp $ builtLoc y)
+                (parenthesizeTypeForOp $ mkLocated x)
+                (parenthesizeTypeForApp $ mkLocated y)
 
 class HasTuple e where
     unit :: e
@@ -158,16 +156,22 @@ unboxedTuple = tupleOf Unboxed
 
 instance HasTuple HsExpr' where
     tupleOf b ts =
-        noExt ExplicitTuple
-            (map (builtLoc . noExt Present . builtLoc) ts)
+        explicitTuple
+            (map (withEpAnnNotUsed Present . mkLocated) ts)
             b
+      where
+#if MIN_VERSION_ghc(9,2,0)
+        explicitTuple = withEpAnnNotUsed ExplicitTuple
+#else
+        explicitTuple = noExt ExplicitTuple . map builtLoc
+#endif
     unit = noExt HsVar unitDataConName
 
-unitDataConName :: Located RdrName
-unitDataConName = builtLoc $ nameRdrName $ dataConName $ unitDataCon
+unitDataConName :: LIdP
+unitDataConName = mkLocated $ nameRdrName $ dataConName $ unitDataCon
 
 instance HasTuple HsType' where
-    tupleOf b = noExt HsTupleTy b' . map builtLoc
+    tupleOf b = withEpAnnNotUsed HsTupleTy b' . map mkLocated
         where
             b' = case b of
                     Unboxed -> HsUnboxedTuple
@@ -178,7 +182,7 @@ instance HasTuple HsType' where
 
 instance HasTuple Pat' where
     tupleOf b ps =
-        noExt TuplePat (map builtPat ps) b
+        withEpAnnNotUsed TuplePat (map builtPat ps) b
 #if !MIN_VERSION_ghc(8,6,0)
         []
 #endif
@@ -202,22 +206,28 @@ class HasList e where
 -- TODO: allow something like "consOp" which applies (:) as an operator, but using
 -- the built-in RdrName.
 
-nilDataConName :: Located RdrName
-nilDataConName = builtLoc $ nameRdrName $ dataConName $ nilDataCon
+nilDataConName :: LIdP
+nilDataConName = mkLocated $ nameRdrName $ dataConName $ nilDataCon
 
 instance HasList HsExpr' where
-    list = withPlaceHolder (noExt ExplicitList) Nothing . map builtLoc
+    list = withPlaceHolder (withEpAnnNotUsed explicitList) . map mkLocated
+      where
+#if MIN_VERSION_ghc(9,2,0)
+        explicitList = ExplicitList
+#else
+        explicitList x = ExplicitList x Nothing
+#endif
     nil = noExt HsVar nilDataConName
-    cons = noExt HsVar $ builtLoc consDataCon_RDR
+    cons = noExt HsVar $ mkLocated consDataCon_RDR
 
 instance HasList Pat' where
 #if MIN_VERSION_ghc(8,6,0)
-    list = noExt ListPat . map builtPat
+    list = withEpAnnNotUsed ListPat . map builtPat
 #else
     list ps = ListPat (map builtPat ps) PlaceHolder Nothing
 #endif
     nil = noExt VarPat nilDataConName
-    cons = noExt VarPat $ builtLoc $ consDataCon_RDR
+    cons = noExt VarPat $ mkLocated $ consDataCon_RDR
 
 -- | Terms that can contain references to locally-bound variables.
 --
@@ -245,24 +255,24 @@ instance BVar HsExpr' where
     bvar = var . UnqualStr
 
 instance Var HsType' where
-    var = noExt HsTyVar notPromoted . typeRdrName
+    var = withEpAnnNotUsed HsTyVar notPromoted . typeRdrName
 
 instance BVar HsType' where
     bvar = var . UnqualStr
 
 #if MIN_VERSION_ghc(9,0,0)
 instance BVar HsTyVarBndr' where
-    bvar = noExt UserTyVar () . typeRdrName . UnqualStr
+    bvar = withEpAnnNotUsed UserTyVar () . typeRdrName . UnqualStr
 
 instance BVar HsTyVarBndrS' where
-    bvar = noExt UserTyVar SpecifiedSpec . typeRdrName . UnqualStr
+    bvar = withEpAnnNotUsed UserTyVar SpecifiedSpec . typeRdrName . UnqualStr
 #else
 instance BVar HsTyVarBndr' where
-    bvar = noExt UserTyVar . typeRdrName . UnqualStr
+    bvar = withEpAnnNotUsed UserTyVar . typeRdrName . UnqualStr
 #endif
 
 instance Var IE' where
-    var n = noExt IEVar $ builtLoc $ IEName $ exportRdrName n
+    var n = noExt IEVar $ mkLocated $ IEName $ exportRdrName n
 
 instance BVar IE' where
     bvar = var . UnqualStr

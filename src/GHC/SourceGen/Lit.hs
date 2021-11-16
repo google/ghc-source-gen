@@ -17,7 +17,10 @@ module GHC.SourceGen.Lit
     , frac
     ) where
 
-#if MIN_VERSION_ghc(9,0,0)
+#if MIN_VERSION_ghc(9,2,0)
+import GHC.Types.SourceText (mkTHFractionalLit, mkIntegralLit)
+import GHC.Data.FastString (fsLit)
+#elif MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic (mkFractionalLit, mkIntegralLit)
 import GHC.Data.FastString (fsLit)
 #else
@@ -36,13 +39,13 @@ class HasLit e where
     overLit :: HsOverLit' -> e
 
 instance HasLit HsExpr' where
-    lit = noExt HsLit
-    overLit = noExt HsOverLit
+    lit = withEpAnnNotUsed HsLit
+    overLit = withEpAnnNotUsed HsOverLit
 
 instance HasLit Pat' where
     lit = noExt LitPat
     overLit l = withPlaceHolder
-                    $ noExt NPat (builtLoc l) Nothing noSyntaxExpr
+                    $ withEpAnnNotUsed NPat (builtLoc l) Nothing noSyntaxExpr
 
 char :: HasLit e => Char -> e
 char = lit . noSourceText HsChar
@@ -60,4 +63,8 @@ int n = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit n') noExpr
 frac :: HasLit e => Rational -> e
 frac x = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit $ HsFractional x') noExpr
   where
+#if MIN_VERSION_ghc(9,2,0)
+    x' = mkTHFractionalLit x
+#else
     x' = mkFractionalLit x
+#endif

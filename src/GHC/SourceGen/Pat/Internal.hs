@@ -29,11 +29,16 @@ needsPar (NPat _ l _ _) = overLitNeedsParen $ unLoc l
 needsPar (LitPat l) = litNeedsParen l
 needsPar (NPat l _ _ _) = overLitNeedsParen $ unLoc l
 #endif
-#if MIN_VERSION_ghc(9,0,0)
+#if MIN_VERSION_ghc(9,2,0)
+needsPar (ConPat _ _ (PrefixCon _ xs)) = not $ null xs
+#elif MIN_VERSION_ghc(9,0,0)
 needsPar (ConPat _ _ (PrefixCon xs)) = not $ null xs
-needsPar (ConPat _ _ (InfixCon _ _)) = True
 #else
 needsPar (ConPatIn _ (PrefixCon xs)) = not $ null xs
+#endif
+#if MIN_VERSION_ghc(9,0,0)
+needsPar (ConPat _ _ (InfixCon _ _)) = True
+#else
 needsPar (ConPatIn _ (InfixCon _ _)) = True
 needsPar ConPatOut{} = True
 #endif
@@ -46,5 +51,5 @@ needsPar SigPatOut{} = True
 needsPar _ = False
 
 parPat :: Pat' -> Pat'
-parPat = noExt ParPat . builtPat
+parPat = withEpAnnNotUsed ParPat . builtPat
 
