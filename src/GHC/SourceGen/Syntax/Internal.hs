@@ -67,11 +67,11 @@ import GHC.Hs.Type (Promoted(..))
 #endif
 
 #if MIN_VERSION_ghc(8,10,0)
-import GHC.Hs.Extension (NoExtField(NoExtField))
+import qualified GHC.Hs.Extension as GHC
 #elif MIN_VERSION_ghc(8,6,0)
-import GHC.Hs.Extension (NoExt(NoExt))
+import qualified GHC.Hs.Extension as GHC
 #else
-import PlaceHolder(PlaceHolder(..))
+import qualified PlaceHolder as GHC
 #endif
 
 #if MIN_VERSION_ghc(9,0,0)
@@ -80,42 +80,45 @@ import GHC.Types.Var (Specificity)
 
 import GHC.Hs.Extension (GhcPs)
 
-#if MIN_VERSION_ghc(8,6,0)
 #if MIN_VERSION_ghc(8,10,0)
-noExt :: (NoExtField -> a) -> a
-noExt = ($ NoExtField)
-
-noExtOrPlaceHolder :: (NoExtField -> a) -> a
-noExtOrPlaceHolder = noExt
-
-#else
-noExt :: (NoExt -> a) -> a
-noExt = ($ NoExt)
-
-noExtOrPlaceHolder :: (NoExt -> a) -> a
-noExtOrPlaceHolder = noExt
+type NoExtField = GHC.NoExtField
+#elif MIN_VERSION_ghc(8,6,0)
+type NoExtField = GHC.NoExt
 #endif
 
-withPlaceHolder :: a -> a
-withPlaceHolder = id
-
-withPlaceHolders :: a -> a
-withPlaceHolders = id
-
+#if MIN_VERSION_ghc(8,10,0)
+noExt :: (NoExtField -> a) -> a
+noExt = ($ GHC.NoExtField)
+#elif MIN_VERSION_ghc(8,6,0)
+noExt :: (NoExtField -> a) -> a
+noExt = ($ GHC.NoExt)
 #else
-
 noExt :: a -> a
 noExt = id
+#endif
 
-noExtOrPlaceHolder :: (PlaceHolder -> a) -> a
+#if MIN_VERSION_ghc(8,6,0)
+noExtOrPlaceHolder :: (NoExtField -> a) -> a
+noExtOrPlaceHolder = noExt
+#else
+noExtOrPlaceHolder :: (GHC.PlaceHolder -> a) -> a
 noExtOrPlaceHolder = withPlaceHolder
+#endif
 
-withPlaceHolder :: (PlaceHolder -> a) -> a
-withPlaceHolder = ($ PlaceHolder)
+#if MIN_VERSION_ghc(8,6,0)
+withPlaceHolder :: a -> a
+withPlaceHolder = id
+#else
+withPlaceHolder :: (GHC.PlaceHolder -> a) -> a
+withPlaceHolder = ($ GHC.PlaceHolder)
+#endif
 
-withPlaceHolders :: ([PlaceHolder] -> a) -> a
+#if MIN_VERSION_ghc(8,6,0)
+withPlaceHolders :: a -> a
+withPlaceHolders = id
+#else
+withPlaceHolders :: ([GHC.PlaceHolder] -> a) -> a
 withPlaceHolders = ($ [])
-
 #endif
 
 builtSpan :: SrcSpan
