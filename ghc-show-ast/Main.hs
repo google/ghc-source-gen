@@ -13,6 +13,13 @@ import Data.Typeable (cast)
 import System.Environment (getArgs)
 import Text.PrettyPrint
 
+#if MIN_VERSION_ghc(9,2,0)
+import qualified GHC.Driver.Errors as Error
+import qualified GHC.Parser.Errors.Ppr as Error
+#elif MIN_VERSION_ghc(9,0,0)
+import qualified GHC.Utils.Error as Error
+#endif
+
 #if MIN_VERSION_ghc(9,0,1)
 import GHC.Data.FastString
 import GHC.Types.Name
@@ -45,7 +52,6 @@ import qualified GHC.Parser as Parser
 import qualified GHC.Types.SrcLoc as GHC
 import qualified GHC.Data.StringBuffer as GHC
 import GHC.Paths (libdir)
-import qualified GHC.Utils.Error as Error
 import GHC.Driver.Monad (liftIO)
 #else
 import FastString
@@ -107,10 +113,36 @@ parseModule f = GHC.runGhc (Just libdir) $ do
     contents <- GHC.liftIO $ GHC.stringToStringBuffer <$> readFile f
     let options = GHC.getOptions dflags contents f
     (dflags', _, _) <- GHC.parseDynamicFilePragma dflags options
-    let state = GHC.mkPState dflags' contents (GHC.mkRealSrcLoc (GHC.fsLit f) 1 1)
+
+#if MIN_VERSION_ghc(9,2,0)
+    let state =
+            GHC.initParserState
+                ( GHC.mkParserOpts
+                    (GHC.warningFlags dflags')
+                    (GHC.extensionFlags dflags')
+                    (GHC.safeImportsOn dflags')
+                    (GHC.gopt GHC.Opt_Haddock dflags')
+                    (GHC.gopt GHC.Opt_KeepRawTokenStream dflags')
+                    True
+                )
+#else
+    let state =
+            GHC.mkPState
+                dflags'
+#endif
+                contents
+                (GHC.mkRealSrcLoc (GHC.fsLit f) 1 1)
+
     case GHC.unP Parser.parseModule state of
         GHC.POk _state m -> return $ GHC.unLoc m
-#if MIN_VERSION_ghc(8,10,0)
+#if MIN_VERSION_ghc(9,2,0)
+        GHC.PFailed s -> do
+            logger <- GHC.getLogger
+            liftIO $ do
+                let errors = Error.pprError <$> GHC.getErrorMessages s
+                Error.printBagOfErrors logger dflags errors
+                exitFailure
+#elif MIN_VERSION_ghc(8,10,0)
         GHC.PFailed s -> liftIO $ do
                 let (_warnings, errors) = GHC.messages s dflags
                 Error.printBagOfErrors dflags errors
