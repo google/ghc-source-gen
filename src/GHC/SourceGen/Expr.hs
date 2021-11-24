@@ -35,9 +35,13 @@ import GHC.Hs.Type (FieldOcc(..), AmbiguousFieldOcc(..))
 import GHC.Hs.Utils (mkHsIf)
 import Data.String (fromString)
 #if MIN_VERSION_ghc(9,0,0)
-import GHC.Types.SrcLoc (unLoc, GenLocated(..), Located)
+import GHC.Types.SrcLoc (unLoc, GenLocated(..))
 #else
-import SrcLoc (unLoc, GenLocated(..), Located)
+import SrcLoc (unLoc, GenLocated(..))
+#endif
+
+#if MIN_VERSION_ghc(9,2,0)
+import GHC.Parser.Annotation (EpAnn(..))
 #endif
 
 import GHC.SourceGen.Binds.Internal
@@ -57,23 +61,41 @@ import GHC.SourceGen.Type.Internal
 -- > =====
 -- > overLabel "foo"
 overLabel :: String -> HsExpr'
-overLabel = noExt HsOverLabel Nothing . fromString
+overLabel = hsOverLabel . fromString
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    hsOverLabel = withEpAnnNotUsed HsOverLabel
+#else
+    hsOverLabel = noExt HsOverLabel Nothing
+#endif
 
 let' :: [RawValBind] -> HsExpr' -> HsExpr'
-let' binds e = noExt HsLet (builtLoc $ valBinds binds) $ builtLoc e
+let' binds e = withEpAnnNotUsed HsLet (toHsLocalBinds $ valBinds binds) $ mkLocated e
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    toHsLocalBinds = id
+#else
+    toHsLocalBinds = builtLoc
+#endif
 
 case' :: HsExpr' -> [RawMatch] -> HsExpr'
-case' e matches = noExt HsCase (builtLoc e)
+case' e matches = withEpAnnNotUsed HsCase (mkLocated e)
                     $ matchGroup CaseAlt matches
 
 lambda :: [Pat'] -> HsExpr' -> HsExpr'
 lambda ps e = noExt HsLam $ matchGroup LambdaExpr [match ps e]
 
 lambdaCase :: [RawMatch] -> HsExpr'
-lambdaCase = noExt HsLamCase . matchGroup CaseAlt
+lambdaCase = withEpAnnNotUsed HsLamCase . matchGroup CaseAlt
 
 if' :: HsExpr' -> HsExpr' -> HsExpr' -> HsExpr'
-if' x y z = mkHsIf (builtLoc x) (builtLoc y) (builtLoc z)
+if' x y z = mkHsIf
+                (mkLocated x)
+                (mkLocated y)
+                (mkLocated z)
+#if MIN_VERSION_ghc(9,2,0)
+                EpAnnNotUsed
+#endif
 
 -- | A MultiWayIf expression.
 --
@@ -87,7 +109,7 @@ if' x y z = mkHsIf (builtLoc x) (builtLoc y) (builtLoc z)
 -- >     , guardedStmt (var "otherwise") $ rhs (string "h")
 -- >     ]
 multiIf :: [GuardedExpr] -> HsExpr'
-multiIf = noExtOrPlaceHolder HsMultiIf . map builtLoc
+multiIf = withPlaceHolder (withEpAnnNotUsed HsMultiIf) . map builtLoc
 
 -- | A do-expression.
 --
@@ -101,11 +123,11 @@ multiIf = noExtOrPlaceHolder HsMultiIf . map builtLoc
 do' :: [Stmt'] -> HsExpr'
 do' = withPlaceHolder
 #if MIN_VERSION_ghc(9,0,0)
-        . noExt HsDo (DoExpr Nothing)
+        . withEpAnnNotUsed HsDo (DoExpr Nothing)
 #else
         . noExt HsDo DoExpr
 #endif
-        . builtLoc . map (builtLoc . parenthesizeIfLet)
+        . mkLocated . map (mkLocated . parenthesizeIfLet)
   where
   -- Put parentheses around a "let" in a do-binding, to avoid:
   --   do let x = ...
@@ -130,13 +152,13 @@ do' = withPlaceHolder
 -- >          ]
 listComp :: HsExpr' -> [Stmt'] -> HsExpr'
 listComp lastExpr stmts =
-    let lastStmt = noExt LastStmt (builtLoc lastExpr) ret noSyntaxExpr
+    let lastStmt = noExt LastStmt (mkLocated lastExpr) ret noSyntaxExpr
 #if MIN_VERSION_ghc(9,0,0)
         ret = Nothing
 #else
         ret = False
 #endif
-     in withPlaceHolder . noExt HsDo ListComp . builtLoc . map builtLoc $
+     in withPlaceHolder . withEpAnnNotUsed HsDo ListComp . mkLocated . map mkLocated $
             stmts ++ [lastStmt]
 
 -- | A type constraint on an expression.
@@ -146,7 +168,7 @@ listComp lastExpr stmts =
 -- > var "e" @::@ var "t"
 (@::@) :: HsExpr' -> HsType' -> HsExpr'
 #if MIN_VERSION_ghc(8,8,0)
-e @::@ t = noExt ExprWithTySig (builtLoc e) (sigWcType t)
+e @::@ t = withEpAnnNotUsed ExprWithTySig (mkLocated e) (sigWcType t)
 #elif MIN_VERSION_ghc(8,6,0)
 e @::@ t = ExprWithTySig (sigWcType t) (builtLoc e)
 #else
@@ -160,7 +182,9 @@ e @::@ t = ExprWithTySig (builtLoc e) (sigWcType t)
 -- > =====
 -- > var "f" @@ var "Int"
 tyApp :: HsExpr' -> HsType' -> HsExpr'
-#if MIN_VERSION_ghc(8,8,0)
+#if MIN_VERSION_ghc(9,2,0)
+tyApp e t = HsAppType builtSpan e' t'
+#elif MIN_VERSION_ghc(8,8,0)
 tyApp e t = noExt HsAppType e' t'
 #elif MIN_VERSION_ghc(8,6,0)
 tyApp e t = HsAppType t' e'
@@ -168,8 +192,8 @@ tyApp e t = HsAppType t' e'
 tyApp e t = HsAppType e' t'
 #endif
   where
-    t' = wcType $ unLoc $ parenthesizeTypeForApp $ builtLoc t
-    e' = builtLoc e
+    t' = wcType $ unLoc $ parenthesizeTypeForApp $ mkLocated t
+    e' = mkLocated e
 
 -- | Constructs a record with explicit field names.
 --
@@ -177,20 +201,23 @@ tyApp e t = HsAppType e' t'
 -- > =====
 -- > recordConE "A" [("x", var "y")]
 recordConE :: RdrNameStr -> [(RdrNameStr, HsExpr')] -> HsExpr'
-recordConE c fs = (withPlaceHolder $ noExt RecordCon (valueRdrName c))
+recordConE c fs = (withPlaceHolder $ withEpAnnNotUsed RecordCon (valueRdrName c))
 #if !MIN_VERSION_ghc(8,6,0)
                     noPostTcExpr
 #endif
                     $ HsRecFields (map recField fs)
                         Nothing -- No ".."
   where
-    recField :: (RdrNameStr, HsExpr') -> LHsRecField' (Located HsExpr')
+    recField :: (RdrNameStr, HsExpr') -> LHsRecField' LHsExpr'
     recField (f, e) =
-        builtLoc HsRecField
+        mkLocated HsRecField
             { hsRecFieldLbl =
                   builtLoc $ withPlaceHolder $ noExt FieldOcc $ valueRdrName f
-            , hsRecFieldArg = builtLoc e
+            , hsRecFieldArg = mkLocated e
             , hsRecPun = False
+#if MIN_VERSION_ghc(9,2,0)
+            , hsRecFieldAnn = EpAnnNotUsed
+#endif
             }
 
 -- | Updates a record expression with explicit field names.
@@ -209,26 +236,34 @@ recordConE c fs = (withPlaceHolder $ noExt RecordCon (valueRdrName c))
 recordUpd :: HsExpr' -> [(RdrNameStr, HsExpr')] -> HsExpr'
 recordUpd e fs =
     withPlaceHolder4
-       $ noExt RecordUpd (parenthesizeExprForApp $ builtLoc e)
-       $ map mkField fs
+       $ withEpAnnNotUsed RecordUpd (parenthesizeExprForApp $ mkLocated e)
+       $ toRecordUpdFields $ map mkField fs
   where
     mkField :: (RdrNameStr, HsExpr') -> LHsRecUpdField'
     mkField (f, e') =
-        builtLoc HsRecField
+        mkLocated HsRecField
             { hsRecFieldLbl =
                 builtLoc $ withPlaceHolder $ noExt Ambiguous $ valueRdrName f
-            , hsRecFieldArg = builtLoc e'
+            , hsRecFieldArg = mkLocated e'
             , hsRecPun = False
+#if MIN_VERSION_ghc(9,2,0)
+            , hsRecFieldAnn = EpAnnNotUsed
+#endif
             }
     withPlaceHolder4 = withPlaceHolder . withPlaceHolder . withPlaceHolder
                             . withPlaceHolder
+#if MIN_VERSION_ghc(9,2,0)
+    toRecordUpdFields = Left
+#else
+    toRecordUpdFields = id
+#endif
 
 arithSeq :: ArithSeqInfo GhcPs -> HsExpr'
 arithSeq =
-#if !MIN_VERSION_ghc(8,6,0)
-    ArithSeq noPostTcExpr Nothing
+#if MIN_VERSION_ghc(8,6,0)
+    withEpAnnNotUsed ArithSeq Nothing
 #else
-    noExt ArithSeq Nothing
+    ArithSeq noPostTcExpr Nothing
 #endif
 
 -- | An arithmetic sequence expression with a start value.
@@ -237,7 +272,7 @@ arithSeq =
 -- > =====
 -- > from (var "a")
 from :: HsExpr' -> HsExpr'
-from from' = arithSeq $ From (builtLoc from')
+from from' = arithSeq $ From (mkLocated from')
 
 -- | An arithmetic sequence expression with a start and a step values.
 --
@@ -245,7 +280,7 @@ from from' = arithSeq $ From (builtLoc from')
 -- > =====
 -- > fromThen (var "a") (var "b")
 fromThen :: HsExpr' -> HsExpr' -> HsExpr'
-fromThen from' then' = arithSeq $ FromThen (builtLoc from') (builtLoc then')
+fromThen from' then' = arithSeq $ FromThen (mkLocated from') (mkLocated then')
 
 -- | An arithmetic sequence expression with a start and an end values.
 --
@@ -253,7 +288,7 @@ fromThen from' then' = arithSeq $ FromThen (builtLoc from') (builtLoc then')
 -- > =====
 -- > fromTo (var "a") (var "b")
 fromTo :: HsExpr' -> HsExpr' -> HsExpr'
-fromTo from' to = arithSeq $ FromTo (builtLoc from') (builtLoc to)
+fromTo from' to = arithSeq $ FromTo (mkLocated from') (mkLocated to)
 
 -- | An arithmetic sequence expression with a start, a step, and an end values.
 --
@@ -262,4 +297,4 @@ fromTo from' to = arithSeq $ FromTo (builtLoc from') (builtLoc to)
 -- > fromThenTo (var "a") (var "b") (var "c")
 fromThenTo :: HsExpr' -> HsExpr' -> HsExpr' -> HsExpr'
 fromThenTo from' then' to =
-    arithSeq $ FromThenTo (builtLoc from') (builtLoc then') (builtLoc to)
+    arithSeq $ FromThenTo (mkLocated from') (mkLocated then') (mkLocated to)

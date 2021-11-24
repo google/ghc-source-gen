@@ -10,11 +10,9 @@ module GHC.SourceGen.Binds.Internal where
 #if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic (Origin(Generated))
 import GHC.Data.Bag (listToBag)
-import GHC.Types.SrcLoc (Located)
 #else
 import BasicTypes (Origin(Generated))
 import Bag (listToBag)
-import SrcLoc (Located)
 #endif
 import GHC.Hs.Binds
 import GHC.Hs.Decls
@@ -40,14 +38,14 @@ valBinds :: [RawValBind] -> HsLocalBinds'
 -- This case prevents GHC from printing an empty "where" clause:
 valBinds [] = noExt EmptyLocalBinds
 valBinds vbs =
-    noExt HsValBinds
+    withEpAnnNotUsed HsValBinds
 #if MIN_VERSION_ghc(8,6,0)
-        $ noExt ValBinds
+        $ withNoAnnSortKey ValBinds
 #else
         $ noExt ValBindsIn
 #endif
-            (listToBag $ map builtLoc binds)
-            (map builtLoc sigs)
+            (listToBag $ map mkLocated binds)
+            (map mkLocated sigs)
   where
     sigs = [s | SigV s <- vbs]
     binds = [b | BindV b <- vbs]
@@ -83,30 +81,36 @@ data RawGRHSs = RawGRHSs
     , rawGRHSWhere :: [RawValBind]
     }
 
-matchGroup :: HsMatchContext' -> [RawMatch] -> MatchGroup' (Located HsExpr')
+matchGroup :: HsMatchContext' -> [RawMatch] -> MatchGroup' LHsExpr'
 matchGroup context matches =
-    noExt MG (builtLoc $ map (builtLoc . mkMatch) matches)
+    noExt MG (mkLocated $ map (mkLocated . mkMatch) matches)
 #if !MIN_VERSION_ghc(8,6,0)
                             [] PlaceHolder
 #endif
                             Generated
   where
-    mkMatch :: RawMatch -> Match' (Located HsExpr')
-    mkMatch r = noExt Match context
+    mkMatch :: RawMatch -> Match' LHsExpr'
+    mkMatch r = withEpAnnNotUsed Match context
                     (map builtPat $ map parenthesize $ rawMatchPats r)
                     (mkGRHSs $ rawMatchGRHSs r)
 
-mkGRHSs :: RawGRHSs -> GRHSs' (Located HsExpr')
-mkGRHSs g = noExt GRHSs
+mkGRHSs :: RawGRHSs -> GRHSs' LHsExpr'
+mkGRHSs g = withEmptyEpAnnComments GRHSs
                 (map builtLoc $ rawGRHSs g)
-                (builtLoc $ valBinds $ rawGRHSWhere g)
+                (fromLocalBinds $ valBinds $ rawGRHSWhere g)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    fromLocalBinds = id
+#else
+    fromLocalBinds = builtLoc
+#endif
 
 -- | An expression with a single guard.
 --
 -- For example:
 --
 -- > | otherwise = ()
-type GuardedExpr = GRHS' (Located HsExpr')
+type GuardedExpr = GRHS' LHsExpr'
 
 -- | Syntax types which can declare/define functions.  For example:
 -- declarations, or the body of a class declaration or class instance.

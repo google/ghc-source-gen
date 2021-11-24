@@ -17,11 +17,14 @@ module GHC.SourceGen.Lit
     , frac
     ) where
 
-#if MIN_VERSION_ghc(9,0,0)
-import GHC.Types.Basic (FractionalLit(..), IntegralLit(..), SourceText(..))
+#if MIN_VERSION_ghc(9,2,0)
+import GHC.Types.SourceText (mkTHFractionalLit, mkIntegralLit)
+import GHC.Data.FastString (fsLit)
+#elif MIN_VERSION_ghc(9,0,0)
+import GHC.Types.Basic (mkFractionalLit, mkIntegralLit)
 import GHC.Data.FastString (fsLit)
 #else
-import BasicTypes (FractionalLit(..), IntegralLit(..), SourceText(..))
+import BasicTypes (mkFractionalLit, mkIntegralLit)
 import FastString (fsLit)
 #endif
 import GHC.Hs.Lit
@@ -36,13 +39,13 @@ class HasLit e where
     overLit :: HsOverLit' -> e
 
 instance HasLit HsExpr' where
-    lit = noExt HsLit
-    overLit = noExt HsOverLit
+    lit = withEpAnnNotUsed HsLit
+    overLit = withEpAnnNotUsed HsOverLit
 
 instance HasLit Pat' where
     lit = noExt LitPat
     overLit l = withPlaceHolder
-                    $ noExt NPat (builtLoc l) Nothing noSyntaxExpr
+                    $ withEpAnnNotUsed NPat (builtLoc l) Nothing noSyntaxExpr
 
 char :: HasLit e => Char -> e
 char = lit . noSourceText HsChar
@@ -52,13 +55,16 @@ string = lit . noSourceText HsString . fsLit
 
 -- | Note: this is an *overloaded* integer.
 int :: HasLit e => Integer -> e
-int n = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit il) noExpr
+int n = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit n') noExpr
   where
-    il = HsIntegral $ noSourceText IL (n < 0) n
+    n' = HsIntegral $ mkIntegralLit n
 
 -- | Note: this is an *overloaded* rational, e.g., a decimal number.
 frac :: HasLit e => Rational -> e
-frac x = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit $ HsFractional il) noExpr
+frac x = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit $ HsFractional x') noExpr
   where
-    il = FL (SourceText s) (x < 0) x
-    s = show (fromRational x :: Double)
+#if MIN_VERSION_ghc(9,2,0)
+    x' = mkTHFractionalLit x
+#else
+    x' = mkFractionalLit x
+#endif

@@ -5,6 +5,7 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 resolver: nightly-2021-11-14
+compiler: ghc-9.2.1
 
 packages:
 - .

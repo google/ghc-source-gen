@@ -36,7 +36,7 @@ import GHC.SourceGen.Type.Internal
 
 -- | A promoted name, for example from the @DataKinds@ extension.
 tyPromotedVar :: RdrNameStr -> HsType'
-tyPromotedVar = noExt HsTyVar promoted . typeRdrName
+tyPromotedVar = withEpAnnNotUsed HsTyVar promoted . typeRdrName
 
 stringTy :: String -> HsType'
 stringTy = noExt HsTyLit . noSourceText HsStrTy . fromString
@@ -45,15 +45,15 @@ numTy :: Integer -> HsType'
 numTy = noExt HsTyLit . noSourceText HsNumTy
 
 listTy :: HsType' -> HsType'
-listTy = noExt HsListTy . builtLoc
+listTy = withEpAnnNotUsed HsListTy . mkLocated
 
 listPromotedTy :: [HsType'] -> HsType'
 -- Lists of two or more elements don't need the explicit tick (`'`).
 -- But for consistency, just always add it.
-listPromotedTy = withPlaceHolder (noExt HsExplicitListTy promoted) . map builtLoc
+listPromotedTy = withPlaceHolder (withEpAnnNotUsed HsExplicitListTy promoted) . map mkLocated
 
 tuplePromotedTy :: [HsType'] -> HsType'
-tuplePromotedTy = withPlaceHolders (noExt HsExplicitTupleTy) . map builtLoc
+tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed HsExplicitTupleTy) . map mkLocated
 
 -- | A function type.
 --
@@ -61,11 +61,11 @@ tuplePromotedTy = withPlaceHolders (noExt HsExplicitTupleTy) . map builtLoc
 -- > =====
 -- > var "a" --> var "b"
 (-->) :: HsType' -> HsType' -> HsType'
-a --> b = noExt HsFunTy
+a --> b = withEpAnnNotUsed HsFunTy
 #if MIN_VERSION_ghc(9,0,0)
          (HsUnrestrictedArrow NormalSyntax)
 #endif
-         (parenthesizeTypeForFun $ builtLoc a) (builtLoc b)
+         (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
 
 infixr 0 -->
 
@@ -75,16 +75,18 @@ infixr 0 -->
 -- > =====
 -- > forall' [bvar "a"] $ var "T" @@ var "a"
 forall' :: [HsTyVarBndrS'] -> HsType' -> HsType'
-forall' ts = noExt HsForAllTy
-#if MIN_VERSION_ghc(9,0,0)
-        (mkHsForAllInvisTele (map builtLoc ts))
+forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    hsForAllTy x = HsForAllTy x . withEpAnnNotUsed mkHsForAllInvisTele
+#elif MIN_VERSION_ghc(9,0,0)
+    hsForAllTy x = HsForAllTy x . mkHsForAllInvisTele
+#elif MIN_VERSION_ghc(8,10,0)
+    fvf = ForallInvis -- "Invisible" forall, i.e., with a dot
+    hsForAllTy x = HsForAllTy x fvf
 #else
-#if MIN_VERSION_ghc(8,10,0)
-        ForallInvis  -- "Invisible" forall, i.e., with a dot
+    hsForAllTy = HsForAllTy
 #endif
-        (map builtLoc ts)
-#endif
-        . builtLoc
 
 -- | Qualify a type with constraints.
 --
@@ -92,7 +94,13 @@ forall' ts = noExt HsForAllTy
 -- > =====
 -- > [var "F" @@ var "x", var "G" @@ var "x"] ==> var "x"
 (==>) :: [HsType'] -> HsType' -> HsType'
-(==>) cs = noExt HsQualTy (builtLoc (map builtLoc cs)) . builtLoc
+(==>) cs = hsQualTy (mkLocated (map mkLocated cs)) . mkLocated
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    hsQualTy = noExt HsQualTy . Just
+#else
+    hsQualTy = noExt HsQualTy
+#endif
 
 infixr 0 ==>
 
@@ -102,8 +110,8 @@ infixr 0 ==>
 -- > =====
 -- > kindedVar "x" (var "A")
 kindedVar :: OccNameStr -> HsType' -> HsTyVarBndr'
-kindedVar v t = noExt KindedTyVar
+kindedVar v t = withEpAnnNotUsed KindedTyVar
 #if MIN_VERSION_ghc(9,0,0)
                 ()
 #endif
-                (typeRdrName $ UnqualStr v) (builtLoc t)
+                (typeRdrName $ UnqualStr v) (mkLocated t)

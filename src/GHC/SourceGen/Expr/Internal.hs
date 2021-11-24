@@ -9,16 +9,16 @@ module GHC.SourceGen.Expr.Internal where
 
 import GHC.Hs.Expr
 #if MIN_VERSION_ghc(9,0,0)
-import GHC.Types.SrcLoc (Located, unLoc)
+import GHC.Types.SrcLoc (unLoc)
 #else
-import SrcLoc (Located, unLoc)
+import SrcLoc (unLoc)
 #endif
 
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal
 
 parenthesizeExprForApp, parenthesizeExprForOp
-    :: Located HsExpr' -> Located HsExpr'
+    :: LHsExpr' -> LHsExpr'
 parenthesizeExprForApp e 
     | needsExprForApp (unLoc e) = parExpr e
     | otherwise = e
@@ -26,8 +26,8 @@ parenthesizeExprForOp e
     | needsExprForOp (unLoc e) = parExpr e
     | otherwise = e
 
-parExpr :: Located HsExpr' -> Located HsExpr'
-parExpr = builtLoc . noExt HsPar
+parExpr :: LHsExpr' -> LHsExpr'
+parExpr = mkLocated . withEpAnnNotUsed HsPar
 
 #if MIN_VERSION_ghc(8,6,0)
 #define WILD_EXT _

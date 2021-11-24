@@ -5,6 +5,8 @@
 -- https://developers.google.com/open-source/licenses/bsd
 
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE TypeFamilies #-}
+
 -- | This module provides combinators for constructing Haskell declarations.
 module GHC.SourceGen.Decl
     ( HsDecl'
@@ -50,17 +52,17 @@ module GHC.SourceGen.Decl
     ) where
 
 #if MIN_VERSION_ghc(9,0,0)
-import GHC.Types.Basic (LexicalFixity(Prefix))
+import GHC (LexicalFixity(Prefix))
 import GHC.Data.Bag (listToBag)
-import GHC.Types.SrcLoc (Located, LayoutInfo(..))
+import GHC.Types.SrcLoc (LayoutInfo(..))
 #else
 import BasicTypes (LexicalFixity(Prefix))
 import Bag (listToBag)
-import SrcLoc (Located)
 #endif
 #if !MIN_VERSION_ghc(8,6,0)
 import BasicTypes (DerivStrategy(..))
 #endif
+import GHC (GhcPs)
 import GHC.Hs.Binds
 import GHC.Hs.Decls
 
@@ -68,9 +70,15 @@ import GHC.Hs.Type
     ( ConDeclField(..)
     , FieldOcc(..)
     , HsConDetails(..)
+#if !MIN_VERSION_ghc(9,2,0)
     , HsImplicitBndrs (..)
+#endif
+#if MIN_VERSION_ghc(9,2,0)
+    , HsOuterTyVarBndrs (..)
+#endif
     , HsSrcBang(..)
     , HsType(..)
+    , LHsType
 #if MIN_VERSION_ghc(8,6,0)
     , HsWildCardBndrs (..)
 #endif
@@ -84,7 +92,9 @@ import GHC.Hs.Type
 #endif
     )
 
-#if MIN_VERSION_ghc(8,10,0)
+#if MIN_VERSION_ghc(9,2,0)
+import GHC.Parser.Annotation (AnnSortKey(..), EpAnn(..))
+#elif MIN_VERSION_ghc(8,10,0)
 import GHC.Hs.Extension (NoExtField(NoExtField))
 #elif MIN_VERSION_ghc(8,6,0)
 import GHC.Hs.Extension (NoExt(NoExt))
@@ -163,8 +173,10 @@ class'
     -> HsDecl'
 class' context name vars decls
     = noExt TyClD $ ClassDecl
-            { tcdCtxt = builtLoc $ map builtLoc context
-#if MIN_VERSION_ghc(9,0,0)
+            { tcdCtxt = toHsContext $ mkLocated $ map mkLocated context
+#if MIN_VERSION_ghc(9,2,0)
+            , tcdCExt = (EpAnnNotUsed, NoAnnSortKey, NoLayoutInfo)
+#elif MIN_VERSION_ghc(9,0,0)
             , tcdCExt = NoLayoutInfo
 #elif MIN_VERSION_ghc(8,10,0)
             , tcdCExt = NoExtField
@@ -176,16 +188,27 @@ class' context name vars decls
             , tcdLName = typeRdrName $ unqual name
             , tcdTyVars = mkQTyVars vars
             , tcdFixity = Prefix
-            , tcdFDs = [ builtLoc (map typeRdrName xs, map typeRdrName ys)
+            , tcdFDs = [ mkLocated $ funDep' (map typeRdrName xs) (map typeRdrName ys)
                        | ClassFunDep xs ys <- decls
                        ]
-            , tcdSigs = [builtLoc sig | ClassSig sig <- decls]
+            , tcdSigs = [mkLocated sig | ClassSig sig <- decls]
             , tcdMeths =
-                listToBag [builtLoc bind | ClassDefaultMethod bind <- decls]
+                listToBag [mkLocated bind | ClassDefaultMethod bind <- decls]
             , tcdATs = []  -- Associated types
             , tcdATDefs = []  -- Associated type defaults
             , tcdDocs = []  -- Haddocks
             }
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    funDep' = withEpAnnNotUsed FunDep
+#else
+    funDep' = (,)
+#endif
+#if MIN_VERSION_ghc(9,2,0)
+    toHsContext = Just
+#else
+    toHsContext = id
+#endif
 
 -- | A definition that can appear in the body of an @instance@ declaration.
 --
@@ -217,14 +240,16 @@ instance HasValBind RawInstDecl where
 instance' :: HsType' -> [RawInstDecl] -> HsDecl'
 instance' ty decls = noExt InstD  $ noExt ClsInstD $ ClsInstDecl
     { cid_poly_ty = sigType ty
-#if MIN_VERSION_ghc(8,10,0)
+#if MIN_VERSION_ghc(9,2,0)
+    , cid_ext = (EpAnnNotUsed, NoAnnSortKey)
+#elif MIN_VERSION_ghc(8,10,0)
     , cid_ext = NoExtField
 #elif MIN_VERSION_ghc(8,6,0)
     , cid_ext = NoExt
 #endif
-    , cid_binds = listToBag [builtLoc b | InstBind b <- decls]
-    , cid_sigs = [builtLoc sig | InstSig sig <- decls]
-    , cid_tyfam_insts = [builtLoc $ t | InstTyFam t <- decls]
+    , cid_binds = listToBag [mkLocated b | InstBind b <- decls]
+    , cid_sigs = [mkLocated sig | InstSig sig <- decls]
+    , cid_tyfam_insts = [mkLocated $ t | InstTyFam t <- decls]
     , cid_datafam_insts = []
     , cid_overlap_mode = Nothing
     }
@@ -248,17 +273,31 @@ instance HasTyFamInst RawInstDecl where
 -- > tyFamInst "Elt" [var "String"] (var "Char")
 tyFamInst :: HasTyFamInst t => RdrNameStr -> [HsType'] -> HsType' -> t
 tyFamInst name params ty = tyFamInstD
-        $ TyFamInstDecl
-        $ implicitBndrs
-        $ noExt FamEqn (typeRdrName name)
-#if MIN_VERSION_ghc(8,8,0)
-            Nothing -- eqn binders
-            (map (HsValArg . builtLoc) params)
-#else
-            (map builtLoc params)
-#endif
+        $ tyFamInstDecl
+        $ famEqn
+            (typeRdrName name)
+            eqn_bndrs
+            (map mkLocated params)
             Prefix
-            (builtLoc ty)
+            (mkLocated ty)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    tyFamInstDecl = withEpAnnNotUsed TyFamInstDecl
+#else
+    tyFamInstDecl = TyFamInstDecl . withPlaceHolder . noExt (withPlaceHolder HsIB)
+#endif
+#if MIN_VERSION_ghc(9,2,0)
+    famEqn tycon bndrs pats = withEpAnnNotUsed FamEqn tycon bndrs (map HsValArg pats)
+#elif MIN_VERSION_ghc(8,8,0)
+    famEqn tycon bndrs pats = noExt FamEqn tycon bndrs (map HsValArg pats)
+#else
+    famEqn tycon _ = noExt FamEqn tycon
+#endif
+#if MIN_VERSION_ghc(9,2,0)
+    eqn_bndrs = noExt HsOuterImplicit
+#else
+    eqn_bndrs = Nothing
+#endif
 
 -- | Declares a type synonym.
 --
@@ -267,10 +306,10 @@ tyFamInst name params ty = tyFamInstD
 -- > type' "A" [bvar "a", bvar "b"] $ var "B" @@ var "b" @@ var "a"
 type' :: OccNameStr -> [HsTyVarBndr'] -> HsType' -> HsDecl'
 type' name vars t =
-    noExt TyClD $ withPlaceHolder $ noExt SynDecl (typeRdrName $ unqual name)
+    noExt TyClD $ withPlaceHolder $ withEpAnnNotUsed SynDecl (typeRdrName $ unqual name)
         (mkQTyVars vars)
         Prefix
-        (builtLoc t)
+        (mkLocated t)
 
 newOrDataType
     :: NewOrData
@@ -281,14 +320,26 @@ newOrDataType
     -> HsDecl'
 newOrDataType newOrData name vars conDecls derivs
     = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
-        noExt DataDecl (typeRdrName $ unqual name)
+        withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
             $ noExt HsDataDefn newOrData
-                (builtLoc []) Nothing
+                cxt
                 Nothing
-                (map builtLoc conDecls)
-                (builtLoc $ map builtLoc derivs)
+                Nothing
+                (map mkLocated conDecls)
+                (toHsDeriving $ map builtLoc derivs)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    cxt = Nothing
+#else
+    cxt = builtLoc []
+#endif
+#if MIN_VERSION_ghc(9,2,0)
+    toHsDeriving = id
+#else
+    toHsDeriving = mkLocated
+#endif
 
 -- | A newtype declaration.
 --
@@ -321,7 +372,13 @@ data' = newOrDataType DataType
 -- > prefixCon "Foo" [field (var "a"), field (var "Int")]
 prefixCon :: OccNameStr -> [Field] -> ConDecl'
 prefixCon name fields = renderCon98Decl name
-    $ PrefixCon $ map (hsUnrestricted . renderField) fields
+    $ prefixCon' $ map (hsUnrestricted . renderField) fields
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    prefixCon' = PrefixCon []
+#else
+    prefixCon' = PrefixCon
+#endif
 
 -- | Declares a Haskell-98-style infix constructor for a data or type
 -- declaration.
@@ -341,10 +398,10 @@ infixCon f name f' = renderCon98Decl name
 -- > recordCon "A" [("x", var "B"), ("y", var "C")]
 recordCon :: OccNameStr -> [(OccNameStr, Field)] -> ConDecl'
 recordCon name fields = renderCon98Decl name
-    $ RecCon $ builtLoc $ map mkLConDeclField fields
+    $ RecCon $ mkLocated $ map mkLConDeclField fields
   where
     mkLConDeclField (n, f) =
-        builtLoc $ noExt ConDeclField
+        mkLocated $ withEpAnnNotUsed ConDeclField
                         [builtLoc $ withPlaceHolder $ noExt FieldOcc $ valueRdrName $ unqual n]
                         (renderField f)
                         Nothing
@@ -388,42 +445,67 @@ hsUnrestricted :: a -> a
 hsUnrestricted = id
 #endif
 
-renderField :: Field -> Located HsType'
+renderField :: Field -> LHsType GhcPs
 -- TODO: parenthesizeTypeForApp is an overestimate in the case of
 -- rendering an infix or record type.
-renderField f = wrap $ parenthesizeTypeForApp $ builtLoc $ fieldType f
+renderField f = wrap $ parenthesizeTypeForApp $ mkLocated $ fieldType f
   where
     wrap = case strictness f of
         NoSrcStrict -> id
-        s -> builtLoc . (noExt HsBangTy $ noSourceText HsSrcBang NoSrcUnpack s)
+        s -> mkLocated . (withEpAnnNotUsed HsBangTy $ noSourceText HsSrcBang NoSrcUnpack s)
 
 renderCon98Decl :: OccNameStr -> HsConDeclDetails' -> ConDecl'
-renderCon98Decl name details = noExt ConDeclH98 (typeRdrName $ unqual name)
-#if MIN_VERSION_ghc(8,6,0)
-    (builtLoc False)
-    []
+renderCon98Decl name details =
+    conDeclH98 (typeRdrName $ unqual name) False [] Nothing details Nothing
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    conDeclH98 = withEpAnnNotUsed ConDeclH98
+#elif MIN_VERSION_ghc(8,6,0)
+    conDeclH98 n = noExt ConDeclH98 n . builtLoc
 #else
-    Nothing
+    conDeclH98 n _ _ = ConDeclH98 n Nothing
 #endif
-    Nothing
-    details
-    Nothing
 
 deriving' :: [HsType'] -> HsDerivingClause'
 deriving' = derivingWay Nothing
 
 derivingWay :: Maybe DerivStrategy' -> [HsType'] -> HsDerivingClause'
 derivingWay way ts =
-    noExt HsDerivingClause (fmap builtLoc way) $ builtLoc $ map sigType ts
+    withEpAnnNotUsed HsDerivingClause (fmap builtLoc way) $ mkLocated $ derivClauseTys $ map sigType ts
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    derivClauseTys [x] = noExt DctSingle x
+    derivClauseTys xs = noExt DctMulti xs
+#else
+    derivClauseTys = id
+#endif
 
 derivingStock :: [HsType'] -> HsDerivingClause'
-derivingStock = derivingWay (Just StockStrategy)
+derivingStock = derivingWay (Just strat)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    strat = withEpAnnNotUsed StockStrategy
+#else
+    strat = StockStrategy
+#endif
 
 derivingNewtype :: [HsType'] -> HsDerivingClause'
-derivingNewtype = derivingWay (Just NewtypeStrategy)
+derivingNewtype = derivingWay (Just strat)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    strat = withEpAnnNotUsed NewtypeStrategy
+#else
+    strat = NewtypeStrategy
+#endif
 
 derivingAnyclass :: [HsType'] -> HsDerivingClause'
-derivingAnyclass = derivingWay (Just AnyclassStrategy)
+derivingAnyclass = derivingWay (Just strat)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    strat = withEpAnnNotUsed AnyclassStrategy
+#else
+    strat = AnyclassStrategy
+#endif
 
 #if MIN_VERSION_ghc(8,6,0)
 -- | A `DerivingVia` clause.
@@ -433,27 +515,49 @@ derivingAnyclass = derivingWay (Just AnyclassStrategy)
 -- > derivingVia (var "T") [var "Eq", var "Show"]
 -- Available with @ghc>=8.6@.
 derivingVia :: HsType' -> [HsType'] -> HsDerivingClause'
-derivingVia t = derivingWay (Just $ ViaStrategy $ sigType t)
+derivingVia t = derivingWay (Just $ strat $ sigType t)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    strat = ViaStrategy . withEpAnnNotUsed XViaStrategyPs
+#else
+    strat = ViaStrategy
+#endif
 #endif
 
 standaloneDeriving :: HsType' -> HsDecl'
 standaloneDeriving = standaloneDerivingWay Nothing
 
 standaloneDerivingStock :: HsType' -> HsDecl'
-standaloneDerivingStock = standaloneDerivingWay (Just StockStrategy)
+standaloneDerivingStock = standaloneDerivingWay (Just strat)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    strat = withEpAnnNotUsed StockStrategy
+#else
+    strat = StockStrategy
+#endif
 
 standaloneDerivingNewtype :: HsType' -> HsDecl'
-standaloneDerivingNewtype = standaloneDerivingWay (Just NewtypeStrategy)
+standaloneDerivingNewtype = standaloneDerivingWay (Just strat)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    strat = withEpAnnNotUsed NewtypeStrategy
+#else
+    strat = NewtypeStrategy
+#endif
 
 standaloneDerivingAnyclass :: HsType' -> HsDecl'
-standaloneDerivingAnyclass = standaloneDerivingWay (Just AnyclassStrategy)
+standaloneDerivingAnyclass = standaloneDerivingWay (Just strat)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    strat = withEpAnnNotUsed AnyclassStrategy
+#else
+    strat = AnyclassStrategy
+#endif
 
 standaloneDerivingWay :: Maybe DerivStrategy' -> HsType' -> HsDecl'
 standaloneDerivingWay way ty = noExt DerivD derivDecl
   where derivDecl =
-          noExt DerivDecl (hsWC hsIB) (fmap builtLoc way) Nothing
-        hsIB =
-          withPlaceHolder $ noExtOrPlaceHolder HsIB (builtLoc ty)
+          withEpAnnNotUsed DerivDecl (hsWC $ sigType ty) (fmap builtLoc way) Nothing
         hsWC =
 #if MIN_VERSION_ghc(8,6,0)
           noExt HsWC
@@ -468,7 +572,7 @@ standaloneDerivingWay way ty = noExt DerivD derivDecl
 -- > patSynSigs ["F", "G"] $ var "T"
 patSynSigs :: [OccNameStr] -> HsType' -> HsDecl'
 patSynSigs names t =
-    sigB $ noExt PatSynSig (map (typeRdrName . unqual) names)
+    sigB $ withEpAnnNotUsed PatSynSig (map (typeRdrName . unqual) names)
         $ sigType t
 
 -- | Declares a pattern signature and its type.
@@ -488,8 +592,14 @@ patSynSig n = patSynSigs [n]
 -- > patSynBind "F" ["a", "b"] $ conP "G" [bvar "b", bvar "a"]
 patSynBind :: OccNameStr -> [OccNameStr] -> Pat' -> HsDecl'
 patSynBind n ns p = bindB $ noExt PatSynBind
-                    $ withPlaceHolder (noExt PSB (valueRdrName $ unqual n))
-                        (PrefixCon (map (valueRdrName . unqual) ns))
+                    $ withPlaceHolder (withEpAnnNotUsed PSB (valueRdrName $ unqual n))
+                        (prefixCon' (map (valueRdrName . unqual) ns))
                         (builtPat p)
                         ImplicitBidirectional
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    prefixCon' = PrefixCon []
+#else
+    prefixCon' = PrefixCon
+#endif
 

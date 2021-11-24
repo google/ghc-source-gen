@@ -21,6 +21,7 @@ import GHC.Hs
     , HsValBinds
     , HsMatchContext
     , IE
+    , LHsExpr
     , LHsQTyVars
     , Match
     , MatchGroup
@@ -28,12 +29,10 @@ import GHC.Hs
     , GRHSs
     , Stmt
     , ConDecl
-    , HsConDeclDetails
     , LHsSigType
     , ImportDecl
     , LHsSigWcType
     , LHsWcType
-    , HsImplicitBndrs
     , TyFamInstDecl
 #if !MIN_VERSION_ghc(8,8,0)
     , LHsRecField
@@ -41,6 +40,11 @@ import GHC.Hs
 #endif
 #if MIN_VERSION_ghc(9,0,0)
     , HsPatSigType
+#endif
+#if MIN_VERSION_ghc(9,2,0)
+    , HsConDeclH98Details
+#else
+    , HsConDeclDetails
 #endif
     )
 import GHC.Hs.Binds (Sig, HsLocalBinds)
@@ -58,6 +62,16 @@ import RdrName (RdrName)
 import SrcLoc (SrcSpan, Located, GenLocated(..), mkGeneralSrcSpan)
 #endif
 
+#if MIN_VERSION_ghc(9,2,0)
+import GHC.Parser.Annotation
+    ( SrcSpanAnn'(..)
+    , AnnSortKey(..)
+    , EpAnn(..)
+    , EpAnnComments
+    , emptyComments
+    )
+#endif
+
 #if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic (PromotionFlag(..))
 #elif MIN_VERSION_ghc(8,8,0)
@@ -67,11 +81,12 @@ import GHC.Hs.Type (Promoted(..))
 #endif
 
 #if MIN_VERSION_ghc(8,10,0)
-import GHC.Hs.Extension (NoExtField(NoExtField))
+import qualified GHC.Hs as GHC
 #elif MIN_VERSION_ghc(8,6,0)
-import GHC.Hs.Extension (NoExt(NoExt))
+import qualified GHC.Hs.Extension as GHC
 #else
-import PlaceHolder(PlaceHolder(..))
+import qualified HsExtension as GHC
+import qualified PlaceHolder as GHC
 #endif
 
 #if MIN_VERSION_ghc(9,0,0)
@@ -80,42 +95,78 @@ import GHC.Types.Var (Specificity)
 
 import GHC.Hs.Extension (GhcPs)
 
-#if MIN_VERSION_ghc(8,6,0)
 #if MIN_VERSION_ghc(8,10,0)
-noExt :: (NoExtField -> a) -> a
-noExt = ($ NoExtField)
-
-noExtOrPlaceHolder :: (NoExtField -> a) -> a
-noExtOrPlaceHolder = noExt
-
-#else
-noExt :: (NoExt -> a) -> a
-noExt = ($ NoExt)
-
-noExtOrPlaceHolder :: (NoExt -> a) -> a
-noExtOrPlaceHolder = noExt
+type NoExtField = GHC.NoExtField
+#elif MIN_VERSION_ghc(8,6,0)
+type NoExtField = GHC.NoExt
 #endif
 
-withPlaceHolder :: a -> a
-withPlaceHolder = id
-
-withPlaceHolders :: a -> a
-withPlaceHolders = id
-
+#if MIN_VERSION_ghc(8,10,0)
+noExt :: (NoExtField -> a) -> a
+noExt = ($ GHC.NoExtField)
+#elif MIN_VERSION_ghc(8,6,0)
+noExt :: (NoExtField -> a) -> a
+noExt = ($ GHC.NoExt)
 #else
-
 noExt :: a -> a
 noExt = id
+#endif
 
-noExtOrPlaceHolder :: (PlaceHolder -> a) -> a
+#if MIN_VERSION_ghc(8,6,0)
+noExtOrPlaceHolder :: (NoExtField -> a) -> a
+noExtOrPlaceHolder = noExt
+#else
+noExtOrPlaceHolder :: (GHC.PlaceHolder -> a) -> a
 noExtOrPlaceHolder = withPlaceHolder
+#endif
 
-withPlaceHolder :: (PlaceHolder -> a) -> a
-withPlaceHolder = ($ PlaceHolder)
+#if MIN_VERSION_ghc(9,2,0)
+withEpAnnNotUsed :: (EpAnn ann -> a) -> a
+withEpAnnNotUsed = ($ EpAnnNotUsed)
+#elif MIN_VERSION_ghc(8,6,0)
+withEpAnnNotUsed :: (NoExtField -> a) -> a
+withEpAnnNotUsed = noExt
+#else
+withEpAnnNotUsed :: a -> a
+withEpAnnNotUsed = id
+#endif
 
-withPlaceHolders :: ([PlaceHolder] -> a) -> a
+#if MIN_VERSION_ghc(9,2,0)
+withNoAnnSortKey :: (AnnSortKey -> a) -> a
+withNoAnnSortKey = ($ NoAnnSortKey)
+#elif MIN_VERSION_ghc(8,6,0)
+withNoAnnSortKey :: (NoExtField -> a) -> a
+withNoAnnSortKey = noExt
+#else
+withNoAnnSortKey :: a -> a
+withNoAnnSortKey = id
+#endif
+
+#if MIN_VERSION_ghc(9,2,0)
+withEmptyEpAnnComments :: (EpAnnComments -> a) -> a
+withEmptyEpAnnComments = ($ emptyComments)
+#elif MIN_VERSION_ghc(8,6,0)
+withEmptyEpAnnComments :: (NoExtField -> a) -> a
+withEmptyEpAnnComments = noExt
+#else
+withEmptyEpAnnComments :: a -> a
+withEmptyEpAnnComments = id
+#endif
+
+#if MIN_VERSION_ghc(8,6,0)
+withPlaceHolder :: a -> a
+withPlaceHolder = id
+#else
+withPlaceHolder :: (GHC.PlaceHolder -> a) -> a
+withPlaceHolder = ($ GHC.PlaceHolder)
+#endif
+
+#if MIN_VERSION_ghc(8,6,0)
+withPlaceHolders :: a -> a
+withPlaceHolders = id
+#else
+withPlaceHolders :: ([GHC.PlaceHolder] -> a) -> a
 withPlaceHolders = ($ [])
-
 #endif
 
 builtSpan :: SrcSpan
@@ -124,10 +175,27 @@ builtSpan = mkGeneralSrcSpan "<ghc-source-gen>"
 builtLoc :: e -> Located e
 builtLoc = L builtSpan
 
+#if MIN_VERSION_ghc(9,2,0)
+type SrcSpanAnn ann = GHC.SrcSpanAnn' (EpAnn ann)
+#else
+type SrcSpanAnn ann = SrcSpan
+#endif
+
+mkLocated :: a -> GenLocated (SrcSpanAnn ann) a
+mkLocated = L (toAnn builtSpan)
+  where
+#if MIN_VERSION_ghc(9,2,0)
+    toAnn = SrcSpanAnn EpAnnNotUsed
+#else
+    toAnn = id
+#endif
+
 -- In GHC-8.8.* (but not >=8.10 or <=8.6), source locations for Pat aren't
 -- stored in each node, and LPat is a synonym for Pat.
 builtPat :: Pat' -> LPat'
-#if MIN_VERSION_ghc(8,8,0) && !MIN_VERSION_ghc(8,10,0)
+#if MIN_VERSION_ghc(9,2,0)
+builtPat = mkLocated
+#elif MIN_VERSION_ghc(8,8,0) && !MIN_VERSION_ghc(8,10,0)
 builtPat = id
 #else
 builtPat = builtLoc
@@ -182,6 +250,8 @@ type Pat' = Pat GhcPs
 -- * 'GHC.SourceGen.Lit.HasLit'
 type HsExpr' = HsExpr GhcPs
 
+type LHsExpr' = LHsExpr GhcPs
+
 -- | A Haskell declaration, as it is represented after the parsing step.
 --
 -- Instances:
@@ -234,11 +304,15 @@ type Match' = Match GhcPs
 type MatchGroup' = MatchGroup GhcPs
 type GRHS' = GRHS GhcPs
 type GRHSs' = GRHSs GhcPs
-type Stmt' = Stmt GhcPs (Located HsExpr')
+type Stmt' = Stmt GhcPs LHsExpr'
 type HsOverLit' = HsOverLit GhcPs
 type LHsQTyVars' = LHsQTyVars GhcPs
 type ConDecl' = ConDecl GhcPs
+#if MIN_VERSION_ghc(9,2,0)
+type HsConDeclDetails' = HsConDeclH98Details GhcPs
+#else
 type HsConDeclDetails' = HsConDeclDetails GhcPs
+#endif
 type LHsSigType' = LHsSigType GhcPs
 type ImportDecl' = ImportDecl GhcPs
 type LHsSigWcType' = LHsSigWcType GhcPs
@@ -247,7 +321,6 @@ type HsDerivingClause' = HsDerivingClause GhcPs
 type LHsRecField' arg = LHsRecField GhcPs arg
 type LHsRecUpdField' = LHsRecUpdField GhcPs
 type LPat' = LPat GhcPs
-type HsImplicitBndrs' = HsImplicitBndrs GhcPs
 type TyFamInstDecl' = TyFamInstDecl GhcPs
 
 #if MIN_VERSION_ghc(8,6,0)
@@ -260,4 +333,10 @@ type DerivStrategy' = DerivStrategy
 type HsPatSigType' = HsPatSigType GhcPs
 #else
 type HsPatSigType' = LHsSigWcType'
+#endif
+
+#if MIN_VERSION_ghc(9,2,0)
+type LIdP = GHC.LIdP GHC.GhcPs
+#else
+type LIdP = Located (GHC.IdP GHC.GhcPs)
 #endif

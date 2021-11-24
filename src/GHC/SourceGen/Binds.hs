@@ -46,7 +46,11 @@ module GHC.SourceGen.Binds
     , (<--)
     ) where
 
+#if MIN_VERSION_ghc(9,0,0)
+import GHC (LexicalFixity(..))
+#else
 import GHC.Types.Basic (LexicalFixity(..))
+#endif
 import Data.Bool (bool)
 import Data.Maybe (fromMaybe)
 import GHC.Hs.Binds
@@ -69,7 +73,7 @@ import GHC.SourceGen.Type.Internal (sigWcType)
 -- > typeSigs ["f", "g"] (var "A")
 typeSigs :: HasValBind t => [OccNameStr] -> HsType' -> t
 typeSigs names t =
-    sigB $ noExt TypeSig (map (typeRdrName . unqual) names)
+    sigB $ withEpAnnNotUsed TypeSig (map (typeRdrName . unqual) names)
         $ sigWcType t
 
 -- | Declares the type of a single function or value.
@@ -184,7 +188,7 @@ patBindGRHSs p g =
     bindB
         $ withPlaceHolder
             (withPlaceHolder
-                (noExt PatBind (builtPat p) (mkGRHSs g)))
+                (withEpAnnNotUsed PatBind (builtPat p) (mkGRHSs g)))
         $ ([],[])
 
 -- | Defines a pattern binding without any guards.
@@ -277,7 +281,7 @@ guard s = guards [stmt s]
 -- > =====
 -- > guards [conP "Just" (bvar "x") <-- var "y", bvar "x"] unit
 guards :: [Stmt'] -> HsExpr' -> GuardedExpr
-guards stmts e = noExt GRHS (map builtLoc stmts) (builtLoc e)
+guards stmts e = withEpAnnNotUsed GRHS (map mkLocated stmts) (mkLocated e)
 
 -- | An expression statement.  May be used in a do expression (with 'do'') or in a
 -- match (with 'guard').
@@ -286,7 +290,7 @@ guards stmts e = noExt GRHS (map builtLoc stmts) (builtLoc e)
 stmt :: HsExpr' -> Stmt'
 -- For now, don't worry about rebindable syntax.
 stmt e =
-    withPlaceHolder $ noExt BodyStmt (builtLoc e) noSyntaxExpr noSyntaxExpr
+    withPlaceHolder $ noExt BodyStmt (mkLocated e) noSyntaxExpr noSyntaxExpr
 
 -- | A statement that binds a pattern.
 --
@@ -294,7 +298,7 @@ stmt e =
 -- > =====
 -- > bvar "x" <-- var "act"
 (<--) :: Pat' -> HsExpr' -> Stmt'
-p <-- e = withPlaceHolder $ noExt BindStmt (builtPat p) (builtLoc e)
+p <-- e = withPlaceHolder $ withEpAnnNotUsed BindStmt (builtPat p) (mkLocated e)
 #if !MIN_VERSION_ghc(9,0,0)
          noSyntaxExpr noSyntaxExpr
 #endif

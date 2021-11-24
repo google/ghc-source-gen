@@ -26,6 +26,10 @@ import GHC.SourceGen.Pat.Internal
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal (patSigType)
 
+#if MIN_VERSION_ghc(9,2,0)
+import GHC.Parser.Annotation (EpAnn(..))
+#endif
+
 -- | A wild pattern (@_@).
 wildP :: Pat'
 wildP = noExtOrPlaceHolder WildPat
@@ -36,7 +40,7 @@ wildP = noExtOrPlaceHolder WildPat
 -- > =====
 -- > asP "a" (var "B")
 asP :: RdrNameStr -> Pat' -> Pat'
-v `asP` p = noExt AsPat (valueRdrName v) $ builtPat $ parenthesize p
+v `asP` p = withEpAnnNotUsed AsPat (valueRdrName v) $ builtPat $ parenthesize p
 
 -- | A pattern constructor.
 --
@@ -44,14 +48,18 @@ v `asP` p = noExt AsPat (valueRdrName v) $ builtPat $ parenthesize p
 -- > =====
 -- > conP "A" [bvar "b", bvar "c"]
 conP :: RdrNameStr -> [Pat'] -> Pat'
-conP c xs =
+conP c = conPat (valueRdrName c) . prefixCon . map (builtPat . parenthesize)
+  where
 #if MIN_VERSION_ghc(9,0,0)
-  noExt ConPat
+    conPat = withEpAnnNotUsed ConPat
 #else
-  ConPatIn
+    conPat = ConPatIn
 #endif
-  (valueRdrName c) $ PrefixCon
-                $ map (builtPat . parenthesize) xs
+#if MIN_VERSION_ghc(9,2,0)
+    prefixCon = PrefixCon []
+#else
+    prefixCon = PrefixCon
+#endif
 
 -- | A pattern constructor with no arguments.
 --
@@ -64,7 +72,7 @@ conP_ c = conP c []
 recordConP :: RdrNameStr -> [(RdrNameStr, Pat')] -> Pat'
 recordConP c fs =
 #if MIN_VERSION_ghc(9,0,0)
-  noExt ConPat
+  withEpAnnNotUsed ConPat
 #else
   ConPatIn
 #endif
@@ -73,11 +81,14 @@ recordConP c fs =
   where
     mkRecField :: (RdrNameStr, Pat') -> LHsRecField' LPat'
     mkRecField (f, p) =
-        builtLoc $ HsRecField
+        mkLocated $ HsRecField
             { hsRecFieldLbl =
                 builtLoc $ withPlaceHolder $ noExt FieldOcc $ valueRdrName f
             , hsRecFieldArg = builtPat p
             , hsRecPun = False
+#if MIN_VERSION_ghc(9,2,0)
+            , hsRecFieldAnn = EpAnnNotUsed
+#endif
             }
 
 -- | A bang-pattern.
@@ -86,7 +97,7 @@ recordConP c fs =
 -- > =====
 -- > strictP (bvar x)
 strictP :: Pat' -> Pat'
-strictP = noExt BangPat . builtPat . parenthesize
+strictP = withEpAnnNotUsed BangPat . builtPat . parenthesize
 
 -- | A lazy pattern match.
 --
@@ -94,7 +105,7 @@ strictP = noExt BangPat . builtPat . parenthesize
 -- > =====
 -- > lazyP (conP "A" [bvar x])
 lazyP :: Pat' -> Pat'
-lazyP = noExt LazyPat . builtPat . parenthesize
+lazyP = withEpAnnNotUsed LazyPat . builtPat . parenthesize
 
 -- | A pattern type signature
 --
@@ -103,7 +114,7 @@ lazyP = noExt LazyPat . builtPat . parenthesize
 -- > sigPat (bvar "x") (var "y")
 sigP :: Pat' -> HsType' -> Pat'
 #if MIN_VERSION_ghc(8,8,0)
-sigP p t = noExt SigPat (builtPat p) (patSigType t)
+sigP p t = withEpAnnNotUsed SigPat (builtPat p) (patSigType t)
 #elif MIN_VERSION_ghc(8,6,0)
 sigP p t = SigPat (patSigType t) (builtPat p)
 #else
