@@ -52,26 +52,22 @@ library:
     - GHC.Hs.ImpExp
     - GHC.Hs.Lit
     - GHC.Hs.Pat
-    - GHC.Hs.Type
     - GHC.Hs.Utils
-    - GHC.Driver.Monad
-    - GHC.Driver.Session
-    - GHC.Utils.Outputable
-    - GHC.Types.Basic
-    - GHC.Plugins
-    - GHC.Tc.Types.Evidence
 
-  - condition: impl(ghc>=8.10) && impl(ghc<9.0)
-    source-dirs: compat-8.10
-    other-modules:
-    - GHC.Hs.Type
-    - GHC.Driver.Monad
-    - GHC.Driver.Session
-    - GHC.Utils.Outputable
-    - GHC.Types.Basic
-    - GHC.Plugins
-    - GHC.Tc.Types.Evidence
-    
+  verbatim: |
+    if impl(ghc<9.0)
+      other-modules:
+          GHC.Hs.Type
+          GHC.Driver.Monad
+          GHC.Driver.Session
+          GHC.Utils.Outputable
+          GHC.Types.Basic
+          GHC.Plugins
+          GHC.Tc.Types.Evidence
+    if impl(ghc>=8.10) && impl(ghc<9.0)
+      hs-source-dirs:
+          compat-8.10
+
   source-dirs: src
   other-modules:
   - GHC.SourceGen.Binds.Internal
