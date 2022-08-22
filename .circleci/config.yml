@@ -54,10 +54,8 @@ workflows:
         matrix:
           parameters:
             resolver:
-            - lts-12.8
-            - lts-13.23
-            - lts-15.13
-            - lts-18.5
+            - lts-16.31
+            - lts-18.28
     - build:
         name: build-ghc-9.0
         stack_yaml: stack-9.0.yaml
