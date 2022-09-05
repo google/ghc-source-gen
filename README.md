@@ -21,12 +21,13 @@ The following example creates a module that defines the
 {-# LANGUAGE NoMonomorphismRestriction #-}
 import GHC.SourceGen
 import GHC.Paths (libdir)
+import GHC (runGhc)
 
 constModule :: HsModule'
 constModule =
     module' (Just "Const") (Just [var "const"]) []
         [ typeSig "const" $ a --> b --> a
-        , funBind "const" $ match [wildP, x] x
+        , funBind "const" $ match [x, wildP] x
         ]
   where
     a = var "a"
@@ -43,7 +44,7 @@ module Const (
         const
     ) where
 const :: a -> b -> a
-const _ x = x
+const x _ = x
 ```
 
 ## Comparison with the GHC API
