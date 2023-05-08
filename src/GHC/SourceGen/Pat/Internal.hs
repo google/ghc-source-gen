@@ -51,5 +51,9 @@ needsPar SigPatOut{} = True
 needsPar _ = False
 
 parPat :: Pat' -> Pat'
+#if MIN_VERSION_ghc(9,4,0)
+parPat p = withEpAnnNotUsed ParPat mkToken (builtPat p) mkToken
+#else
 parPat = withEpAnnNotUsed ParPat . builtPat
+#endif
 

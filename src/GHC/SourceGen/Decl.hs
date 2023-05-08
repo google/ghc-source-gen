@@ -328,7 +328,11 @@ newOrDataType newOrData name vars conDecls derivs
                 Nothing
                 Nothing
                 (map mkLocated conDecls)
+#if MIN_VERSION_ghc(9,4,0)
+                (toHsDeriving $ map mkLocated derivs)
+#else
                 (toHsDeriving $ map builtLoc derivs)
+#endif
   where
 #if MIN_VERSION_ghc(9,2,0)
     cxt = Nothing
@@ -402,7 +406,11 @@ recordCon name fields = renderCon98Decl name
   where
     mkLConDeclField (n, f) =
         mkLocated $ withEpAnnNotUsed ConDeclField
+#if MIN_VERSION_ghc(9,4,0)
+                        [mkLocated $ withPlaceHolder $ noExt FieldOcc $ valueRdrName $ unqual n]
+#else
                         [builtLoc $ withPlaceHolder $ noExt FieldOcc $ valueRdrName $ unqual n]
+#endif
                         (renderField f)
                         Nothing
 
@@ -471,7 +479,11 @@ deriving' = derivingWay Nothing
 
 derivingWay :: Maybe DerivStrategy' -> [HsType'] -> HsDerivingClause'
 derivingWay way ts =
+#if MIN_VERSION_ghc(9,4,0)
+    withEpAnnNotUsed HsDerivingClause (fmap mkLocated way) $ mkLocated $ derivClauseTys $ map sigType ts
+#else
     withEpAnnNotUsed HsDerivingClause (fmap builtLoc way) $ mkLocated $ derivClauseTys $ map sigType ts
+#endif
   where
 #if MIN_VERSION_ghc(9,2,0)
     derivClauseTys [x] = noExt DctSingle x
@@ -557,7 +569,11 @@ standaloneDerivingAnyclass = standaloneDerivingWay (Just strat)
 standaloneDerivingWay :: Maybe DerivStrategy' -> HsType' -> HsDecl'
 standaloneDerivingWay way ty = noExt DerivD derivDecl
   where derivDecl =
+#if MIN_VERSION_ghc(9,4,0)
+          withEpAnnNotUsed DerivDecl (hsWC $ sigType ty) (fmap mkLocated way) Nothing
+#else
           withEpAnnNotUsed DerivDecl (hsWC $ sigType ty) (fmap builtLoc way) Nothing
+#endif
         hsWC =
 #if MIN_VERSION_ghc(8,6,0)
           noExt HsWC

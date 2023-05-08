@@ -29,6 +29,10 @@ import GHC.Parser.Annotation
 import GHC.Hs.Type
 #endif
 
+#if MIN_VERSION_ghc(9,4,0)
+import Language.Haskell.Syntax.Extension
+#endif
+
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
 import GHC.SourceGen.Name.Internal
@@ -62,7 +66,9 @@ tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed HsExplicitTupleTy) . map mk
 -- > var "a" --> var "b"
 (-->) :: HsType' -> HsType' -> HsType'
 a --> b = withEpAnnNotUsed HsFunTy
-#if MIN_VERSION_ghc(9,0,0)
+#if MIN_VERSION_ghc(9,4,0)
+         (HsUnrestrictedArrow mkUniToken)
+#elif MIN_VERSION_ghc(9,0,0)
          (HsUnrestrictedArrow NormalSyntax)
 #endif
          (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
@@ -96,7 +102,9 @@ forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
 (==>) :: [HsType'] -> HsType' -> HsType'
 (==>) cs = hsQualTy (mkLocated (map mkLocated cs)) . mkLocated
   where
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,4,0)
+    hsQualTy = noExt HsQualTy 
+#elif MIN_VERSION_ghc(9,2,0)
     hsQualTy = noExt HsQualTy . Just
 #else
     hsQualTy = noExt HsQualTy

@@ -93,6 +93,10 @@ import qualified PlaceHolder as GHC
 import GHC.Types.Var (Specificity)
 #endif
 
+#if MIN_VERSION_ghc(9,4,0)
+import GHC.Parser.Annotation
+#endif
+
 import GHC.Hs.Extension (GhcPs)
 
 #if MIN_VERSION_ghc(8,10,0)
@@ -339,4 +343,14 @@ type HsPatSigType' = LHsSigWcType'
 type LIdP = GHC.LIdP GHC.GhcPs
 #else
 type LIdP = Located (GHC.IdP GHC.GhcPs)
+#endif
+
+#if MIN_VERSION_ghc(9,4,0)
+mkUniToken :: GenLocated TokenLocation (GHC.HsUniToken t u)
+mkUniToken = L NoTokenLoc GHC.HsNormalTok
+#endif
+
+#if MIN_VERSION_ghc(9,4,0)
+mkToken :: GenLocated TokenLocation (GHC.HsToken t)
+mkToken = L NoTokenLoc GHC.HsTok
 #endif

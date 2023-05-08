@@ -56,10 +56,18 @@ class Par e where
     par :: e -> e
 
 instance Par HsExpr' where
+#if MIN_VERSION_ghc(9,4,0)
+    par p = withEpAnnNotUsed HsPar mkToken (mkLocated p) mkToken
+#else
     par = withEpAnnNotUsed HsPar . mkLocated
+#endif
 
 instance Par Pat' where
+#if MIN_VERSION_ghc(9,4,0)
+    par p = withEpAnnNotUsed ParPat mkToken (builtPat p) mkToken
+#else
     par = withEpAnnNotUsed ParPat . builtPat
+#endif
 
 instance Par HsType' where
     par = withEpAnnNotUsed HsParTy . mkLocated
@@ -139,9 +147,15 @@ instance App HsExpr' where
 
 instance App HsType' where
     op x o y
+#if MIN_VERSION_ghc(9,4,0)
+        = withEpAnnNotUsed HsOpTy notPromoted (parenthesizeTypeForOp $ mkLocated x)
+                (typeRdrName o)
+                (parenthesizeTypeForOp $ mkLocated y)
+#else
         = noExt HsOpTy (parenthesizeTypeForOp $ mkLocated x)
                 (typeRdrName o)
                 (parenthesizeTypeForOp $ mkLocated y)
+#endif
     x @@ y = noExt HsAppTy
                 (parenthesizeTypeForOp $ mkLocated x)
                 (parenthesizeTypeForApp $ mkLocated y)

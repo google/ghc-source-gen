@@ -96,7 +96,11 @@ matchGroup context matches =
 
 mkGRHSs :: RawGRHSs -> GRHSs' LHsExpr'
 mkGRHSs g = withEmptyEpAnnComments GRHSs
+#if MIN_VERSION_ghc(9,4,0)
+                (map mkLocated $ rawGRHSs g)
+#else
                 (map builtLoc $ rawGRHSs g)
+#endif
                 (fromLocalBinds $ valBinds $ rawGRHSWhere g)
   where
 #if MIN_VERSION_ghc(9,2,0)

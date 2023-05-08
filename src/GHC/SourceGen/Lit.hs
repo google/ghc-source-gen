@@ -45,7 +45,11 @@ instance HasLit HsExpr' where
 instance HasLit Pat' where
     lit = noExt LitPat
     overLit l = withPlaceHolder
+#if MIN_VERSION_ghc(9,4,0)
+                    $ withEpAnnNotUsed NPat (mkLocated l) Nothing noSyntaxExpr
+#else
                     $ withEpAnnNotUsed NPat (builtLoc l) Nothing noSyntaxExpr
+#endif
 
 char :: HasLit e => Char -> e
 char = lit . noSourceText HsChar
@@ -55,13 +59,21 @@ string = lit . noSourceText HsString . fsLit
 
 -- | Note: this is an *overloaded* integer.
 int :: HasLit e => Integer -> e
+#if MIN_VERSION_ghc(9,4,0)
+int n = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit n')
+#else
 int n = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit n') noExpr
+#endif
   where
     n' = HsIntegral $ mkIntegralLit n
 
 -- | Note: this is an *overloaded* rational, e.g., a decimal number.
 frac :: HasLit e => Rational -> e
+#if MIN_VERSION_ghc(9,4,0)
+frac x = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit $ HsFractional x')
+#else
 frac x = overLit $ withPlaceHolder $ withPlaceHolder (noExt OverLit $ HsFractional x') noExpr
+#endif
   where
 #if MIN_VERSION_ghc(9,2,0)
     x' = mkTHFractionalLit x
