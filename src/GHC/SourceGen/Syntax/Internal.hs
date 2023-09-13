@@ -290,7 +290,7 @@ type HsTyVarBndrS' = HsTyVarBndr GhcPs
 #endif
 
 type HsLit' = HsLit GhcPs
-#if MIN_VERSION_ghc(9,0,0)
+#if MIN_VERSION_ghc(9,0,0) && !MIN_VERSION_ghc(9,6,0)
 type HsModule' = HsModule
 #else
 type HsModule' = HsModule GhcPs

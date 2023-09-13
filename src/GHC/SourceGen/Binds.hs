@@ -106,7 +106,9 @@ funBindsWithFixity fixity name matches = bindB $ withPlaceHolder
             WpHole
 #endif
             )
+#if !MIN_VERSION_ghc(9,6,0)
         []
+#endif
   where
     name' = valueRdrName $ unqual name
     occ = valueOccName name
@@ -189,7 +191,9 @@ patBindGRHSs p g =
         $ withPlaceHolder
             (withPlaceHolder
                 (withEpAnnNotUsed PatBind (builtPat p) (mkGRHSs g)))
+#if !MIN_VERSION_ghc(9,6,0)                
         $ ([],[])
+#endif
 
 -- | Defines a pattern binding without any guards.
 --
