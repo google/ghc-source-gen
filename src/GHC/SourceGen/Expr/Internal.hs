@@ -17,6 +17,10 @@ import SrcLoc (unLoc)
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal
 
+#if MIN_VERSION_ghc(9,4,0)
+import Language.Haskell.Syntax.Extension
+#endif
+
 parenthesizeExprForApp, parenthesizeExprForOp
     :: LHsExpr' -> LHsExpr'
 parenthesizeExprForApp e 
@@ -27,7 +31,11 @@ parenthesizeExprForOp e
     | otherwise = e
 
 parExpr :: LHsExpr' -> LHsExpr'
+#if MIN_VERSION_ghc(9,4,0)
+parExpr e = mkLocated $ withEpAnnNotUsed HsPar mkToken e mkToken
+#else
 parExpr = mkLocated . withEpAnnNotUsed HsPar
+#endif
 
 #if MIN_VERSION_ghc(8,6,0)
 #define WILD_EXT _

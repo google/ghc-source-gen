@@ -44,6 +44,9 @@ import GHC.Types.Name.Reader (RdrName)
 #else
 import RdrName (RdrName)
 #endif
+#if MIN_VERSION_ghc(9,4,0)
+import GHC.Types.PkgQual (RawPkgQual(..))
+#endif
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name
@@ -86,7 +89,11 @@ as' d m = d { ideclAs = Just (mkLocated $ unModuleNameStr m) }
 import' :: ModuleNameStr -> ImportDecl'
 import' m = noSourceText (withEpAnnNotUsed ImportDecl)
             (mkLocated $ unModuleNameStr m)
-            Nothing
+#if MIN_VERSION_ghc(9,4,0)
+            NoRawPkgQual
+#else
+            Nothing 
+#endif
 #if MIN_VERSION_ghc(9,0,0)
             NotBoot
 #else
