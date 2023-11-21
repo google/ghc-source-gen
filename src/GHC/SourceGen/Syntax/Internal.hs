@@ -62,7 +62,7 @@ import RdrName (RdrName)
 import SrcLoc (SrcSpan, Located, GenLocated(..), mkGeneralSrcSpan)
 #endif
 
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,2,0) && !MIN_VERSION_ghc(9,6,0)
 import GHC.Parser.Annotation
     ( SrcSpanAnn'(..)
     , AnnSortKey(..)
