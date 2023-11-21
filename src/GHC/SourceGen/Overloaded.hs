@@ -288,7 +288,7 @@ instance BVar HsTyVarBndr' where
 instance Var IE' where
     var n =
       noExt IEVar $ mkLocated $
-#if MIN_VERSION_ghc(9,6,0)      
+#if MIN_VERSION_ghc(9,6,0)
       (IEName noExtField)
 #else
       IEName
@@ -297,4 +297,3 @@ instance Var IE' where
 
 instance BVar IE' where
     bvar = var . UnqualStr
-

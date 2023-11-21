@@ -113,7 +113,7 @@ import' m = importDecl
 #if MIN_VERSION_ghc(9,4,0)
             NoRawPkgQual
 #else
-            Nothing 
+            Nothing
 #endif
 #if MIN_VERSION_ghc(9,0,0)
             NotBoot
@@ -132,14 +132,14 @@ import' m = importDecl
             Nothing Nothing
   where
 #if MIN_VERSION_ghc(9,6,0)
-    importDecl = ImportDecl 
+    importDecl = ImportDecl
             (XImportDeclPass{ ideclAnn = EpAnnNotUsed
             , ideclSourceText = NoSourceText
             , ideclImplicit = False
              })
 #else
     importDecl = noSourceText (withEpAnnNotUsed ImportDecl)
-#endif 
+#endif
 
 exposing :: ImportDecl' -> [IE'] -> ImportDecl'
 exposing d ies = d
