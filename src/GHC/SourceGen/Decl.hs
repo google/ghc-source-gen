@@ -51,9 +51,6 @@ module GHC.SourceGen.Decl
     , patSynBind
     ) where
 
-#if MIN_VERSION_ghc(9,0,0) && !MIN_VERSION_ghc(9,6,0)
-import GHC.Types.SrcLoc (LayoutInfo(..))
-#endif
 #if MIN_VERSION_ghc(9,0,0)
 import GHC (LexicalFixity(Prefix))
 import GHC.Data.Bag (listToBag)
@@ -61,8 +58,7 @@ import GHC.Data.Bag (listToBag)
 #if MIN_VERSION_ghc(9,6,0)
 import GHC (GhcPs, LayoutInfo (NoLayoutInfo))
 #else
-import GHC (GhcPs)
-import GHC.Types.SrcLoc (LayoutInfo(..))
+import GHC.Types.SrcLoc (LayoutInfo(NoLayoutInfo))
 #endif
 
 #else

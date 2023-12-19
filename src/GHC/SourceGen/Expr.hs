@@ -29,11 +29,11 @@ module GHC.SourceGen.Expr
     ) where
 
 import GHC.Hs.Expr
-import GHC.Hs.Extension (GhcPs
+import GHC.Hs.Extension (GhcPs)
 #if MIN_VERSION_ghc(9,6,0)
-                         , noHsTok
+import GHC.Hs.Extension (noHsTok)
+import GHC.Types.SourceText (SourceText(NoSourceText))
 #endif
-                        )
 #if MIN_VERSION_ghc(9,4,0)
 import GHC.Hs.Pat (HsFieldBind(..), HsRecFields(..))
 #else
@@ -62,7 +62,6 @@ import GHC.SourceGen.Type.Internal
     , sigWcType
     , wcType
     )
-import GHC.Types.SourceText (SourceText(NoSourceText))
 
 -- | An overloaded label, as used with the @OverloadedLabels@ extension.
 --

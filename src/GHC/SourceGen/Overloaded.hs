@@ -22,7 +22,11 @@ import GHC.Hs.Type
     ( HsType(..)
     , HsTyVarBndr(..)
     )
-import GHC.Hs (IE(..), IEWrappedName(..), noExtField)
+import GHC.Hs (IE(..), IEWrappedName(..)
+#if MIN_VERSION_ghc(9,6,0)
+    , noExtField
+#endif
+    )
 #if !MIN_VERSION_ghc(8,6,0)
 import PlaceHolder(PlaceHolder(..))
 #endif
