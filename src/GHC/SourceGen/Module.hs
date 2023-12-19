@@ -27,9 +27,11 @@ module GHC.SourceGen.Module
     )  where
 
 import GHC.Hs.ImpExp
-    ( LIEWrappedName, IEWildcard(..), IEWrappedName(..), IE(..)
+    ( IEWildcard(..), IEWrappedName(..), IE(..)
 #if MIN_VERSION_ghc(9,6,0)
     , ImportListInterpretation (EverythingBut, Exactly), XImportDeclPass (ideclSourceText, ideclImplicit)
+#else
+    , LIEWrappedName
 #endif
     )
 import GHC.Hs
@@ -59,12 +61,16 @@ import GHC.Types.PkgQual (RawPkgQual(..))
 #endif
 
 import GHC.SourceGen.Syntax.Internal
-import GHC.SourceGen.Name
-    ( RdrNameStr, ModuleNameStr(unModuleNameStr), OccNameStr, unqual )
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
+#if MIN_VERSION_ghc(9,0,0)
+import GHC.SourceGen.Name (unqual)
+#endif
+#if MIN_VERSION_ghc(9,4,0)
+import GHC.SourceGen.Name (RdrNameStr, ModuleNameStr(unModuleNameStr), OccNameStr)
 import GHC.Types.SourceText (SourceText(NoSourceText))
 import GHC.Types.SrcLoc (GenLocated)
+#endif
 
 module'
     :: Maybe ModuleNameStr

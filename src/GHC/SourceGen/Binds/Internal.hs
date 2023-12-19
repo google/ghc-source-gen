@@ -24,7 +24,6 @@ import PlaceHolder (PlaceHolder(..))
 
 import GHC.SourceGen.Pat.Internal (parenthesize)
 import GHC.SourceGen.Syntax.Internal
-import GHC (noExtField, NoExtField (NoExtField))
 
 -- | A binding definition inside of a @let@ or @where@ clause.
 --
