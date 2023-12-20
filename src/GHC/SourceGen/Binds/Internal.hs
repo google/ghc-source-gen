@@ -83,12 +83,19 @@ data RawGRHSs = RawGRHSs
 
 matchGroup :: HsMatchContext' -> [RawMatch] -> MatchGroup' LHsExpr'
 matchGroup context matches =
-    noExt MG (mkLocated $ map (mkLocated . mkMatch) matches)
+#if MIN_VERSION_ghc(9,6,0)
+    MG Generated
+#else
+    noExt MG
+#endif
+                            matches'
 #if !MIN_VERSION_ghc(8,6,0)
                             [] PlaceHolder
-#endif
+#elif !MIN_VERSION_ghc(9,6,0)
                             Generated
+#endif                            
   where
+    matches' = mkLocated $ map (mkLocated . mkMatch) matches
     mkMatch :: RawMatch -> Match' LHsExpr'
     mkMatch r = withEpAnnNotUsed Match context
                     (map builtPat $ map parenthesize $ rawMatchPats r)

@@ -4,12 +4,12 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-resolver: nightly-2022-08-19
-compiler: ghc-9.2.4
+resolver: lts-20.26
+compiler: ghc-9.2.8
 
 packages:
 - .
 - ghc-show-ast
 
 ghc-options:
-  "$locals": -Wall -Werror
+  "$locals": -Wall -Werror -Wwarn=unused-imports -Wwarn=dodgy-imports

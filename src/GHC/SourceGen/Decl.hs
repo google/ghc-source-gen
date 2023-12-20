@@ -54,7 +54,13 @@ module GHC.SourceGen.Decl
 #if MIN_VERSION_ghc(9,0,0)
 import GHC (LexicalFixity(Prefix))
 import GHC.Data.Bag (listToBag)
-import GHC.Types.SrcLoc (LayoutInfo(..))
+
+#if MIN_VERSION_ghc(9,6,0)
+import GHC (GhcPs, LayoutInfo (NoLayoutInfo))
+#else
+import GHC.Types.SrcLoc (LayoutInfo(NoLayoutInfo))
+#endif
+
 #else
 import BasicTypes (LexicalFixity(Prefix))
 import Bag (listToBag)
@@ -62,7 +68,6 @@ import Bag (listToBag)
 #if !MIN_VERSION_ghc(8,6,0)
 import BasicTypes (DerivStrategy(..))
 #endif
-import GHC (GhcPs)
 import GHC.Hs.Binds
 import GHC.Hs.Decls
 
@@ -108,6 +113,7 @@ import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
+import GHC.Hs
 
 -- | A definition that can appear in the body of a @class@ declaration.
 --
@@ -174,7 +180,10 @@ class'
 class' context name vars decls
     = noExt TyClD $ ClassDecl
             { tcdCtxt = toHsContext $ mkLocated $ map mkLocated context
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,6,0)
+            , tcdLayout = NoLayoutInfo
+            , tcdCExt = (EpAnnNotUsed, NoAnnSortKey)
+#elif MIN_VERSION_ghc(9,2,0)
             , tcdCExt = (EpAnnNotUsed, NoAnnSortKey, NoLayoutInfo)
 #elif MIN_VERSION_ghc(9,0,0)
             , tcdCExt = NoLayoutInfo
@@ -323,11 +332,23 @@ newOrDataType newOrData name vars conDecls derivs
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
-            $ noExt HsDataDefn newOrData
+            $ noExt HsDataDefn
+#if !MIN_VERSION_ghc(9,6,0)
+                newOrData
+#endif
                 cxt
                 Nothing
                 Nothing
+#if MIN_VERSION_ghc(9,6,0)
+                (case newOrData of
+                    NewType -> case conDecls of
+                        [decl] -> NewTypeCon $ mkLocated decl
+                        _ -> error "NewTypeCon with more than one decl"
+                    DataType -> DataTypeCons False (map mkLocated conDecls)
+                )  
+#else
                 (map mkLocated conDecls)
+#endif
 #if MIN_VERSION_ghc(9,4,0)
                 (toHsDeriving $ map mkLocated derivs)
 #else

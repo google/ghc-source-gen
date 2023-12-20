@@ -30,6 +30,10 @@ module GHC.SourceGen.Expr
 
 import GHC.Hs.Expr
 import GHC.Hs.Extension (GhcPs)
+#if MIN_VERSION_ghc(9,6,0)
+import GHC.Hs.Extension (noHsTok)
+import GHC.Types.SourceText (SourceText(NoSourceText))
+#endif
 #if MIN_VERSION_ghc(9,4,0)
 import GHC.Hs.Pat (HsFieldBind(..), HsRecFields(..))
 #else
@@ -67,7 +71,9 @@ import GHC.SourceGen.Type.Internal
 overLabel :: String -> HsExpr'
 overLabel = hsOverLabel . fromString
   where
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,6,0)
+    hsOverLabel = withEpAnnNotUsed HsOverLabel NoSourceText
+#elif MIN_VERSION_ghc(9,2,0)
     hsOverLabel = withEpAnnNotUsed HsOverLabel
 #else
     hsOverLabel = noExt HsOverLabel Nothing
@@ -198,7 +204,9 @@ e @::@ t = ExprWithTySig (builtLoc e) (sigWcType t)
 -- > =====
 -- > var "f" @@ var "Int"
 tyApp :: HsExpr' -> HsType' -> HsExpr'
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,6,0)
+tyApp e t = noExt HsAppType e' noHsTok t'
+#elif MIN_VERSION_ghc(9,2,0)
 tyApp e t = HsAppType builtSpan e' t'
 #elif MIN_VERSION_ghc(8,8,0)
 tyApp e t = noExt HsAppType e' t'

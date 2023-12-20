@@ -22,7 +22,11 @@ import GHC.Hs.Type
     ( HsType(..)
     , HsTyVarBndr(..)
     )
-import GHC.Hs (IE(..), IEWrappedName(..))
+import GHC.Hs (IE(..), IEWrappedName(..)
+#if MIN_VERSION_ghc(9,6,0)
+    , noExtField
+#endif
+    )
 #if !MIN_VERSION_ghc(8,6,0)
 import PlaceHolder(PlaceHolder(..))
 #endif
@@ -286,8 +290,14 @@ instance BVar HsTyVarBndr' where
 #endif
 
 instance Var IE' where
-    var n = noExt IEVar $ mkLocated $ IEName $ exportRdrName n
+    var n =
+      noExt IEVar $ mkLocated $
+#if MIN_VERSION_ghc(9,6,0)
+      (IEName noExtField)
+#else
+      IEName
+#endif
+      $ exportRdrName n
 
 instance BVar IE' where
     bvar = var . UnqualStr
-
