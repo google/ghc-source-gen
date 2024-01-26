@@ -63,9 +63,7 @@ import GHC.Types.PkgQual (RawPkgQual(..))
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Lit.Internal (noSourceText)
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.SourceGen.Name (unqual)
-#endif
 #if MIN_VERSION_ghc(9,4,0)
 import GHC.SourceGen.Name (RdrNameStr, ModuleNameStr(unModuleNameStr), OccNameStr)
 import GHC.Types.SourceText (SourceText(NoSourceText))
