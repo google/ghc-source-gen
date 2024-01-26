@@ -1,11 +1,11 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.34.6.
+-- This file has been generated from package.yaml by hpack version 0.36.0.
 --
 -- see: https://github.com/sol/hpack
 
 name:           ghc-source-gen
-version:        0.4.4.0
+version:        0.4.4.1
 synopsis:       Constructs Haskell syntax trees for the GHC API.
 description:    @ghc-source-gen@ is a library for generating Haskell source code.
                 It uses the <https://hackage.haskell.org/package/ghc ghc> library
@@ -62,6 +62,7 @@ library
   build-depends:
       base >=4.7 && <5
     , ghc >=8.4 && <9.7
+  default-language: Haskell2010
   if impl(ghc<8.10)
     other-modules:
         GHC.Hs
@@ -75,7 +76,6 @@ library
         GHC.Hs.Utils
     hs-source-dirs:
         compat
-  default-language: Haskell2010
   if impl(ghc<9.0)
     other-modules:
         GHC.Hs.Type
@@ -130,12 +130,12 @@ test-suite pprint_examples
     , ghc-source-gen
     , tasty >=1.0 && <1.5
     , tasty-hunit ==0.10.*
+  default-language: Haskell2010
   if impl(ghc<9.0)
     other-modules:
         GHC.Utils.Outputable
     hs-source-dirs:
         compat
-  default-language: Haskell2010
 
 test-suite pprint_test
   type: exitcode-stdio-1.0
@@ -156,6 +156,7 @@ test-suite pprint_test
     , ghc-source-gen
     , tasty >=1.0 && <1.5
     , tasty-hunit ==0.10.*
+  default-language: Haskell2010
   if impl(ghc<9.0)
     other-modules:
         GHC.Driver.Monad
@@ -163,4 +164,3 @@ test-suite pprint_test
         GHC.Utils.Outputable
     hs-source-dirs:
         compat
-  default-language: Haskell2010

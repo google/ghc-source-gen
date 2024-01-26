@@ -5,7 +5,7 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 name:                ghc-source-gen
-version:             0.4.4.0
+version:             0.4.4.1
 github:              "google/ghc-source-gen"
 license:             BSD3
 author:              "Judah Jacobson"

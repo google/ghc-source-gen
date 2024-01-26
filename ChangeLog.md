@@ -1,5 +1,9 @@
 # Changelog for haskell-syntax
 
+
+# 0.4.4.1
+- Repair unintentionally broken GHC 8.10.7 support.
+
 # 0.4.4.0
 - Support GHC 9.6.
 
