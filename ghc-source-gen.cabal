@@ -61,7 +61,7 @@ library
       TypeSynonymInstances
   build-depends:
       base >=4.7 && <5
-    , ghc >=8.4 && <9.7
+    , ghc >=8.4 && <9.9
   default-language: Haskell2010
   if impl(ghc<8.10)
     other-modules:
@@ -104,7 +104,7 @@ test-suite name_test
   build-depends:
       QuickCheck >=2.10 && <2.15
     , base >=4.7 && <5
-    , ghc >=8.4 && <9.7
+    , ghc >=8.4 && <9.9
     , ghc-source-gen
     , tasty >=1.0 && <1.5
     , tasty-hunit ==0.10.*
@@ -125,7 +125,7 @@ test-suite pprint_examples
       TypeSynonymInstances
   build-depends:
       base >=4.7 && <5
-    , ghc >=8.4 && <9.7
+    , ghc >=8.4 && <9.9
     , ghc-paths ==0.1.*
     , ghc-source-gen
     , tasty >=1.0 && <1.5
@@ -151,7 +151,7 @@ test-suite pprint_test
       TypeSynonymInstances
   build-depends:
       base >=4.7 && <5
-    , ghc >=8.4 && <9.7
+    , ghc >=8.4 && <9.9
     , ghc-paths ==0.1.*
     , ghc-source-gen
     , tasty >=1.0 && <1.5

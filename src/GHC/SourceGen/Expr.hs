@@ -294,7 +294,9 @@ recordUpd e fs =
             }
     withPlaceHolder4 = withPlaceHolder . withPlaceHolder . withPlaceHolder
                             . withPlaceHolder
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,8,0)
+    toRecordUpdFields = noExt RegularRecUpdFields
+#elif MIN_VERSION_ghc(9,2,0)
     toRecordUpdFields = Left
 #else
     toRecordUpdFields = id
