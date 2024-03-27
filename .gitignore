@@ -2,3 +2,4 @@
 dist/
 # Generated automatically by hpack:
 *.yaml.lock
+dist-newstyle
