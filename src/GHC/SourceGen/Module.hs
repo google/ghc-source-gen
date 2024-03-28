@@ -177,7 +177,7 @@ source d = d { ideclSource =
 -- > =====
 -- > thingAll "A"
 thingAll :: RdrNameStr -> IE'
-thingAll = withEpAnnNotUsed IEThingAll . wrappedName
+thingAll = withEpAnnNotUsed' IEThingAll . wrappedName
 
 -- | Exports specific methods and/or constructors.
 --
@@ -185,7 +185,7 @@ thingAll = withEpAnnNotUsed IEThingAll . wrappedName
 -- > =====
 -- > thingWith "A" ["b", "C"]
 thingWith :: RdrNameStr -> [OccNameStr] -> IE'
-thingWith n cs = withEpAnnNotUsed IEThingWith (wrappedName n) NoIEWildcard
+thingWith n cs = withEpAnnNotUsed' IEThingWith (wrappedName n) NoIEWildcard
                     (map (wrappedName . unqual) cs)
 #if !MIN_VERSION_ghc(9,2,0)
                     -- The parsing step leaves the list of fields empty
@@ -212,4 +212,12 @@ wrappedName = mkLocated . IEName . exportRdrName
 -- > =====
 -- > moduleContents "M"
 moduleContents :: ModuleNameStr -> IE'
-moduleContents = withEpAnnNotUsed IEModuleContents . mkLocated . unModuleNameStr
+moduleContents = withEpAnnNotUsed' IEModuleContents . mkLocated . unModuleNameStr
+
+
+#if MIN_VERSION_ghc(9,8,0)
+withEpAnnNotUsed' :: ((Maybe x, EpAnn ann) -> a) -> a
+withEpAnnNotUsed' = ($ (Nothing, EpAnnNotUsed))
+#else
+withEpAnnNotUsed' = withEpAnnNotUsed
+#endif

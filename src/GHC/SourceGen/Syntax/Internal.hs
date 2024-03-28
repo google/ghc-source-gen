@@ -80,6 +80,10 @@ import BasicTypes (PromotionFlag(..))
 import GHC.Hs.Type (Promoted(..))
 #endif
 
+#if MIN_VERSION_ghc(9,8,0)
+import GHC.Hs.Type (HsBndrVis)
+#endif
+
 #if MIN_VERSION_ghc(8,10,0)
 import qualified GHC.Hs as GHC
 #elif MIN_VERSION_ghc(8,6,0)
@@ -281,7 +285,10 @@ type IE' = IE GhcPs
 -- Instances:
 --
 -- * 'GHC.SourceGen.Overloaded.BVar'
-#if MIN_VERSION_ghc(9,0,0)
+#if MIN_VERSION_ghc(9,8,0)
+type HsTyVarBndr' = HsTyVarBndr (HsBndrVis GhcPs) GhcPs
+type HsTyVarBndrS' = HsTyVarBndr Specificity GhcPs
+#elif MIN_VERSION_ghc(9,0,0)
 type HsTyVarBndr' = HsTyVarBndr () GhcPs
 type HsTyVarBndrS' = HsTyVarBndr Specificity GhcPs
 #else
@@ -323,7 +330,11 @@ type LHsSigWcType' = LHsSigWcType GhcPs
 type LHsWcType' = LHsWcType GhcPs
 type HsDerivingClause' = HsDerivingClause GhcPs
 type LHsRecField' arg = LHsRecField GhcPs arg
+#if MIN_VERSION_ghc(9,8,0)
+type LHsRecUpdField' = LHsRecUpdField GhcPs GhcPs
+#else
 type LHsRecUpdField' = LHsRecUpdField GhcPs
+#endif
 type LPat' = LPat GhcPs
 type TyFamInstDecl' = TyFamInstDecl GhcPs
 
