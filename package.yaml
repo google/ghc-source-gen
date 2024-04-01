@@ -30,7 +30,7 @@ description: |
 
 dependencies:
 - base >= 4.7 && < 5
-- ghc >= 8.4 && < 9.7
+- ghc >= 8.4 && < 9.9
 
 default-extensions:
 - DataKinds
@@ -84,7 +84,7 @@ tests:
     dependencies:
     - ghc-source-gen
     - ghc-paths == 0.1.*
-    - tasty >= 1.0 && < 1.5
+    - tasty >= 1.0 && < 1.6
     - tasty-hunit == 0.10.*
 
     when:
@@ -100,7 +100,7 @@ tests:
     dependencies:
     - ghc-source-gen
     - ghc-paths == 0.1.*
-    - tasty >= 1.0 && < 1.5
+    - tasty >= 1.0 && < 1.6
     - tasty-hunit == 0.10.*
 
     when:
@@ -117,6 +117,6 @@ tests:
     dependencies:
     - ghc-source-gen
     - QuickCheck >= 2.10 && < 2.15
-    - tasty >= 1.0 && < 1.5
+    - tasty >= 1.0 && < 1.6
     - tasty-hunit == 0.10.*
     - tasty-quickcheck >= 0.9 && < 0.11
