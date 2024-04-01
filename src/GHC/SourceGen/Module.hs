@@ -219,5 +219,14 @@ moduleContents = withEpAnnNotUsed' IEModuleContents . mkLocated . unModuleNameSt
 withEpAnnNotUsed' :: ((Maybe x, EpAnn ann) -> a) -> a
 withEpAnnNotUsed' = ($ (Nothing, EpAnnNotUsed))
 #else
+
+#if MIN_VERSION_ghc(9,2,0)
+withEpAnnNotUsed' :: (EpAnn ann -> a) -> a
+#elif MIN_VERSION_ghc(8,6,0)
+withEpAnnNotUsed' :: (NoExtField -> a) -> a
+#else
+withEpAnnNotUsed' :: a -> a
+#endif
 withEpAnnNotUsed' = withEpAnnNotUsed
+
 #endif
