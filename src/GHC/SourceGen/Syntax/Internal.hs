@@ -55,6 +55,9 @@ import BasicTypes (DerivStrategy)
 #endif
 import GHC.Hs.Decls (HsDerivingClause)
 import GHC.Hs.Pat
+#if MIN_VERSION_ghc(9,10,0)
+import Language.Haskell.Syntax.Extension (NoGhcTc)
+#endif
 #if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.SrcLoc (SrcSpan, Located, GenLocated(..), mkGeneralSrcSpan)
 #else
@@ -317,7 +320,9 @@ type HsBind' = HsBind GhcPs
 type HsLocalBinds' = HsLocalBinds GhcPs
 type HsValBinds' = HsValBinds GhcPs
 type Sig' = Sig GhcPs
-#if MIN_VERSION_ghc(9,0,0)
+#if MIN_VERSION_ghc(9,10,0)
+type HsMatchContext' = HsMatchContext (GHC.LIdP (NoGhcTc GhcPs))
+#elif MIN_VERSION_ghc(9,0,0)
 type HsMatchContext' = HsMatchContext GhcPs
 #else
 type HsMatchContext' = HsMatchContext RdrName
@@ -367,18 +372,12 @@ type LIdP = GHC.LIdP GHC.GhcPs
 type LIdP = Located (GHC.IdP GHC.GhcPs)
 #endif
 
-#if MIN_VERSION_ghc(9,10,0)
-mkUniToken :: GenLocated TokenLocation (GHC.EpUniToken t u)
-mkUniToken = undefined -- L NoTokenLoc GHC.HsNormalTok
-#elif MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,4,0) && !MIN_VERSION_ghc(9,10,0)
 mkUniToken :: GenLocated TokenLocation (GHC.HsUniToken t u)
 mkUniToken = L NoTokenLoc GHC.HsNormalTok
 #endif
 
-#if MIN_VERSION_ghc(9,10,0)
-mkToken :: GenLocated TokenLocation (GHC.EpToken t)
-mkToken = undefined
-#elif MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,4,0) && !MIN_VERSION_ghc(9,10,0)
 mkToken :: GenLocated TokenLocation (GHC.HsToken t)
 mkToken = L NoTokenLoc GHC.HsTok
 #endif

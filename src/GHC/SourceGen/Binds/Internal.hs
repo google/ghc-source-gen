@@ -9,6 +9,9 @@ module GHC.SourceGen.Binds.Internal where
 
 #if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic ( Origin(Generated)
+#if MIN_VERSION_ghc(9,10,0)
+                       , GenReason(OtherExpansion)
+#endif
 #if MIN_VERSION_ghc(9,8,0)
                        , DoPmc (DoPmc)
 #endif
@@ -24,6 +27,10 @@ import GHC.Hs.Expr (MatchGroup(..), Match(..), GRHSs(..))
 
 #if !MIN_VERSION_ghc(8,6,0)
 import PlaceHolder (PlaceHolder(..))
+#endif
+
+#if MIN_VERSION_ghc(9,10,0)
+import GHC.Parser.Annotation (noAnn)
 #endif
 
 import GHC.SourceGen.Pat.Internal (parenthesize)
@@ -42,14 +49,22 @@ valBinds :: [RawValBind] -> HsLocalBinds'
 -- This case prevents GHC from printing an empty "where" clause:
 valBinds [] = noExt EmptyLocalBinds
 valBinds vbs =
-    withEpAnnNotUsed HsValBinds
-#if MIN_VERSION_ghc(8,6,0)
+#if MIN_VERSION_ghc(9,10,0)
+    HsValBinds noAnn
         $ withNoAnnSortKey ValBinds
-#else
-        $ noExt ValBindsIn
-#endif
             (listToBag $ map mkLocated binds)
             (map mkLocated sigs)
+#elif Min_VERSION_ghc(8,6,0)
+    withEpAnnNotUsed HsValBinds
+        $ withNoAnnSortKey ValBinds
+            (listToBag $ map mkLocated binds)
+            (map mkLocated sigs)
+#else
+    withEpAnnNotUsed HsValBinds
+        $ noExt ValBindsIn
+            (listToBag $ map mkLocated binds)
+            (map mkLocated sigs)
+#endif
   where
     sigs = [s | SigV s <- vbs]
     binds = [b | BindV b <- vbs]
@@ -87,7 +102,9 @@ data RawGRHSs = RawGRHSs
 
 matchGroup :: HsMatchContext' -> [RawMatch] -> MatchGroup' LHsExpr'
 matchGroup context matches =
-#if MIN_VERSION_ghc(9,8,0)
+#if MIN_VERSION_ghc(9,10,0)
+    MG (Generated OtherExpansion DoPmc)
+#elif MIN_VERSION_ghc(9,8,0)
     MG (Generated DoPmc)
 #elif MIN_VERSION_ghc(9,6,0)
     MG Generated
@@ -99,13 +116,19 @@ matchGroup context matches =
                             [] PlaceHolder
 #elif !MIN_VERSION_ghc(9,6,0)
                             Generated
-#endif                            
+#endif
   where
     matches' = mkLocated $ map (mkLocated . mkMatch) matches
     mkMatch :: RawMatch -> Match' LHsExpr'
+#if MIN_VERSION_ghc(9,10,0)
+    mkMatch r = Match [] context
+                    (map builtPat $ map parenthesize $ rawMatchPats r)
+                    (mkGRHSs $ rawMatchGRHSs r)
+#else
     mkMatch r = withEpAnnNotUsed Match context
                     (map builtPat $ map parenthesize $ rawMatchPats r)
                     (mkGRHSs $ rawMatchGRHSs r)
+#endif
 
 mkGRHSs :: RawGRHSs -> GRHSs' LHsExpr'
 mkGRHSs g = withEmptyEpAnnComments GRHSs
@@ -135,7 +158,7 @@ type GuardedExpr = GRHS' LHsExpr'
 -- To declare the type of a function or value, use
 -- 'GHC.SourceGen.Binds.typeSig' or 'GHC.SourceGen.Binds.typeSigs'.
 --
--- To define a function, use 
+-- To define a function, use
 -- 'GHC.SourceGen.Binds.funBind' or 'GHC.SourceGen.Binds.funBinds'.
 --
 -- To define a value, use
