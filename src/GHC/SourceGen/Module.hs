@@ -43,8 +43,11 @@ import GHC.Hs
 #if MIN_VERSION_ghc(9,2,0)
     , EpAnn(..)
 #endif
+#if MIN_VERSION_ghc(9,6,0) && !MIN_VERSION_ghc(9,10,0)
+    , LayoutInfo (NoLayoutInfo)
+#endif
 #if MIN_VERSION_ghc(9,6,0)
-    , hsmodDeprecMessage, hsmodHaddockModHeader, hsmodAnn, AnnKeywordId, XModulePs (XModulePs, hsmodLayout), noAnn, LayoutInfo (NoLayoutInfo), GhcPs, XImportDeclPass (XImportDeclPass, ideclAnn), SrcSpanAnnA, noExtField
+    , hsmodDeprecMessage, hsmodHaddockModHeader, hsmodAnn, AnnKeywordId, XModulePs (XModulePs, hsmodLayout), noAnn, GhcPs, XImportDeclPass (XImportDeclPass, ideclAnn), SrcSpanAnnA, noExtField
 #endif
     )
 #if MIN_VERSION_ghc(9,0,0) && !MIN_VERSION_ghc(9,6,0)
@@ -59,6 +62,10 @@ import RdrName (RdrName)
 #if MIN_VERSION_ghc(9,4,0)
 import GHC.Types.PkgQual (RawPkgQual(..))
 #endif
+#if MIN_VERSION_ghc(9,10,0)
+import GHC.Parser.Annotation (EpLayout (..), noAnn)
+#endif
+
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name.Internal
@@ -84,7 +91,11 @@ module' name exports imports decls = HsModule
 #if MIN_VERSION_ghc(9,6,0)
     , hsmodExt = XModulePs
       { hsmodAnn = noAnn
+#if MIN_VERSION_ghc(9,10,0)
+      , hsmodLayout = EpNoLayout
+#else
       , hsmodLayout = NoLayoutInfo
+#endif
       , hsmodDeprecMessage = Nothing
       , hsmodHaddockModHeader = Nothing }
 #else
@@ -135,7 +146,13 @@ import' m = importDecl
 #endif
             Nothing Nothing
   where
-#if MIN_VERSION_ghc(9,6,0)
+#if MIN_VERSION_ghc(9,10,0)
+    importDecl = ImportDecl
+            (XImportDeclPass{ ideclAnn = noAnn
+            , ideclSourceText = NoSourceText
+            , ideclImplicit = False
+             })
+#elif MIN_VERSION_ghc(9,6,0)
     importDecl = ImportDecl
             (XImportDeclPass{ ideclAnn = EpAnnNotUsed
             , ideclSourceText = NoSourceText
@@ -177,7 +194,11 @@ source d = d { ideclSource =
 -- > =====
 -- > thingAll "A"
 thingAll :: RdrNameStr -> IE'
+#if MIN_VERSION_ghc(9,10,0)
+thingAll n = IEThingAll (Nothing, []) (wrappedName n) Nothing
+#else
 thingAll = withEpAnnNotUsed' IEThingAll . wrappedName
+#endif
 
 -- | Exports specific methods and/or constructors.
 --
@@ -185,6 +206,9 @@ thingAll = withEpAnnNotUsed' IEThingAll . wrappedName
 -- > =====
 -- > thingWith "A" ["b", "C"]
 thingWith :: RdrNameStr -> [OccNameStr] -> IE'
+#if MIN_VERSION_ghc(9,10,0)
+thingWith n cs = IEThingWith (Nothing, []) (wrappedName n) NoIEWildcard (map (wrappedName . unqual) cs) Nothing
+#else
 thingWith n cs = withEpAnnNotUsed' IEThingWith (wrappedName n) NoIEWildcard
                     (map (wrappedName . unqual) cs)
 #if !MIN_VERSION_ghc(9,2,0)
@@ -193,7 +217,7 @@ thingWith n cs = withEpAnnNotUsed' IEThingWith (wrappedName n) NoIEWildcard
                     -- constructors.
                     []
 #endif
-
+#endif
 -- TODO: support "mixed" syntax with both ".." and explicit names.
 
 #if MIN_VERSION_ghc(9,6,0)
@@ -212,21 +236,23 @@ wrappedName = mkLocated . IEName . exportRdrName
 -- > =====
 -- > moduleContents "M"
 moduleContents :: ModuleNameStr -> IE'
+#if MIN_VERSION_ghc(9,10,0)
+moduleContents n = IEModuleContents (Nothing, []) (mkLocated (unModuleNameStr n))
+#else
 moduleContents = withEpAnnNotUsed' IEModuleContents . mkLocated . unModuleNameStr
+#endif
 
-
-#if MIN_VERSION_ghc(9,8,0)
+#if MIN_VERSION_ghc(9,10,0)
+#elif MIN_VERSION_ghc(9,8,0)
 withEpAnnNotUsed' :: ((Maybe x, EpAnn ann) -> a) -> a
 withEpAnnNotUsed' = ($ (Nothing, EpAnnNotUsed))
-#else
-
-#if MIN_VERSION_ghc(9,2,0)
+#elif MIN_VERSION_ghc(9,2,0)
 withEpAnnNotUsed' :: (EpAnn ann -> a) -> a
+withEpAnnNotUsed' = withEpAnnNotUsed
 #elif MIN_VERSION_ghc(8,6,0)
 withEpAnnNotUsed' :: (NoExtField -> a) -> a
+withEpAnnNotUsed' = withEpAnnNotUsed
 #else
 withEpAnnNotUsed' :: a -> a
-#endif
 withEpAnnNotUsed' = withEpAnnNotUsed
-
 #endif
