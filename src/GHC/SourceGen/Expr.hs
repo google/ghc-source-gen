@@ -30,7 +30,11 @@ module GHC.SourceGen.Expr
 
 import GHC.Hs.Expr
 import GHC.Hs.Extension (GhcPs)
-#if MIN_VERSION_ghc(9,6,0)
+#if MIN_VERSION_ghc(9,10,0)
+import GHC.Hs.Expr (EpAnnHsCase (..))
+import GHC.Parser.Annotation (EpToken(..), noAnn, noSpanAnchor)
+import GHC.Types.SourceText (SourceText(NoSourceText))
+#elif MIN_VERSION_ghc(9,6,0)
 import GHC.Hs.Extension (noHsTok)
 import GHC.Types.SourceText (SourceText(NoSourceText))
 #endif
@@ -71,7 +75,9 @@ import GHC.SourceGen.Type.Internal
 overLabel :: String -> HsExpr'
 overLabel = hsOverLabel . fromString
   where
-#if MIN_VERSION_ghc(9,6,0)
+#if MIN_VERSION_ghc(9,10,0)
+    hsOverLabel = noExt HsOverLabel NoSourceText
+#elif MIN_VERSION_ghc(9,6,0)
     hsOverLabel = withEpAnnNotUsed HsOverLabel NoSourceText
 #elif MIN_VERSION_ghc(9,2,0)
     hsOverLabel = withEpAnnNotUsed HsOverLabel
@@ -80,7 +86,9 @@ overLabel = hsOverLabel . fromString
 #endif
 
 let' :: [RawValBind] -> HsExpr' -> HsExpr'
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+let' binds e = HsLet (EpTok noSpanAnchor, EpTok noSpanAnchor) (toHsLocalBinds $ valBinds binds) $ mkLocated e
+#elif MIN_VERSION_ghc(9,4,0)
 let' binds e = withEpAnnNotUsed HsLet mkToken (toHsLocalBinds $ valBinds binds) mkToken $ mkLocated e
 #else
 let' binds e = withEpAnnNotUsed HsLet (toHsLocalBinds $ valBinds binds) $ mkLocated e
@@ -93,14 +101,27 @@ let' binds e = withEpAnnNotUsed HsLet (toHsLocalBinds $ valBinds binds) $ mkLoca
 #endif
 
 case' :: HsExpr' -> [RawMatch] -> HsExpr'
+#if MIN_VERSION_ghc(9,10,0)
+case' e matches = HsCase ann (mkLocated e)
+                    $ matchGroup CaseAlt matches
+  where
+    ann = EpAnnHsCase noSpanAnchor noSpanAnchor []
+#else
 case' e matches = withEpAnnNotUsed HsCase (mkLocated e)
                     $ matchGroup CaseAlt matches
+#endif
 
 lambda :: [Pat'] -> HsExpr' -> HsExpr'
+#if MIN_VERSION_ghc(9,10,0)
+lambda ps e = HsLam [] LamSingle $ matchGroup (LamAlt LamSingle) [match ps e]
+#else
 lambda ps e = noExt HsLam $ matchGroup LambdaExpr [match ps e]
+#endif
 
 lambdaCase :: [RawMatch] -> HsExpr'
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+lambdaCase = HsLam [] LamCase . matchGroup CaseAlt
+#elif MIN_VERSION_ghc(9,4,0)
 lambdaCase = withEpAnnNotUsed HsLamCase LamCase . matchGroup CaseAlt
 #else
 lambdaCase = withEpAnnNotUsed HsLamCase . matchGroup CaseAlt
@@ -111,8 +132,11 @@ if' x y z = mkHsIf
                 (mkLocated x)
                 (mkLocated y)
                 (mkLocated z)
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
+                noAnn
+#elif MIN_VERSION_ghc(9,2,0)
                 EpAnnNotUsed
+#else
 #endif
 
 -- | A MultiWayIf expression.
@@ -127,7 +151,9 @@ if' x y z = mkHsIf
 -- >     , guardedStmt (var "otherwise") $ rhs (string "h")
 -- >     ]
 multiIf :: [GuardedExpr] -> HsExpr'
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+multiIf = withPlaceHolder (HsMultiIf []) . map mkLocated
+#elif MIN_VERSION_ghc(9,4,0)
 multiIf = withPlaceHolder (withEpAnnNotUsed HsMultiIf) . map mkLocated
 #else
 multiIf = withPlaceHolder (withEpAnnNotUsed HsMultiIf) . map builtLoc
@@ -144,7 +170,9 @@ multiIf = withPlaceHolder (withEpAnnNotUsed HsMultiIf) . map builtLoc
 -- > do' [bvar "x" <-- var "act", stmt $ var "return" @@ var "x"]
 do' :: [Stmt'] -> HsExpr'
 do' = withPlaceHolder
-#if MIN_VERSION_ghc(9,0,0)
+#if MIN_VERSION_ghc(9,10,0)
+        . HsDo noAnn (DoExpr Nothing)
+#elif MIN_VERSION_ghc(9,0,0)
         . withEpAnnNotUsed HsDo (DoExpr Nothing)
 #else
         . noExt HsDo DoExpr
@@ -180,8 +208,13 @@ listComp lastExpr stmts =
 #else
         ret = False
 #endif
+#if MIN_VERSION_ghc(9,10,0)
+     in withPlaceHolder . HsDo noAnn ListComp . mkLocated . map mkLocated $
+            stmts ++ [lastStmt]
+#else
      in withPlaceHolder . withEpAnnNotUsed HsDo ListComp . mkLocated . map mkLocated $
             stmts ++ [lastStmt]
+#endif
 
 -- | A type constraint on an expression.
 --
@@ -189,7 +222,9 @@ listComp lastExpr stmts =
 -- > =====
 -- > var "e" @::@ var "t"
 (@::@) :: HsExpr' -> HsType' -> HsExpr'
-#if MIN_VERSION_ghc(8,8,0)
+#if MIN_VERSION_ghc(9,10,0)
+e @::@ t = ExprWithTySig [] (mkLocated e) (sigWcType t)
+#elif MIN_VERSION_ghc(8,8,0)
 e @::@ t = withEpAnnNotUsed ExprWithTySig (mkLocated e) (sigWcType t)
 #elif MIN_VERSION_ghc(8,6,0)
 e @::@ t = ExprWithTySig (sigWcType t) (builtLoc e)
@@ -204,7 +239,9 @@ e @::@ t = ExprWithTySig (builtLoc e) (sigWcType t)
 -- > =====
 -- > var "f" @@ var "Int"
 tyApp :: HsExpr' -> HsType' -> HsExpr'
-#if MIN_VERSION_ghc(9,6,0)
+#if MIN_VERSION_ghc(9,10,0)
+tyApp e t = HsAppType (EpTok noSpanAnchor) e' t'
+#elif MIN_VERSION_ghc(9,6,0)
 tyApp e t = noExt HsAppType e' noHsTok t'
 #elif MIN_VERSION_ghc(9,2,0)
 tyApp e t = HsAppType builtSpan e' t'
@@ -225,7 +262,11 @@ tyApp e t = HsAppType e' t'
 -- > =====
 -- > recordConE "A" [("x", var "y")]
 recordConE :: RdrNameStr -> [(RdrNameStr, HsExpr')] -> HsExpr'
+#if MIN_VERSION_ghc(9,10,0)
+recordConE c fs = (withPlaceHolder $ RecordCon [] (valueRdrName c))
+#else
 recordConE c fs = (withPlaceHolder $ withEpAnnNotUsed RecordCon (valueRdrName c))
+#endif
 #if !MIN_VERSION_ghc(8,6,0)
                     noPostTcExpr
 #endif
@@ -234,7 +275,14 @@ recordConE c fs = (withPlaceHolder $ withEpAnnNotUsed RecordCon (valueRdrName c)
   where
     recField :: (RdrNameStr, HsExpr') -> LHsRecField' LHsExpr'
     recField (f, e) =
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+        mkLocated HsFieldBind
+            { hfbLHS =
+                  mkLocated $ withPlaceHolder $ noExt FieldOcc $ valueRdrName f
+            , hfbRHS = mkLocated e
+            , hfbPun = False
+            , hfbAnn = []
+#elif MIN_VERSION_ghc(9,4,0)
         mkLocated HsFieldBind
             { hfbLHS =
                   mkLocated $ withPlaceHolder $ noExt FieldOcc $ valueRdrName f
@@ -268,13 +316,26 @@ recordConE c fs = (withPlaceHolder $ withEpAnnNotUsed RecordCon (valueRdrName c)
 -- > var "f" @@ recordUpd (var "x") [("a", var "b")]
 recordUpd :: HsExpr' -> [(RdrNameStr, HsExpr')] -> HsExpr'
 recordUpd e fs =
+#if MIN_VERSION_ghc(9,10,0)
+    withPlaceHolder4
+       $ RecordUpd [] (parenthesizeExprForApp $ mkLocated e)
+       $ toRecordUpdFields $ map mkField fs
+#else
     withPlaceHolder4
        $ withEpAnnNotUsed RecordUpd (parenthesizeExprForApp $ mkLocated e)
        $ toRecordUpdFields $ map mkField fs
+#endif
   where
     mkField :: (RdrNameStr, HsExpr') -> LHsRecUpdField'
     mkField (f, e') =
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+        mkLocated HsFieldBind
+            { hfbLHS =
+                mkLocated $ withPlaceHolder $ noExt Ambiguous $ valueRdrName f
+            , hfbRHS = mkLocated e'
+            , hfbPun = False
+            , hfbAnn = []
+#elif MIN_VERSION_ghc(9,4,0)
         mkLocated HsFieldBind
             { hfbLHS =
                 mkLocated $ withPlaceHolder $ noExt Ambiguous $ valueRdrName f
@@ -304,7 +365,9 @@ recordUpd e fs =
 
 arithSeq :: ArithSeqInfo GhcPs -> HsExpr'
 arithSeq =
-#if MIN_VERSION_ghc(8,6,0)
+#if MIN_VERSION_ghc(9,10,0)
+    ArithSeq [] Nothing
+#elif MIN_VERSION_ghc(8,6,0)
     withEpAnnNotUsed ArithSeq Nothing
 #else
     ArithSeq noPostTcExpr Nothing
