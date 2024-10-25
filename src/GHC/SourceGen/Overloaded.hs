@@ -39,7 +39,14 @@ import GHC.Hs
     , Pat(..)
     , HsTupArg(..)
     , HsTupleSort(..)
+#if MIN_VERSION_ghc(9,10,0)
+    , EpToken (..)
+    , noSpanAnchor
+#endif
     )
+#if MIN_VERSION_ghc(9,10,0)
+import GHC.Parser.Annotation (AnnList (..), AnnParen (AnnParen), ParenType (AnnParens))
+#endif
 #if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic (Boxity(..))
 import GHC.Core.DataCon (dataConName)
@@ -62,22 +69,35 @@ import GHC.SourceGen.Type.Internal
 class Par e where
     par :: e -> e
 
+#if MIN_VERSION_ghc(9,10,0)
+mkParToken :: (EpToken "(", EpToken ")")
+mkParToken = (EpTok noSpanAnchor, EpTok noSpanAnchor)
+#endif
+
 instance Par HsExpr' where
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+    par p = HsPar mkParToken (mkLocated p)
+#elif MIN_VERSION_ghc(9,4,0)
     par p = withEpAnnNotUsed HsPar mkToken (mkLocated p) mkToken
 #else
     par = withEpAnnNotUsed HsPar . mkLocated
 #endif
 
 instance Par Pat' where
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+    par p = ParPat mkParToken (builtPat p)
+#elif MIN_VERSION_ghc(9,4,0)
     par p = withEpAnnNotUsed ParPat mkToken (builtPat p) mkToken
 #else
     par = withEpAnnNotUsed ParPat . builtPat
 #endif
 
 instance Par HsType' where
+#if MIN_VERSION_ghc(9,10,0)
+    par = HsParTy (AnnParen AnnParens noSpanAnchor noSpanAnchor) . mkLocated
+#else
     par = withEpAnnNotUsed HsParTy . mkLocated
+#endif
 
 -- | A class for term application.
 --
@@ -141,6 +161,13 @@ class App e where
 infixl 2 @@
 
 instance App HsExpr' where
+#if MIN_VERSION_ghc(9,10,0)
+    op x o y
+        = OpApp []
+            (parenthesizeExprForOp $ mkLocated x)
+            (mkLocated $ var o)
+            (parenthesizeExprForOp $ mkLocated y)
+#else
     op x o y
         = withEpAnnNotUsed OpApp
             (parenthesizeExprForOp $ mkLocated x)
@@ -149,12 +176,22 @@ instance App HsExpr' where
             PlaceHolder
 #endif
             (parenthesizeExprForOp $ mkLocated y)
+#endif
+#if MIN_VERSION_ghc(9,10,0)
+    x @@ y = noExt HsApp (parenthesizeExprForOp $ mkLocated x)
+                (parenthesizeExprForApp $ mkLocated y)
+#else
     x @@ y = withEpAnnNotUsed HsApp (parenthesizeExprForOp $ mkLocated x)
                 (parenthesizeExprForApp $ mkLocated y)
+#endif
 
 instance App HsType' where
     op x o y
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+        = HsOpTy [] notPromoted (parenthesizeTypeForOp $ mkLocated x)
+                (typeRdrName o)
+                (parenthesizeTypeForOp $ mkLocated y)
+#elif MIN_VERSION_ghc(9,4,0)
         = withEpAnnNotUsed HsOpTy notPromoted (parenthesizeTypeForOp $ mkLocated x)
                 (typeRdrName o)
                 (parenthesizeTypeForOp $ mkLocated y)
@@ -176,6 +213,11 @@ tuple = tupleOf Boxed
 unboxedTuple = tupleOf Unboxed
 
 instance HasTuple HsExpr' where
+
+#if MIN_VERSION_ghc(9,10,0)
+    tupleOf b ts =
+        ExplicitTuple [] (map (noExt Present . mkLocated) ts) b
+#else
     tupleOf b ts =
         explicitTuple
             (map (withEpAnnNotUsed Present . mkLocated) ts)
@@ -186,13 +228,19 @@ instance HasTuple HsExpr' where
 #else
         explicitTuple = noExt ExplicitTuple . map builtLoc
 #endif
+#endif
     unit = noExt HsVar unitDataConName
+
 
 unitDataConName :: LIdP
 unitDataConName = mkLocated $ nameRdrName $ dataConName $ unitDataCon
 
 instance HasTuple HsType' where
+#if MIN_VERSION_ghc(9,10,0)
+    tupleOf b = HsTupleTy (AnnParen AnnParens noSpanAnchor noSpanAnchor) b' . map mkLocated
+#else
     tupleOf b = withEpAnnNotUsed HsTupleTy b' . map mkLocated
+#endif
         where
             b' = case b of
                     Unboxed -> HsUnboxedTuple
@@ -203,9 +251,12 @@ instance HasTuple HsType' where
 
 instance HasTuple Pat' where
     tupleOf b ps =
+#if MIN_VERSION_ghc(9,10,0)
+        TuplePat [] (map builtPat ps) b
+#elif MIN_VERSION_ghc(8,6,0)
         withEpAnnNotUsed TuplePat (map builtPat ps) b
-#if !MIN_VERSION_ghc(8,6,0)
-        []
+#else
+        withEpAnnNotUsed TuplePat (map builtPat ps) b []
 #endif
     unit = noExt VarPat unitDataConName
 
@@ -230,10 +281,15 @@ class HasList e where
 nilDataConName :: LIdP
 nilDataConName = mkLocated $ nameRdrName $ dataConName $ nilDataCon
 
+emptyAnnList :: AnnList
+emptyAnnList = AnnList Nothing Nothing Nothing [] []
+
 instance HasList HsExpr' where
     list = withPlaceHolder (withEpAnnNotUsed explicitList) . map mkLocated
       where
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
+        explicitList = ExplicitList emptyAnnList
+#elif MIN_VERSION_ghc(9,2,0)
         explicitList = ExplicitList
 #else
         explicitList x = ExplicitList x Nothing
@@ -242,7 +298,9 @@ instance HasList HsExpr' where
     cons = noExt HsVar $ mkLocated consDataCon_RDR
 
 instance HasList Pat' where
-#if MIN_VERSION_ghc(8,6,0)
+#if MIN_VERSION_ghc(9,10,0)
+    list = ListPat emptyAnnList . map builtPat
+#elif MIN_VERSION_ghc(8,6,0)
     list = withEpAnnNotUsed ListPat . map builtPat
 #else
     list ps = ListPat (map builtPat ps) PlaceHolder Nothing
@@ -276,18 +334,28 @@ instance BVar HsExpr' where
     bvar = var . UnqualStr
 
 instance Var HsType' where
+#if MIN_VERSION_ghc(9,10,0)
+    var = HsTyVar [] notPromoted . typeRdrName
+#else
     var = withEpAnnNotUsed HsTyVar notPromoted . typeRdrName
+#endif
 
 instance BVar HsType' where
     bvar = var . UnqualStr
 
-#if MIN_VERSION_ghc(9,0,0)
+#if MIN_VERSION_ghc(9,10,0)
 instance BVar HsTyVarBndr' where
-#if MIN_VERSION_ghc(9,8,0)
+    bvar = UserTyVar [] (noExt HsBndrRequired) . typeRdrName . UnqualStr
+instance BVar HsTyVarBndrS' where
+    bvar = UserTyVar [] SpecifiedSpec . typeRdrName . UnqualStr
+#elif MIN_VERSION_ghc(9,8,0)
+instance BVar HsTyVarBndr' where
     bvar = withEpAnnNotUsed UserTyVar HsBndrRequired . typeRdrName . UnqualStr
-#else
-    bvar = withEpAnnNotUsed UserTyVar () . typeRdrName . UnqualStr
-#endif
+instance BVar HsTyVarBndrS' where
+    bvar = withEpAnnNotUsed UserTyVar SpecifiedSpec . typeRdrName . UnqualStr
+#elif MIN_VERSION_ghc(9,0,0)
+instance BVar HsTyVarBndr' where
+  bvar = withEpAnnNotUsed UserTyVar () . typeRdrName . UnqualStr
 instance BVar HsTyVarBndrS' where
     bvar = withEpAnnNotUsed UserTyVar SpecifiedSpec . typeRdrName . UnqualStr
 #else
@@ -298,14 +366,18 @@ instance BVar HsTyVarBndr' where
 instance Var IE' where
     var n = ie_var $ mkLocated $ ie_name $ exportRdrName n
       where
+#if MIN_VERSION_ghc(9,10,0)
+        ie_var x =
+          IEVar Nothing x Nothing
+#elif MIN_VERSION_ghc(9,8,0)
         ie_var =
-#if MIN_VERSION_ghc(9,8,0)
           IEVar Nothing
 #else
+        ie_var =
           noExt IEVar
 #endif
 
-        ie_name = 
+        ie_name =
 #if MIN_VERSION_ghc(9,6,0)
           noExt IEName
 #else
