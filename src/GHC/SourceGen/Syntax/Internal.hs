@@ -128,7 +128,10 @@ noExtOrPlaceHolder :: (GHC.PlaceHolder -> a) -> a
 noExtOrPlaceHolder = withPlaceHolder
 #endif
 
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
+withEpAnnNotUsed :: a -> a --(EpAnn ann -> a) -> a
+withEpAnnNotUsed = id -- ($ noAnn)
+#elif MIN_VERSION_ghc(9,2,0)
 withEpAnnNotUsed :: (EpAnn ann -> a) -> a
 withEpAnnNotUsed = ($ EpAnnNotUsed)
 #elif MIN_VERSION_ghc(8,6,0)
@@ -139,7 +142,10 @@ withEpAnnNotUsed :: a -> a
 withEpAnnNotUsed = id
 #endif
 
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
+withNoAnnSortKey :: (AnnSortKey tag -> a) -> a
+withNoAnnSortKey = ($ NoAnnSortKey)
+#elif MIN_VERSION_ghc(9,2,0)
 withNoAnnSortKey :: (AnnSortKey -> a) -> a
 withNoAnnSortKey = ($ NoAnnSortKey)
 #elif MIN_VERSION_ghc(8,6,0)
@@ -183,19 +189,24 @@ builtSpan = mkGeneralSrcSpan "<ghc-source-gen>"
 builtLoc :: e -> Located e
 builtLoc = L builtSpan
 
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
+type SrcSpanAnn ann = EpAnn ann
+#elif MIN_VERSION_ghc(9,2,0)
 type SrcSpanAnn ann = GHC.SrcSpanAnn' (EpAnn ann)
 #else
 type SrcSpanAnn ann = SrcSpan
 #endif
 
+
+#if MIN_VERSION_ghc(9,10,0)
+mkLocated :: (NoAnn ann) => a -> GenLocated (SrcSpanAnn ann) a
+mkLocated = L (EpAnn (spanAsAnchor builtSpan) noAnn emptyComments)
+#elif MIN_VERSION_ghc(9,2,0)
 mkLocated :: a -> GenLocated (SrcSpanAnn ann) a
-mkLocated = L (toAnn builtSpan)
-  where
-#if MIN_VERSION_ghc(9,2,0)
-    toAnn = SrcSpanAnn EpAnnNotUsed
+mkLocated = L (SrcSpanAnn EpAnnNotUsed builtSpan)
 #else
-    toAnn = id
+mkLocated :: a -> GenLocated (SrcSpanAnn ann) a
+mkLocated = L builtSpan
 #endif
 
 -- In GHC-8.8.* (but not >=8.10 or <=8.6), source locations for Pat aren't
@@ -356,12 +367,18 @@ type LIdP = GHC.LIdP GHC.GhcPs
 type LIdP = Located (GHC.IdP GHC.GhcPs)
 #endif
 
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+mkUniToken :: GenLocated TokenLocation (GHC.EpUniToken t u)
+mkUniToken = undefined -- L NoTokenLoc GHC.HsNormalTok
+#elif MIN_VERSION_ghc(9,4,0)
 mkUniToken :: GenLocated TokenLocation (GHC.HsUniToken t u)
 mkUniToken = L NoTokenLoc GHC.HsNormalTok
 #endif
 
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+mkToken :: GenLocated TokenLocation (GHC.EpToken t)
+mkToken = undefined
+#elif MIN_VERSION_ghc(9,4,0)
 mkToken :: GenLocated TokenLocation (GHC.HsToken t)
 mkToken = L NoTokenLoc GHC.HsTok
 #endif
