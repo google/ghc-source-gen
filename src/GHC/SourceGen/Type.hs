@@ -40,7 +40,11 @@ import GHC.SourceGen.Type.Internal
 
 -- | A promoted name, for example from the @DataKinds@ extension.
 tyPromotedVar :: RdrNameStr -> HsType'
+#if MIN_VERSION_ghc(9,10,0)
+tyPromotedVar = HsTyVar [] promoted . typeRdrName
+#else
 tyPromotedVar = withEpAnnNotUsed HsTyVar promoted . typeRdrName
+#endif
 
 stringTy :: String -> HsType'
 stringTy = noExt HsTyLit . noSourceText HsStrTy . fromString
@@ -49,15 +53,27 @@ numTy :: Integer -> HsType'
 numTy = noExt HsTyLit . noSourceText HsNumTy
 
 listTy :: HsType' -> HsType'
+#if MIN_VERSION_ghc(9,10,0)
+listTy = HsListTy (AnnParen AnnParens noSpanAnchor noSpanAnchor) . mkLocated
+#else
 listTy = withEpAnnNotUsed HsListTy . mkLocated
+#endif
 
 listPromotedTy :: [HsType'] -> HsType'
 -- Lists of two or more elements don't need the explicit tick (`'`).
 -- But for consistency, just always add it.
+#if MIN_VERSION_ghc(9,10,0)
+listPromotedTy = withPlaceHolder (HsExplicitListTy [] promoted) . map mkLocated
+#else
 listPromotedTy = withPlaceHolder (withEpAnnNotUsed HsExplicitListTy promoted) . map mkLocated
+#endif
 
 tuplePromotedTy :: [HsType'] -> HsType'
+#if MIN_VERSION_ghc(9,10,0)
+tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed (HsExplicitTupleTy [])) . map mkLocated
+#else
 tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed HsExplicitTupleTy) . map mkLocated
+#endif
 
 -- | A function type.
 --
@@ -65,13 +81,20 @@ tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed HsExplicitTupleTy) . map mk
 -- > =====
 -- > var "a" --> var "b"
 (-->) :: HsType' -> HsType' -> HsType'
-a --> b = withEpAnnNotUsed HsFunTy
-#if MIN_VERSION_ghc(9,4,0)
-         (HsUnrestrictedArrow mkUniToken)
-#elif MIN_VERSION_ghc(9,0,0)
-         (HsUnrestrictedArrow NormalSyntax)
-#endif
+a --> b =
+#if MIN_VERSION_ghc(9,10,0)
+     (noExt HsFunTy)
+         (HsUnrestrictedArrow (EpUniTok noSpanAnchor NormalSyntax))
          (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
+#elif MIN_VERSION_ghc(9,4,0)
+     withEpAnnNotUsed HsFunTy
+         (HsUnrestrictedArrow mkUniToken)
+         (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
+#elif MIN_VERSION_ghc(9,0,0)
+     withEpAnnNotUsed HsFunTy
+         (HsUnrestrictedArrow NormalSyntax)
+         (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
+#endif
 
 infixr 0 -->
 
@@ -103,7 +126,7 @@ forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
 (==>) cs = hsQualTy (mkLocated (map mkLocated cs)) . mkLocated
   where
 #if MIN_VERSION_ghc(9,4,0)
-    hsQualTy = noExt HsQualTy 
+    hsQualTy = noExt HsQualTy
 #elif MIN_VERSION_ghc(9,2,0)
     hsQualTy = noExt HsQualTy . Just
 #else
@@ -118,10 +141,18 @@ infixr 0 ==>
 -- > =====
 -- > kindedVar "x" (var "A")
 kindedVar :: OccNameStr -> HsType' -> HsTyVarBndr'
-kindedVar v t = withEpAnnNotUsed KindedTyVar
-#if MIN_VERSION_ghc(9,8,0)
-                HsBndrRequired
-#elif MIN_VERSION_ghc(9,0,0)
-                ()
-#endif
+kindedVar v t =
+#if MIN_VERSION_ghc(9,10,0)
+            KindedTyVar
+                []
+                (noExt HsBndrRequired)
                 (typeRdrName $ UnqualStr v) (mkLocated t)
+#elif MIN_VERSION_ghc(9,8,0)
+            withEpAnnNotUsed KindedTyVar
+                HsBndrRequired
+                (typeRdrName $ UnqualStr v) (mkLocated t)
+#elif MIN_VERSION_ghc(9,0,0)
+            withEpAnnNotUsed KindedTyVar
+                ()
+                (typeRdrName $ UnqualStr v) (mkLocated t)
+#endif
