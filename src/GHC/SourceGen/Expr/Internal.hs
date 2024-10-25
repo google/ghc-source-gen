@@ -17,6 +17,10 @@ import SrcLoc (unLoc)
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal
 
+#if MIN_VERSION_ghc(9,10,0)
+import GHC.Parser.Annotation (EpToken (..), noSpanAnchor)
+#endif
+
 #if MIN_VERSION_ghc(9,4,0)
 import Language.Haskell.Syntax.Extension
 #endif
@@ -31,7 +35,9 @@ parenthesizeExprForOp e
     | otherwise = e
 
 parExpr :: LHsExpr' -> LHsExpr'
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+parExpr e = mkLocated $ HsPar (EpTok noSpanAnchor, EpTok noSpanAnchor) e
+#elif MIN_VERSION_ghc(9,4,0)
 parExpr e = mkLocated $ withEpAnnNotUsed HsPar mkToken e mkToken
 #else
 parExpr = mkLocated . withEpAnnNotUsed HsPar
@@ -49,7 +55,9 @@ needsExprForOp e = case e of
     HsLit WILD_EXT l -> litNeedsParen l
     HsOverLit WILD_EXT l -> overLitNeedsParen l
     HsLam{} -> True
+#if !MIN_VERSION_ghc(9,10,0)
     HsLamCase{} -> True
+#endif
     OpApp{} -> True
     NegApp{} -> True
     HsCase{} -> True
