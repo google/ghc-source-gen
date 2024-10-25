@@ -2,6 +2,9 @@
 module GHC.SourceGen.Pat.Internal where
 
 import GHC.Hs.Pat (Pat(..))
+#if MIN_VERSION_ghc(9,10,0)
+import GHC.Parser.Annotation (EpToken(..), noSpanAnchor)
+#endif
 #if MIN_VERSION_ghc(9,0,0)
 import GHC.Hs.Type (HsConDetails(..))
 import GHC.Types.SrcLoc (unLoc)
@@ -51,7 +54,9 @@ needsPar SigPatOut{} = True
 needsPar _ = False
 
 parPat :: Pat' -> Pat'
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
+parPat p = ParPat (EpTok noSpanAnchor, EpTok noSpanAnchor) (builtPat p)
+#elif MIN_VERSION_ghc(9,4,0)
 parPat p = withEpAnnNotUsed ParPat mkToken (builtPat p) mkToken
 #else
 parPat = withEpAnnNotUsed ParPat . builtPat
