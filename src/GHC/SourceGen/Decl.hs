@@ -55,7 +55,9 @@ module GHC.SourceGen.Decl
 import GHC (LexicalFixity(Prefix))
 import GHC.Data.Bag (listToBag)
 
-#if MIN_VERSION_ghc(9,6,0)
+#if MIN_VERSION_ghc(9,10,0)
+import GHC (GhcPs)
+#elif MIN_VERSION_ghc(9,6,0)
 import GHC (GhcPs, LayoutInfo (NoLayoutInfo))
 #else
 import GHC.Types.SrcLoc (LayoutInfo(NoLayoutInfo))
@@ -97,7 +99,9 @@ import GHC.Hs.Type
 #endif
     )
 
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
+import GHC.Parser.Annotation (AnnSortKey(..), EpAnn(..), EpLayout (EpNoLayout))
+#elif MIN_VERSION_ghc(9,2,0)
 import GHC.Parser.Annotation (AnnSortKey(..), EpAnn(..))
 #elif MIN_VERSION_ghc(8,10,0)
 import GHC.Hs.Extension (NoExtField(NoExtField))
@@ -180,7 +184,9 @@ class'
 class' context name vars decls
     = noExt TyClD $ ClassDecl
             { tcdCtxt = toHsContext $ mkLocated $ map mkLocated context
-#if MIN_VERSION_ghc(9,6,0)
+#if MIN_VERSION_ghc(9,10,0)
+            , tcdCExt = ([], EpNoLayout, NoAnnSortKey)
+#elif MIN_VERSION_ghc(9,6,0)
             , tcdLayout = NoLayoutInfo
             , tcdCExt = (EpAnnNotUsed, NoAnnSortKey)
 #elif MIN_VERSION_ghc(9,2,0)
@@ -208,7 +214,9 @@ class' context name vars decls
             , tcdDocs = []  -- Haddocks
             }
   where
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
+    funDep' = FunDep []
+#elif MIN_VERSION_ghc(9,2,0)
     funDep' = withEpAnnNotUsed FunDep
 #else
     funDep' = (,)
@@ -249,7 +257,9 @@ instance HasValBind RawInstDecl where
 instance' :: HsType' -> [RawInstDecl] -> HsDecl'
 instance' ty decls = noExt InstD  $ noExt ClsInstD $ ClsInstDecl
     { cid_poly_ty = sigType ty
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
+    , cid_ext = (Nothing, [], NoAnnSortKey)
+#elif MIN_VERSION_ghc(9,2,0)
     , cid_ext = (EpAnnNotUsed, NoAnnSortKey)
 #elif MIN_VERSION_ghc(8,10,0)
     , cid_ext = NoExtField
@@ -286,21 +296,25 @@ tyFamInst name params ty = tyFamInstD
         $ famEqn
             (typeRdrName name)
             eqn_bndrs
-            (map mkLocated params)
+            params -- (map mkLocated params)
             Prefix
             (mkLocated ty)
   where
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
+    tyFamInstDecl = TyFamInstDecl []
+#elif MIN_VERSION_ghc(9,2,0)
     tyFamInstDecl = withEpAnnNotUsed TyFamInstDecl
 #else
     tyFamInstDecl = TyFamInstDecl . withPlaceHolder . noExt (withPlaceHolder HsIB)
 #endif
-#if MIN_VERSION_ghc(9,2,0)
-    famEqn tycon bndrs pats = withEpAnnNotUsed FamEqn tycon bndrs (map HsValArg pats)
+#if MIN_VERSION_ghc(9,10,0)
+    famEqn tycon bndrs pats = FamEqn [] tycon bndrs (map (mkLocated . noExt HsValArg) pats)
+#elif MIN_VERSION_ghc(9,2,0)
+    famEqn tycon bndrs pats = withEpAnnNotUsed FamEqn tycon bndrs (map (HsValArg . mkLocated) pats)
 #elif MIN_VERSION_ghc(8,8,0)
-    famEqn tycon bndrs pats = noExt FamEqn tycon bndrs (map HsValArg pats)
+    famEqn tycon bndrs pats = noExt FamEqn tycon bndrs (map (HsValArg . mkLocated) pats)
 #else
-    famEqn tycon _ = noExt FamEqn tycon
+    famEqn tycon _ pats = noExt FamEqn tycon (map mkLocated)
 #endif
 #if MIN_VERSION_ghc(9,2,0)
     eqn_bndrs = noExt HsOuterImplicit
@@ -345,7 +359,7 @@ newOrDataType newOrData name vars conDecls derivs
                         [decl] -> NewTypeCon $ mkLocated decl
                         _ -> error "NewTypeCon with more than one decl"
                     DataType -> DataTypeCons False (map mkLocated conDecls)
-                )  
+                )
 #else
                 (map mkLocated conDecls)
 #endif
@@ -639,4 +653,3 @@ patSynBind n ns p = bindB $ noExt PatSynBind
 #else
     prefixCon' = PrefixCon
 #endif
-
