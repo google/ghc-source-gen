@@ -104,7 +104,7 @@ test-suite name_test
   build-depends:
       QuickCheck >=2.10 && <2.15
     , base >=4.7 && <5
-    , ghc >=8.4 && <9.9
+    , ghc >=8.4 && <9.11
     , ghc-source-gen
     , tasty >=1.0 && <1.6
     , tasty-hunit ==0.10.*
