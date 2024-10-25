@@ -39,15 +39,24 @@ class HasLit e where
     overLit :: HsOverLit' -> e
 
 instance HasLit HsExpr' where
+#if MIN_VERSION_ghc(9,10,0)
+    lit = noExt HsLit
+    overLit = noExt HsOverLit
+#else
     lit = withEpAnnNotUsed HsLit
     overLit = withEpAnnNotUsed HsOverLit
+#endif
 
 instance HasLit Pat' where
     lit = noExt LitPat
+#if MIN_VERSION_ghc(9,10,0)
     overLit l = withPlaceHolder
-#if MIN_VERSION_ghc(9,4,0)
+                    $ NPat [] (mkLocated l) Nothing noSyntaxExpr
+#elif MIN_VERSION_ghc(9,4,0)
+    overLit l = withPlaceHolder
                     $ withEpAnnNotUsed NPat (mkLocated l) Nothing noSyntaxExpr
 #else
+    overLit l = withPlaceHolder
                     $ withEpAnnNotUsed NPat (builtLoc l) Nothing noSyntaxExpr
 #endif
 
