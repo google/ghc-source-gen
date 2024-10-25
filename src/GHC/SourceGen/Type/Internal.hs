@@ -17,6 +17,10 @@ import GHC.Hs.Type as Types
 import SrcLoc (unLoc)
 #endif
 
+#if MIN_VERSION_ghc(9,10,0)
+import GHC.Parser.Annotation (AnnParen (AnnParen), ParenType (AnnParens), noAnn, noSpanAnchor)
+#endif
+
 import GHC.SourceGen.Syntax.Internal
 
 mkQTyVars :: [HsTyVarBndr'] -> LHsQTyVars'
@@ -63,7 +67,11 @@ needsParenForApp t = case t of
     _ -> needsParenForOp t
 
 parTy :: LHsType GhcPs -> LHsType GhcPs
+#if MIN_VERSION_ghc(9,10,0)
+parTy = mkLocated . HsParTy (AnnParen AnnParens noSpanAnchor noSpanAnchor)
+#else
 parTy = mkLocated . withEpAnnNotUsed HsParTy
+#endif
 
 sigWcType :: HsType' -> LHsSigWcType'
 sigWcType = noExt (withPlaceHolder Types.HsWC) . sigType
@@ -72,7 +80,9 @@ wcType :: HsType' -> LHsWcType'
 wcType = noExt (withPlaceHolder Types.HsWC) . mkLocated
 
 patSigType :: HsType' -> HsPatSigType'
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
+patSigType = mkHsPatSigType noAnn . mkLocated
+#elif MIN_VERSION_ghc(9,2,0)
 patSigType = withEpAnnNotUsed mkHsPatSigType . mkLocated
 #elif MIN_VERSION_ghc(9,0,0)
 patSigType = mkHsPatSigType . builtLoc
