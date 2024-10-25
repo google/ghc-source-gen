@@ -104,16 +104,30 @@ infixr 0 -->
 -- > =====
 -- > forall' [bvar "a"] $ var "T" @@ var "a"
 forall' :: [HsTyVarBndrS'] -> HsType' -> HsType'
+#if MIN_VERSION_ghc(9,10,0)
+forall' ts t =
+    HsForAllTy
+        NoExtField
+        (mkHsForAllInvisTele ann (map mkLocated ts))
+        (mkLocated t)
+  where
+    ann = EpAnn noSpanAnchor (noAnn, noAnn) emptyComments
+#elif MIN_VERSION_ghc(9,2,0)
 forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
   where
-#if MIN_VERSION_ghc(9,2,0)
     hsForAllTy x = HsForAllTy x . withEpAnnNotUsed mkHsForAllInvisTele
 #elif MIN_VERSION_ghc(9,0,0)
+forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
+  where
     hsForAllTy x = HsForAllTy x . mkHsForAllInvisTele
 #elif MIN_VERSION_ghc(8,10,0)
+forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
+  where
     fvf = ForallInvis -- "Invisible" forall, i.e., with a dot
     hsForAllTy x = HsForAllTy x fvf
 #else
+forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
+  where
     hsForAllTy = HsForAllTy
 #endif
 
