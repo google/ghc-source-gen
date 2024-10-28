@@ -54,7 +54,7 @@ valBinds vbs =
         $ withNoAnnSortKey ValBinds
             (listToBag $ map mkLocated binds)
             (map mkLocated sigs)
-#elif Min_VERSION_ghc(8,6,0)
+#elif MIN_VERSION_ghc(8,6,0)
     withEpAnnNotUsed HsValBinds
         $ withNoAnnSortKey ValBinds
             (listToBag $ map mkLocated binds)
