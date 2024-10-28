@@ -372,9 +372,9 @@ newOrDataType
     -> [ConDecl']
     -> [HsDerivingClause']
     -> HsDecl'
-#if MIN_VERSION_ghc(9,10,0)
 newOrDataType newOrData name vars conDecls derivs
-    = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
+    = noExt TyClD $ withPlaceHolder $ withPlaceHolder $    
+#if MIN_VERSION_ghc(9,10,0)
         DataDecl [] (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
@@ -393,7 +393,6 @@ newOrDataType newOrData name vars conDecls derivs
     cxt = Nothing
     toHsDeriving = id
 #elif MIN_VERSION_ghc(9,6,0)
-    = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
@@ -412,7 +411,6 @@ newOrDataType newOrData name vars conDecls derivs
     cxt = Nothing
     toHsDeriving = id
 #elif MIN_VERSION_ghc(9,4,0)
-    = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
@@ -427,7 +425,6 @@ newOrDataType newOrData name vars conDecls derivs
     cxt = Nothing
     toHsDeriving = id
 #elif MIN_VERSION_ghc(9,2,0)
-    = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
@@ -442,7 +439,6 @@ newOrDataType newOrData name vars conDecls derivs
     cxt = Nothing
     toHsDeriving = id
 #else
-    = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
@@ -587,7 +583,7 @@ renderCon98Decl :: OccNameStr -> HsConDeclDetails' -> ConDecl'
 renderCon98Decl name details =
     conDeclH98 (typeRdrName $ unqual name) False [] Nothing details Nothing
   where
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
     conDeclH98 = ConDeclH98 []
 #elif MIN_VERSION_ghc(9,2,0)
     conDeclH98 = withEpAnnNotUsed ConDeclH98
@@ -631,7 +627,7 @@ derivingStock = derivingWay (Just strat)
 derivingNewtype :: [HsType'] -> HsDerivingClause'
 derivingNewtype = derivingWay (Just strat)
   where
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
     strat = NewtypeStrategy []
 #elif MIN_VERSION_ghc(9,2,0)
     strat = withEpAnnNotUsed NewtypeStrategy
@@ -642,7 +638,7 @@ derivingNewtype = derivingWay (Just strat)
 derivingAnyclass :: [HsType'] -> HsDerivingClause'
 derivingAnyclass = derivingWay (Just strat)
   where
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
     strat = AnyclassStrategy []
 #elif MIN_VERSION_ghc(9,2,0)
     strat = withEpAnnNotUsed AnyclassStrategy
@@ -660,7 +656,7 @@ derivingAnyclass = derivingWay (Just strat)
 derivingVia :: HsType' -> [HsType'] -> HsDerivingClause'
 derivingVia t = derivingWay (Just $ strat $ sigType t)
   where
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,10,0)
     strat = ViaStrategy . XViaStrategyPs []
 #elif MIN_VERSION_ghc(9,2,0)
     strat = ViaStrategy . withEpAnnNotUsed XViaStrategyPs

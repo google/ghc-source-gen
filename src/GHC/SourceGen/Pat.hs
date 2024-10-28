@@ -101,9 +101,15 @@ recordConP c fs =
   where
     mkRecField :: (RdrNameStr, Pat') -> LHsRecField' LPat'
     mkRecField (f, p) =
-#if MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,10,0)
         mkLocated $ HsFieldBind
             { hfbAnn = noAnn
+            , hfbLHS = mkLocated $ withPlaceHolder $ noExt FieldOcc $ valueRdrName f
+            , hfbRHS = builtPat p
+            , hfbPun = False      
+#elif MIN_VERSION_ghc(9,4,0)
+        mkLocated $ HsFieldBind
+            { hfbAnn = EpAnnNotUsed
             , hfbLHS = mkLocated $ withPlaceHolder $ noExt FieldOcc $ valueRdrName f
             , hfbRHS = builtPat p
             , hfbPun = False

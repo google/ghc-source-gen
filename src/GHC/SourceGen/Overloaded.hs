@@ -281,14 +281,11 @@ class HasList e where
 nilDataConName :: LIdP
 nilDataConName = mkLocated $ nameRdrName $ dataConName $ nilDataCon
 
-emptyAnnList :: AnnList
-emptyAnnList = AnnList Nothing Nothing Nothing [] []
-
 instance HasList HsExpr' where
     list = withPlaceHolder (withEpAnnNotUsed explicitList) . map mkLocated
       where
 #if MIN_VERSION_ghc(9,10,0)
-        explicitList = ExplicitList emptyAnnList
+        explicitList = ExplicitList noAnn
 #elif MIN_VERSION_ghc(9,2,0)
         explicitList = ExplicitList
 #else
