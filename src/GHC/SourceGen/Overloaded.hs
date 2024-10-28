@@ -45,7 +45,7 @@ import GHC.Hs
 #endif
     )
 #if MIN_VERSION_ghc(9,10,0)
-import GHC.Parser.Annotation (AnnList (..), AnnParen (AnnParen), ParenType (AnnParens))
+import GHC.Parser.Annotation (AnnList (..), AnnParen (AnnParen), ParenType (AnnParens), noAnn)
 #endif
 #if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic (Boxity(..))
@@ -296,7 +296,7 @@ instance HasList HsExpr' where
 
 instance HasList Pat' where
 #if MIN_VERSION_ghc(9,10,0)
-    list = ListPat emptyAnnList . map builtPat
+    list = ListPat noAnn . map builtPat
 #elif MIN_VERSION_ghc(8,6,0)
     list = withEpAnnNotUsed ListPat . map builtPat
 #else
