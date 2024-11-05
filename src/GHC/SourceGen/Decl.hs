@@ -345,7 +345,6 @@ tyFamInst name params ty = tyFamInstD
     eqn_bndrs = Nothing
 #endif
 
-
 -- | Declares a type synonym.
 --
 -- > type A a b = B b a
