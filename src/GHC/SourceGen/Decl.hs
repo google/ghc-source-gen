@@ -387,10 +387,9 @@ newOrDataType newOrData name vars conDecls derivs
                         _ -> error "NewTypeCon with more than one decl"
                     DataType -> DataTypeCons False (map mkLocated conDecls)
                 )
-                (toHsDeriving $ map mkLocated derivs)
+                (map mkLocated derivs)
   where
     cxt = Nothing
-    toHsDeriving = id
 #elif MIN_VERSION_ghc(9,6,0)
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
@@ -405,10 +404,9 @@ newOrDataType newOrData name vars conDecls derivs
                         _ -> error "NewTypeCon with more than one decl"
                     DataType -> DataTypeCons False (map mkLocated conDecls)
                 )
-                (toHsDeriving $ map mkLocated derivs)
+                (map mkLocated derivs)
   where
     cxt = Nothing
-    toHsDeriving = id
 #elif MIN_VERSION_ghc(9,4,0)
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
@@ -419,10 +417,9 @@ newOrDataType newOrData name vars conDecls derivs
                 Nothing
                 Nothing
                 (map mkLocated conDecls)
-                (toHsDeriving $ map mkLocated derivs)
+                (map mkLocated derivs)
   where
     cxt = Nothing
-    toHsDeriving = id
 #elif MIN_VERSION_ghc(9,2,0)
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
@@ -433,10 +430,9 @@ newOrDataType newOrData name vars conDecls derivs
                 Nothing
                 Nothing
                 (map mkLocated conDecls)
-                (toHsDeriving $ map builtLoc derivs)
+                (map builtLoc derivs)
   where
     cxt = Nothing
-    toHsDeriving = id
 #else
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
@@ -447,10 +443,9 @@ newOrDataType newOrData name vars conDecls derivs
                 Nothing
                 Nothing
                 (map mkLocated conDecls)
-                (toHsDeriving $ map builtLoc derivs)
+                (mkLocated $ map builtLoc derivs)
   where
     cxt = builtLoc []
-    toHsDeriving = mkLocated
 #endif
 
 -- | A newtype declaration.
