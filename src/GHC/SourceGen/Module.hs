@@ -243,6 +243,7 @@ moduleContents = withEpAnnNotUsed' IEModuleContents . mkLocated . unModuleNameSt
 #endif
 
 #if MIN_VERSION_ghc(9,10,0)
+-- withEpAnnNotUsed' is not necessary for newer versions.
 #elif MIN_VERSION_ghc(9,8,0)
 withEpAnnNotUsed' :: ((Maybe x, EpAnn ann) -> a) -> a
 withEpAnnNotUsed' = ($ (Nothing, EpAnnNotUsed))
