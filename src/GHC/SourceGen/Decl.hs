@@ -398,7 +398,7 @@ newOrDataType newOrData name vars conDecls derivs
   where
     mkDataDefnCon NewType [decl] = NewTypeCon $ mkLocated decl
     mkDataDefnCon NewType _ = error "NewTypeCon with more than one decl"
-    mkDataDefnCon DataType conDecls = DataTypeCons False (map mkLocated conDecls)
+    mkDataDefnCon DataType decls = DataTypeCons False (map mkLocated decls)
 #elif MIN_VERSION_ghc(9,4,0)
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
