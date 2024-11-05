@@ -310,12 +310,12 @@ tyFamInst name params ty = tyFamInstD
         $ famEqn
             (typeRdrName name)
             eqn_bndrs
-            params -- (map mkLocated params)
+            (map mkLocated params)
             Prefix
             (mkLocated ty)
   where
     tyFamInstDecl = withEpAnnNotUsed TyFamInstDecl
-    famEqn tycon bndrs pats = withEpAnnNotUsed FamEqn tycon bndrs (map (HsValArg . mkLocated) pats)
+    famEqn tycon bndrs pats = withEpAnnNotUsed FamEqn tycon bndrs (map HsValArg pats)
     eqn_bndrs = noExt HsOuterImplicit
 #elif MIN_VERSION_ghc(8,8,0)
 tyFamInst name params ty = tyFamInstD
@@ -323,12 +323,12 @@ tyFamInst name params ty = tyFamInstD
         $ famEqn
             (typeRdrName name)
             eqn_bndrs
-            params -- (map mkLocated params)
+            (map mkLocated params)
             Prefix
             (mkLocated ty)
   where
     tyFamInstDecl = TyFamInstDecl . withPlaceHolder . noExt (withPlaceHolder HsIB)
-    famEqn tycon bndrs pats = noExt FamEqn tycon bndrs (map (HsValArg . mkLocated) pats)
+    famEqn tycon bndrs pats = noExt FamEqn tycon bndrs (map HsValArg  pats)
     eqn_bndrs = Nothing
 #else
 tyFamInst name params ty = tyFamInstD
@@ -336,12 +336,12 @@ tyFamInst name params ty = tyFamInstD
         $ famEqn
             (typeRdrName name)
             eqn_bndrs
-            params -- (map mkLocated params)
+            (map mkLocated params)
             Prefix
             (mkLocated ty)
   where
     tyFamInstDecl = TyFamInstDecl . withPlaceHolder . noExt (withPlaceHolder HsIB)
-    famEqn tycon _ pats = noExt FamEqn tycon (map mkLocated)
+    famEqn tycon _ = noExt FamEqn tycon
     eqn_bndrs = Nothing
 #endif
 
