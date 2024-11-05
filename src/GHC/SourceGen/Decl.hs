@@ -372,80 +372,66 @@ newOrDataType
     -> [HsDerivingClause']
     -> HsDecl'
 newOrDataType newOrData name vars conDecls derivs
-    = noExt TyClD $ withPlaceHolder $ withPlaceHolder $    
+    = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
+#if MIN_VERSION_ghc(9,6,0)
 #if MIN_VERSION_ghc(9,10,0)
         DataDecl [] (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
             $ noExt HsDataDefn
-                cxt
                 Nothing
                 Nothing
-                (case newOrData of
-                    NewType -> case conDecls of
-                        [decl] -> NewTypeCon $ mkLocated decl
-                        _ -> error "NewTypeCon with more than one decl"
-                    DataType -> DataTypeCons False (map mkLocated conDecls)
-                )
+                Nothing
+                (mkDataDefnCon newOrData conDecls)
                 (map mkLocated derivs)
-  where
-    cxt = Nothing
-#elif MIN_VERSION_ghc(9,6,0)
+#else
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
             $ noExt HsDataDefn
-                cxt
                 Nothing
                 Nothing
-                (case newOrData of
-                    NewType -> case conDecls of
-                        [decl] -> NewTypeCon $ mkLocated decl
-                        _ -> error "NewTypeCon with more than one decl"
-                    DataType -> DataTypeCons False (map mkLocated conDecls)
-                )
+                Nothing
+                (mkDataDefnCon newOrData conDecls)
                 (map mkLocated derivs)
+#endif
   where
-    cxt = Nothing
+    mkDataDefnCon NewType [decl] = NewTypeCon $ mkLocated decl
+    mkDataDefnCon NewType _ = error "NewTypeCon with more than one decl"
+    mkDataDefnCon DataType conDecls = DataTypeCons False (map mkLocated conDecls)
 #elif MIN_VERSION_ghc(9,4,0)
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
             $ noExt HsDataDefn
                 newOrData
-                cxt
+                Nothing
                 Nothing
                 Nothing
                 (map mkLocated conDecls)
                 (map mkLocated derivs)
-  where
-    cxt = Nothing
 #elif MIN_VERSION_ghc(9,2,0)
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
             $ noExt HsDataDefn
                 newOrData
-                cxt
+                Nothing
                 Nothing
                 Nothing
                 (map mkLocated conDecls)
                 (map builtLoc derivs)
-  where
-    cxt = Nothing
 #else
         withEpAnnNotUsed DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
             $ noExt HsDataDefn
                 newOrData
-                cxt
+                (builtLoc [])
                 Nothing
                 Nothing
                 (map mkLocated conDecls)
                 (mkLocated $ map builtLoc derivs)
-  where
-    cxt = builtLoc []
 #endif
 
 -- | A newtype declaration.
