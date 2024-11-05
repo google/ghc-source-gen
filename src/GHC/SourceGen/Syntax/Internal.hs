@@ -132,8 +132,8 @@ noExtOrPlaceHolder = withPlaceHolder
 #endif
 
 #if MIN_VERSION_ghc(9,10,0)
-withEpAnnNotUsed :: a -> a --(EpAnn ann -> a) -> a
-withEpAnnNotUsed = id -- ($ noAnn)
+withEpAnnNotUsed :: a -> a
+withEpAnnNotUsed = id
 #elif MIN_VERSION_ghc(9,2,0)
 withEpAnnNotUsed :: (EpAnn ann -> a) -> a
 withEpAnnNotUsed = ($ EpAnnNotUsed)
