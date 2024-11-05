@@ -297,13 +297,13 @@ tyFamInst name params ty = tyFamInstD
         $ FamEqn
             []
             (typeRdrName name)
-            eqn_bndrs
+            eqnBndrs
             (map (noExt HsValArg . mkLocated) params)
             Prefix
             (mkLocated ty)
   where
     tyFamInstDecl = TyFamInstDecl []
-    eqn_bndrs = noExt HsOuterImplicit
+    eqnBndrs = noExt HsOuterImplicit
 #elif MIN_VERSION_ghc(9,2,0)
 tyFamInst name params ty = tyFamInstD
         $ tyFamInstDecl
