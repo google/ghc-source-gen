@@ -231,7 +231,6 @@ instance HasTuple HsExpr' where
 #endif
     unit = noExt HsVar unitDataConName
 
-
 unitDataConName :: LIdP
 unitDataConName = mkLocated $ nameRdrName $ dataConName $ unitDataCon
 
