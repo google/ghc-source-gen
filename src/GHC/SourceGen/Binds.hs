@@ -60,6 +60,10 @@ import GHC.Plugins (isSymOcc)
 #if !MIN_VERSION_ghc(9,0,1)
 import GHC.Tc.Types.Evidence (HsWrapper(WpHole))
 #endif
+
+#if MIN_VERSION_ghc(9,10,0)
+import GHC.Parser.Annotation (noAnn)
+#endif
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
@@ -73,8 +77,15 @@ import GHC.SourceGen.Type.Internal (sigWcType)
 -- > typeSigs ["f", "g"] (var "A")
 typeSigs :: HasValBind t => [OccNameStr] -> HsType' -> t
 typeSigs names t =
+#if MIN_VERSION_ghc(9,10,0)
+    sigB $ TypeSig ann (map (typeRdrName . unqual) names)
+        $ sigWcType t
+  where
+    ann = AnnSig noAnn []
+#else
     sigB $ withEpAnnNotUsed TypeSig (map (typeRdrName . unqual) names)
         $ sigWcType t
+#endif
 
 -- | Declares the type of a single function or value.
 --
@@ -187,11 +198,21 @@ valBind name = valBindGRHSs name . rhs
 -- >       ]
 patBindGRHSs :: HasPatBind t => Pat' -> RawGRHSs -> t
 patBindGRHSs p g =
+#if MIN_VERSION_ghc(9,10,0)
+    bindB
+        $ withPlaceHolder
+            (withPlaceHolder
+                (noExt PatBind (builtPat p) (noExt HsNoMultAnn) (mkGRHSs g)))
+#elif MIN_VERSION_ghc(9,6,0)
     bindB
         $ withPlaceHolder
             (withPlaceHolder
                 (withEpAnnNotUsed PatBind (builtPat p) (mkGRHSs g)))
-#if !MIN_VERSION_ghc(9,6,0)
+#else
+    bindB
+        $ withPlaceHolder
+            (withPlaceHolder
+                (withEpAnnNotUsed PatBind (builtPat p) (mkGRHSs g)))
         $ ([],[])
 #endif
 
@@ -285,7 +306,11 @@ guard s = guards [stmt s]
 -- > =====
 -- > guards [conP "Just" (bvar "x") <-- var "y", bvar "x"] unit
 guards :: [Stmt'] -> HsExpr' -> GuardedExpr
+#if MIN_VERSION_ghc(9,10,0)
+guards stmts e = GRHS noAnn (map mkLocated stmts) (mkLocated e)
+#else
 guards stmts e = withEpAnnNotUsed GRHS (map mkLocated stmts) (mkLocated e)
+#endif
 
 -- | An expression statement.  May be used in a do expression (with 'do'') or in a
 -- match (with 'guard').
@@ -302,8 +327,12 @@ stmt e =
 -- > =====
 -- > bvar "x" <-- var "act"
 (<--) :: Pat' -> HsExpr' -> Stmt'
+#if MIN_VERSION_ghc(9,10,0)
+p <-- e = withPlaceHolder $ BindStmt [] (builtPat p) (mkLocated e)
+#elif MIN_VERSION_ghc(9,0,0)
 p <-- e = withPlaceHolder $ withEpAnnNotUsed BindStmt (builtPat p) (mkLocated e)
-#if !MIN_VERSION_ghc(9,0,0)
+#else
+p <-- e = withPlaceHolder $ withEpAnnNotUsed BindStmt (builtPat p) (mkLocated e)
          noSyntaxExpr noSyntaxExpr
 #endif
 infixl 1 <--
