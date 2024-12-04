@@ -5,7 +5,7 @@ cabal-version: 1.12
 -- see: https://github.com/sol/hpack
 
 name:           ghc-source-gen
-version:        0.4.5.0
+version:        0.4.6.0
 synopsis:       Constructs Haskell syntax trees for the GHC API.
 description:    @ghc-source-gen@ is a library for generating Haskell source code.
                 It uses the <https://hackage.haskell.org/package/ghc ghc> library
