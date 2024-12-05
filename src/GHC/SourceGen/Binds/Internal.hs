@@ -8,7 +8,6 @@
 {-# LANGUAGE TypeApplications #-}
 module GHC.SourceGen.Binds.Internal where
 
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic ( Origin(Generated)
 #if MIN_VERSION_ghc(9,10,0)
                        , GenReason(OtherExpansion)
@@ -19,10 +18,6 @@ import GHC.Types.Basic ( Origin(Generated)
                        )
 import GHC.Data.Bag (listToBag)
 import GHC.Hs.Extension (GhcPs)
-#else
-import BasicTypes (Origin(Generated))
-import Bag (listToBag)
-#endif
 import GHC.Hs.Binds
 import GHC.Hs.Decls
 import GHC.Hs.Expr (MatchGroup(..), Match(..), GRHSs(..))
@@ -32,10 +27,6 @@ import qualified Data.List.NonEmpty as NonEmpty
 #endif
 #if MIN_VERSION_ghc(9,12,0)
 import Language.Haskell.Syntax.Extension (wrapXRec, noExtField)
-#endif
-
-#if !MIN_VERSION_ghc(8,6,0)
-import PlaceHolder (PlaceHolder(..))
 #endif
 
 #if MIN_VERSION_ghc(9,10,0)
@@ -67,14 +58,9 @@ valBinds vbs =
             (listToBag $ map mkLocated binds)
 #  endif
             (map mkLocated sigs)
-#elif MIN_VERSION_ghc(8,6,0)
-    withEpAnnNotUsed HsValBinds
-        $ withNoAnnSortKey ValBinds
-            (listToBag $ map mkLocated binds)
-            (map mkLocated sigs)
 #else
     withEpAnnNotUsed HsValBinds
-        $ noExt ValBindsIn
+        $ withNoAnnSortKey ValBinds
             (listToBag $ map mkLocated binds)
             (map mkLocated sigs)
 #endif
@@ -125,9 +111,7 @@ matchGroup context matches =
     noExt MG
 #endif
                             matches'
-#if !MIN_VERSION_ghc(8,6,0)
-                            [] PlaceHolder
-#elif !MIN_VERSION_ghc(9,6,0)
+#if !MIN_VERSION_ghc(9,6,0)
                             Generated
 #endif
   where
