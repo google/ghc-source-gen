@@ -1,11 +1,11 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
+-- This file has been generated from package.yaml by hpack version 0.37.0.
 --
 -- see: https://github.com/sol/hpack
 
 name:           ghc-source-gen
-version:        0.4.6.0
+version:        0.4.6.1
 synopsis:       Constructs Haskell syntax trees for the GHC API.
 description:    @ghc-source-gen@ is a library for generating Haskell source code.
                 It uses the <https://hackage.haskell.org/package/ghc ghc> library
@@ -60,34 +60,9 @@ library
       FlexibleInstances
       TypeSynonymInstances
   build-depends:
-      base >=4.7 && <5
-    , ghc >=8.4 && <9.11
+      base >=4.15 && <5
+    , ghc >=9.0 && <9.11
   default-language: Haskell2010
-  if impl(ghc<8.10)
-    other-modules:
-        GHC.Hs
-        GHC.Hs.Binds
-        GHC.Hs.Decls
-        GHC.Hs.Expr
-        GHC.Hs.Extension
-        GHC.Hs.ImpExp
-        GHC.Hs.Lit
-        GHC.Hs.Pat
-        GHC.Hs.Utils
-    hs-source-dirs:
-        compat
-  if impl(ghc<9.0)
-    other-modules:
-        GHC.Hs.Type
-        GHC.Driver.Monad
-        GHC.Driver.Session
-        GHC.Utils.Outputable
-        GHC.Types.Basic
-        GHC.Plugins
-        GHC.Tc.Types.Evidence
-  if impl(ghc>=8.10) && impl(ghc<9.0)
-    hs-source-dirs:
-        compat-8.10
 
 test-suite name_test
   type: exitcode-stdio-1.0
@@ -103,8 +78,8 @@ test-suite name_test
       TypeSynonymInstances
   build-depends:
       QuickCheck >=2.10 && <2.15
-    , base >=4.7 && <5
-    , ghc >=8.4 && <9.11
+    , base >=4.15 && <5
+    , ghc >=9.0 && <9.11
     , ghc-source-gen
     , tasty >=1.0 && <1.6
     , tasty-hunit ==0.10.*
@@ -124,18 +99,13 @@ test-suite pprint_examples
       FlexibleInstances
       TypeSynonymInstances
   build-depends:
-      base >=4.7 && <5
-    , ghc >=8.4 && <9.11
+      base >=4.15 && <5
+    , ghc >=9.0 && <9.11
     , ghc-paths ==0.1.*
     , ghc-source-gen
     , tasty >=1.0 && <1.6
     , tasty-hunit ==0.10.*
   default-language: Haskell2010
-  if impl(ghc<9.0)
-    other-modules:
-        GHC.Utils.Outputable
-    hs-source-dirs:
-        compat
 
 test-suite pprint_test
   type: exitcode-stdio-1.0
@@ -150,17 +120,10 @@ test-suite pprint_test
       FlexibleInstances
       TypeSynonymInstances
   build-depends:
-      base >=4.7 && <5
-    , ghc >=8.4 && <9.11
+      base >=4.15 && <5
+    , ghc >=9.0 && <9.11
     , ghc-paths ==0.1.*
     , ghc-source-gen
     , tasty >=1.0 && <1.6
     , tasty-hunit ==0.10.*
   default-language: Haskell2010
-  if impl(ghc<9.0)
-    other-modules:
-        GHC.Driver.Monad
-        GHC.Driver.Session
-        GHC.Utils.Outputable
-    hs-source-dirs:
-        compat
