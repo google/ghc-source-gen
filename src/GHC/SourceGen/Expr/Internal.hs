@@ -8,11 +8,7 @@
 module GHC.SourceGen.Expr.Internal where
 
 import GHC.Hs.Expr
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.SrcLoc (unLoc)
-#else
-import SrcLoc (unLoc)
-#endif
 
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal
@@ -43,17 +39,11 @@ parExpr e = mkLocated $ withEpAnnNotUsed HsPar mkToken e mkToken
 parExpr = mkLocated . withEpAnnNotUsed HsPar
 #endif
 
-#if MIN_VERSION_ghc(8,6,0)
-#define WILD_EXT _
-#else
-#define WILD_EXT
-#endif
-
 needsExprForApp, needsExprForOp :: HsExpr' -> Bool
 needsExprForOp e = case e of
     -- TODO: more care for literals; only needed for negative numbers?
-    HsLit WILD_EXT l -> litNeedsParen l
-    HsOverLit WILD_EXT l -> overLitNeedsParen l
+    HsLit _ l -> litNeedsParen l
+    HsOverLit _ l -> overLitNeedsParen l
     HsLam{} -> True
 #if !MIN_VERSION_ghc(9,10,0)
     HsLamCase{} -> True

@@ -9,13 +9,8 @@ module GHC.SourceGen.Type.Internal where
 
 import GHC.Hs (GhcPs)
 
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.Hs.Type as Types
 import GHC.Types.SrcLoc (unLoc)
-#else
-import GHC.Hs.Type as Types
-import SrcLoc (unLoc)
-#endif
 
 #if MIN_VERSION_ghc(9,10,0)
 import GHC.Parser.Annotation (AnnParen (AnnParen), ParenType (AnnParens), noAnn, noSpanAnchor)
@@ -84,8 +79,6 @@ patSigType :: HsType' -> HsPatSigType'
 patSigType = mkHsPatSigType noAnn . mkLocated
 #elif MIN_VERSION_ghc(9,2,0)
 patSigType = withEpAnnNotUsed mkHsPatSigType . mkLocated
-#elif MIN_VERSION_ghc(9,0,0)
-patSigType = mkHsPatSigType . builtLoc
 #else
-patSigType = sigWcType
+patSigType = mkHsPatSigType . builtLoc
 #endif

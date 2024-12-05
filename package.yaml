@@ -5,7 +5,7 @@
 # https://developers.google.com/open-source/licenses/bsd
 
 name:                ghc-source-gen
-version:             0.4.6.0
+version:             0.4.6.1
 github:              "google/ghc-source-gen"
 license:             BSD3
 author:              "Judah Jacobson"
@@ -29,8 +29,8 @@ description: |
     For more information, please see the <https://github.com/google/ghc-source-gen README>.
 
 dependencies:
-- base >= 4.7 && < 5
-- ghc >= 8.4 && < 9.11
+- base >= 4.15 && < 5
+- ghc >= 9.0 && < 9.11
 
 default-extensions:
 - DataKinds
@@ -38,36 +38,6 @@ default-extensions:
 - TypeSynonymInstances
 
 library:
-  when:
-  # GHC-8.10 introduced hierarchical modules.
-  # For compatibility, define wrapper modules for older GHC versions.
-  - condition: impl(ghc<8.10)
-    source-dirs: compat
-    other-modules:
-    - GHC.Hs
-    - GHC.Hs.Binds
-    - GHC.Hs.Decls
-    - GHC.Hs.Expr
-    - GHC.Hs.Extension
-    - GHC.Hs.ImpExp
-    - GHC.Hs.Lit
-    - GHC.Hs.Pat
-    - GHC.Hs.Utils
-
-  verbatim: |
-    if impl(ghc<9.0)
-      other-modules:
-          GHC.Hs.Type
-          GHC.Driver.Monad
-          GHC.Driver.Session
-          GHC.Utils.Outputable
-          GHC.Types.Basic
-          GHC.Plugins
-          GHC.Tc.Types.Evidence
-    if impl(ghc>=8.10) && impl(ghc<9.0)
-      hs-source-dirs:
-          compat-8.10
-
   source-dirs: src
   other-modules:
   - GHC.SourceGen.Binds.Internal
@@ -87,12 +57,6 @@ tests:
     - tasty >= 1.0 && < 1.6
     - tasty-hunit == 0.10.*
 
-    when:
-    - condition: impl(ghc<9.0)
-      source-dirs: compat
-      other-modules:
-      - GHC.Utils.Outputable
-
   # TODO: Fill out this test, and use it to replace pprint_examples.
   pprint_test:
     main: pprint_test.hs
@@ -102,14 +66,6 @@ tests:
     - ghc-paths == 0.1.*
     - tasty >= 1.0 && < 1.6
     - tasty-hunit == 0.10.*
-
-    when:
-    - condition: impl(ghc<9.0)
-      source-dirs: compat
-      other-modules:
-      - GHC.Driver.Monad
-      - GHC.Driver.Session
-      - GHC.Utils.Outputable
 
   name_test:
     main: name_test.hs

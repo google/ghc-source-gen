@@ -1,6 +1,9 @@
 # Changelog for haskell-syntax
 
 
+# 0.4.6.1
+- Remove support for GHC < 9.0.
+
 # 0.4.6.0
 - Support GHC 9.10.
 

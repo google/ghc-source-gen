@@ -46,11 +46,7 @@ import GHC.Hs.Pat (HsRecField'(..), HsRecFields(..))
 import GHC.Hs.Type (FieldOcc(..), AmbiguousFieldOcc(..))
 import GHC.Hs.Utils (mkHsIf)
 import Data.String (fromString)
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.SrcLoc (unLoc, GenLocated(..))
-#else
-import SrcLoc (unLoc, GenLocated(..))
-#endif
 
 #if MIN_VERSION_ghc(9,2,0)
 import GHC.Parser.Annotation (EpAnn(..))
@@ -172,10 +168,8 @@ do' :: [Stmt'] -> HsExpr'
 do' = withPlaceHolder
 #if MIN_VERSION_ghc(9,10,0)
         . HsDo noAnn (DoExpr Nothing)
-#elif MIN_VERSION_ghc(9,0,0)
-        . withEpAnnNotUsed HsDo (DoExpr Nothing)
 #else
-        . noExt HsDo DoExpr
+        . withEpAnnNotUsed HsDo (DoExpr Nothing)
 #endif
         . mkLocated . map (mkLocated . parenthesizeIfLet)
   where
@@ -183,13 +177,8 @@ do' = withPlaceHolder
   --   do let x = ...
   --      in x
   -- which is not valid Haskell.
-#if MIN_VERSION_ghc(8,6,0)
     parenthesizeIfLet (BodyStmt ext e@(L _ HsLet{}) x y)
         = BodyStmt ext (parExpr e) x y
-#else
-    parenthesizeIfLet (BodyStmt e@(L _ HsLet{}) x y tc)
-        = BodyStmt (parExpr e) x y tc
-#endif
     parenthesizeIfLet s = s
 
 -- | A list comprehension expression.
@@ -203,11 +192,7 @@ do' = withPlaceHolder
 listComp :: HsExpr' -> [Stmt'] -> HsExpr'
 listComp lastExpr stmts =
     let lastStmt = noExt LastStmt (mkLocated lastExpr) ret noSyntaxExpr
-#if MIN_VERSION_ghc(9,0,0)
         ret = Nothing
-#else
-        ret = False
-#endif
 #if MIN_VERSION_ghc(9,10,0)
      in withPlaceHolder . HsDo noAnn ListComp . mkLocated . map mkLocated $
             stmts ++ [lastStmt]
@@ -224,12 +209,8 @@ listComp lastExpr stmts =
 (@::@) :: HsExpr' -> HsType' -> HsExpr'
 #if MIN_VERSION_ghc(9,10,0)
 e @::@ t = ExprWithTySig [] (mkLocated e) (sigWcType t)
-#elif MIN_VERSION_ghc(8,8,0)
-e @::@ t = withEpAnnNotUsed ExprWithTySig (mkLocated e) (sigWcType t)
-#elif MIN_VERSION_ghc(8,6,0)
-e @::@ t = ExprWithTySig (sigWcType t) (builtLoc e)
 #else
-e @::@ t = ExprWithTySig (builtLoc e) (sigWcType t)
+e @::@ t = withEpAnnNotUsed ExprWithTySig (mkLocated e) (sigWcType t)
 #endif
 -- TODO: The Outputable instance prepends extra spaces; I'm not sure why.
 
@@ -245,12 +226,8 @@ tyApp e t = HsAppType (EpTok noSpanAnchor) e' t'
 tyApp e t = noExt HsAppType e' noHsTok t'
 #elif MIN_VERSION_ghc(9,2,0)
 tyApp e t = HsAppType builtSpan e' t'
-#elif MIN_VERSION_ghc(8,8,0)
-tyApp e t = noExt HsAppType e' t'
-#elif MIN_VERSION_ghc(8,6,0)
-tyApp e t = HsAppType t' e'
 #else
-tyApp e t = HsAppType e' t'
+tyApp e t = noExt HsAppType e' t'
 #endif
   where
     t' = wcType $ unLoc $ parenthesizeTypeForApp $ mkLocated t
@@ -266,9 +243,6 @@ recordConE :: RdrNameStr -> [(RdrNameStr, HsExpr')] -> HsExpr'
 recordConE c fs = (withPlaceHolder $ RecordCon [] (valueRdrName c))
 #else
 recordConE c fs = (withPlaceHolder $ withEpAnnNotUsed RecordCon (valueRdrName c))
-#endif
-#if !MIN_VERSION_ghc(8,6,0)
-                    noPostTcExpr
 #endif
                     $ HsRecFields (map recField fs)
                         Nothing -- No ".."
@@ -367,10 +341,8 @@ arithSeq :: ArithSeqInfo GhcPs -> HsExpr'
 arithSeq =
 #if MIN_VERSION_ghc(9,10,0)
     ArithSeq [] Nothing
-#elif MIN_VERSION_ghc(8,6,0)
-    withEpAnnNotUsed ArithSeq Nothing
 #else
-    ArithSeq noPostTcExpr Nothing
+    withEpAnnNotUsed ArithSeq Nothing
 #endif
 
 -- | An arithmetic sequence expression with a start value.

@@ -68,10 +68,8 @@ conP c = conPat (valueRdrName c) . prefixCon . map (builtPat . parenthesize)
   where
 #if MIN_VERSION_ghc(9,10,0)
     conPat = ConPat []
-#elif MIN_VERSION_ghc(9,0,0)
-    conPat = withEpAnnNotUsed ConPat
 #else
-    conPat = ConPatIn
+    conPat = withEpAnnNotUsed ConPat
 #endif
 #if MIN_VERSION_ghc(9,2,0)
     prefixCon = PrefixCon []
@@ -91,10 +89,8 @@ recordConP :: RdrNameStr -> [(RdrNameStr, Pat')] -> Pat'
 recordConP c fs =
 #if MIN_VERSION_ghc(9,10,0)
   ConPat []
-#elif MIN_VERSION_ghc(9,0,0)
-  withEpAnnNotUsed ConPat
 #else
-  ConPatIn
+  withEpAnnNotUsed ConPat
 #endif
   (valueRdrName c)
         $ RecCon $ HsRecFields (map mkRecField fs) Nothing -- No ".."
@@ -157,10 +153,6 @@ lazyP = withEpAnnNotUsed LazyPat . builtPat . parenthesize
 sigP :: Pat' -> HsType' -> Pat'
 #if MIN_VERSION_ghc(9,10,0)
 sigP p t = SigPat [] (builtPat p) (patSigType t)
-#elif MIN_VERSION_ghc(8,8,0)
-sigP p t = withEpAnnNotUsed SigPat (builtPat p) (patSigType t)
-#elif MIN_VERSION_ghc(8,6,0)
-sigP p t = SigPat (patSigType t) (builtPat p)
 #else
-sigP p t = SigPatIn (builtPat p) (patSigType t)
+sigP p t = withEpAnnNotUsed SigPat (builtPat p) (patSigType t)
 #endif

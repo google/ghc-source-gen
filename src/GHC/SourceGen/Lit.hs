@@ -20,12 +20,9 @@ module GHC.SourceGen.Lit
 #if MIN_VERSION_ghc(9,2,0)
 import GHC.Types.SourceText (mkTHFractionalLit, mkIntegralLit)
 import GHC.Data.FastString (fsLit)
-#elif MIN_VERSION_ghc(9,0,0)
+#else
 import GHC.Types.Basic (mkFractionalLit, mkIntegralLit)
 import GHC.Data.FastString (fsLit)
-#else
-import BasicTypes (mkFractionalLit, mkIntegralLit)
-import FastString (fsLit)
 #endif
 import GHC.Hs.Lit
 import GHC.Hs.Expr (noExpr, noSyntaxExpr, HsExpr(..))

@@ -23,11 +23,10 @@ import qualified GHC.Types.Error as GHC (NoDiagnosticOpts(..))
 #elif MIN_VERSION_ghc(9,2,0)
 import qualified GHC.Driver.Errors as Error
 import qualified GHC.Parser.Errors.Ppr as Error
-#elif MIN_VERSION_ghc(9,0,0)
+#else
 import qualified GHC.Utils.Error as Error
 #endif
 
-#if MIN_VERSION_ghc(9,0,1)
 import GHC.Data.FastString
 import GHC.Types.Name
     ( Name
@@ -60,49 +59,8 @@ import qualified GHC.Types.SrcLoc as GHC
 import qualified GHC.Data.StringBuffer as GHC
 import GHC.Paths (libdir)
 import GHC.Driver.Monad (liftIO)
-#else
-import FastString
-import Name
-    ( Name
-    , isExternalName
-    , isInternalName
-    , isSystemName
-    , isWiredInName
-    , nameOccName
-    , nameUnique
-    )
-import OccName
-    ( OccName
-    , occNameSpace
-    , occNameString
-    , NameSpace
-    , varName
-    , dataName
-    , tvName
-    , tcClsName
-    )
 
-import qualified DynFlags as GHC
-import qualified FastString as GHC
-import qualified GHC as GHC
-import qualified GhcMonad as GHC
-import qualified HeaderInfo as GHC
-import qualified Lexer as GHC
-import qualified Parser as Parser
-import qualified SrcLoc as GHC
-import qualified StringBuffer as GHC
-import GHC.Paths (libdir)
-#if MIN_VERSION_ghc(8,10,0)
-import GhcMonad (liftIO)
-import qualified ErrUtils as Error
-#else
-import qualified Outputable as GHC
-#endif
-#endif
-
-#if MIN_VERSION_ghc(8,10,0)
 import System.Exit (exitFailure)
-#endif
 
 main :: IO ()
 main = do
@@ -110,7 +68,7 @@ main = do
     result <- parseModule f
     print $ gPrint result
 
-#if MIN_VERSION_ghc(9,0,1) && !MIN_VERSION_ghc(9,6,0)
+#if !MIN_VERSION_ghc(9,6,0)
 parseModule :: FilePath -> IO GHC.HsModule
 #else
 parseModule :: FilePath -> IO (GHC.HsModule GHC.GhcPs)
@@ -177,18 +135,11 @@ parseModule f = GHC.runGhc (Just libdir) $ do
                 let errors = Error.pprError <$> GHC.getErrorMessages s
                 Error.printBagOfErrors logger dflags errors
                 exitFailure
-#elif MIN_VERSION_ghc(8,10,0)
+#else
         GHC.PFailed s -> liftIO $ do
                 let (_warnings, errors) = GHC.messages s dflags
                 Error.printBagOfErrors dflags errors
                 exitFailure
-#else
-        GHC.PFailed
-            -- Note: using printBagOfErrors on the messages doesn't produce any
-            -- useful output on older GHCs; so instead print the docs directly.
-            _messages
-            loc docs ->
-            error $ GHC.showPpr dflags loc ++ ": " ++ GHC.showSDoc dflags docs
 #endif
 
 gPrint :: Data a => a -> Doc
