@@ -4,11 +4,7 @@ module Main (main) where
 
 import GHC.SourceGen.Name
 
-#if MIN_VERSION_ghc(9,0,1)
 import GHC.Types.Name.Occurrence
-#else
-import OccName
-#endif
 
 import Data.List (intercalate)
 import Data.String (fromString)

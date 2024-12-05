@@ -46,20 +46,13 @@ module GHC.SourceGen.Binds
     , (<--)
     ) where
 
-#if MIN_VERSION_ghc(9,0,0)
 import GHC (LexicalFixity(..))
-#else
-import GHC.Types.Basic (LexicalFixity(..))
-#endif
 import Data.Bool (bool)
 import Data.Maybe (fromMaybe)
 import GHC.Hs.Binds
 import GHC.Hs.Expr
 import GHC.Hs.Type
 import GHC.Plugins (isSymOcc)
-#if !MIN_VERSION_ghc(9,0,1)
-import GHC.Tc.Types.Evidence (HsWrapper(WpHole))
-#endif
 
 #if MIN_VERSION_ghc(9,10,0)
 import GHC.Parser.Annotation (noAnn)
@@ -113,9 +106,6 @@ funBindsWithFixity :: HasValBind t => Maybe LexicalFixity -> OccNameStr -> [RawM
 funBindsWithFixity fixity name matches = bindB $ withPlaceHolder
         (noExt FunBind name'
             (matchGroup context matches)
-#if !MIN_VERSION_ghc(9,0,1)
-            WpHole
-#endif
             )
 #if !MIN_VERSION_ghc(9,6,0)
         []
@@ -329,11 +319,8 @@ stmt e =
 (<--) :: Pat' -> HsExpr' -> Stmt'
 #if MIN_VERSION_ghc(9,10,0)
 p <-- e = withPlaceHolder $ BindStmt [] (builtPat p) (mkLocated e)
-#elif MIN_VERSION_ghc(9,0,0)
-p <-- e = withPlaceHolder $ withEpAnnNotUsed BindStmt (builtPat p) (mkLocated e)
 #else
 p <-- e = withPlaceHolder $ withEpAnnNotUsed BindStmt (builtPat p) (mkLocated e)
-         noSyntaxExpr noSyntaxExpr
 #endif
 infixl 1 <--
 

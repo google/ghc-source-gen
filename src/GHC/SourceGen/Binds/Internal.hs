@@ -7,7 +7,6 @@
 {-# LANGUAGE CPP #-}
 module GHC.SourceGen.Binds.Internal where
 
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic ( Origin(Generated)
 #if MIN_VERSION_ghc(9,10,0)
                        , GenReason(OtherExpansion)
@@ -17,17 +16,9 @@ import GHC.Types.Basic ( Origin(Generated)
 #endif
                        )
 import GHC.Data.Bag (listToBag)
-#else
-import BasicTypes (Origin(Generated))
-import Bag (listToBag)
-#endif
 import GHC.Hs.Binds
 import GHC.Hs.Decls
 import GHC.Hs.Expr (MatchGroup(..), Match(..), GRHSs(..))
-
-#if !MIN_VERSION_ghc(8,6,0)
-import PlaceHolder (PlaceHolder(..))
-#endif
 
 #if MIN_VERSION_ghc(9,10,0)
 import GHC.Parser.Annotation (noAnn)
@@ -54,14 +45,9 @@ valBinds vbs =
         $ withNoAnnSortKey ValBinds
             (listToBag $ map mkLocated binds)
             (map mkLocated sigs)
-#elif MIN_VERSION_ghc(8,6,0)
-    withEpAnnNotUsed HsValBinds
-        $ withNoAnnSortKey ValBinds
-            (listToBag $ map mkLocated binds)
-            (map mkLocated sigs)
 #else
     withEpAnnNotUsed HsValBinds
-        $ noExt ValBindsIn
+        $ withNoAnnSortKey ValBinds
             (listToBag $ map mkLocated binds)
             (map mkLocated sigs)
 #endif
@@ -112,9 +98,7 @@ matchGroup context matches =
     noExt MG
 #endif
                             matches'
-#if !MIN_VERSION_ghc(8,6,0)
-                            [] PlaceHolder
-#elif !MIN_VERSION_ghc(9,6,0)
+#if !MIN_VERSION_ghc(9,6,0)
                             Generated
 #endif
   where
