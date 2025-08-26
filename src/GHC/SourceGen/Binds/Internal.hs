@@ -59,7 +59,11 @@ valBinds vbs =
 #if MIN_VERSION_ghc(9,10,0)
     HsValBinds noAnn
         $ withNoAnnSortKey ValBinds
+#  if MIN_VERSION_ghc(9,12,0)
             (map mkLocated binds)
+#  else
+            (listToBag $ map mkLocated binds)
+#  endif
             (map mkLocated sigs)
 #elif MIN_VERSION_ghc(8,6,0)
     withEpAnnNotUsed HsValBinds
@@ -125,19 +129,21 @@ matchGroup context matches =
                             Generated
 #endif
   where
-    mkLPat :: [LPat'] -> XRec GhcPs [LPat' ]
-    mkLPat = wrapXRec @GhcPs
     matches' = mkLocated $ map (mkLocated . mkMatch) matches
     mkMatch :: RawMatch -> Match' LHsExpr'
 #if MIN_VERSION_ghc(9,10,0)
+#  if MIN_VERSION_ghc(9,12,0)
     mkMatch r = Match noExtField context
-                    (mkLPat $ map (builtPat) $ map parenthesize $ rawMatchPats r)
-                    (mkGRHSs $ rawMatchGRHSs r)
+                    (wrapXRec @GhcPs $ map builtPat $ map parenthesize $ rawMatchPats r)
+#  else
+    mkMatch r = Match noAnn context
+                    (map builtPat $ map parenthesize $ rawMatchPats r)
+#  endif
 #else
     mkMatch r = withEpAnnNotUsed Match context
                     (map builtPat $ map parenthesize $ rawMatchPats r)
-                    (mkGRHSs $ rawMatchGRHSs r)
 #endif
+                    (mkGRHSs $ rawMatchGRHSs r)
 
 mkGRHSs :: RawGRHSs -> GRHSs' LHsExpr'
 mkGRHSs g = withEmptyEpAnnComments GRHSs

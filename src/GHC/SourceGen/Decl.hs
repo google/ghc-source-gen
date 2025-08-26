@@ -208,7 +208,11 @@ class' context name vars decls
                        ]
             , tcdSigs = [mkLocated sig | ClassSig sig <- decls]
             , tcdMeths =
+#if MIN_VERSION_ghc(9,12,0)
                 [mkLocated bind | ClassDefaultMethod bind <- decls]
+#else
+                listToBag [mkLocated bind | ClassDefaultMethod bind <- decls]
+#endif
             , tcdATs = []  -- Associated types
             , tcdATDefs = []  -- Associated type defaults
             , tcdDocs = []  -- Haddocks
@@ -266,7 +270,11 @@ instance' ty decls = noExt InstD  $ noExt ClsInstD $ ClsInstDecl
 #elif MIN_VERSION_ghc(8,6,0)
     , cid_ext = NoExt
 #endif
+#if MIN_VERSION_ghc(9,12,0)
     , cid_binds = [mkLocated b | InstBind b <- decls]
+#else
+    , cid_binds = listToBag [mkLocated b | InstBind b <- decls]
+#endif
     , cid_sigs = [mkLocated sig | InstSig sig <- decls]
     , cid_tyfam_insts = [mkLocated $ t | InstTyFam t <- decls]
     , cid_datafam_insts = []
@@ -374,11 +382,21 @@ newOrDataType
 newOrDataType newOrData name vars conDecls derivs
     = noExt TyClD $ withPlaceHolder $ withPlaceHolder $
 #if MIN_VERSION_ghc(9,6,0)
-#if MIN_VERSION_ghc(9,10,0)
+#if MIN_VERSION_ghc(9,12,0)
         noExt DataDecl (typeRdrName $ unqual name)
             (mkQTyVars vars)
             Prefix
             $ HsDataDefn noAnn
+                Nothing
+                Nothing
+                Nothing
+                (mkDataDefnCon newOrData conDecls)
+                (map mkLocated derivs)
+#elif MIN_VERSION_ghc(9,10,0)
+        DataDecl [] (typeRdrName $ unqual name)
+            (mkQTyVars vars)
+            Prefix
+            $ noExt HsDataDefn
                 Nothing
                 Nothing
                 Nothing

@@ -97,7 +97,11 @@ recordConP c fs =
   ConPatIn
 #endif
   (valueRdrName c)
+#if MIN_VERSION_ghc(9,12,0)
         $ RecCon $ noExt HsRecFields (map mkRecField fs) Nothing -- No ".."
+#else
+        $ RecCon $ HsRecFields (map mkRecField fs) Nothing -- No ".."
+#endif
   where
     mkRecField :: (RdrNameStr, Pat') -> LHsRecField' LPat'
     mkRecField (f, p) =

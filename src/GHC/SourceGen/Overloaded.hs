@@ -21,17 +21,16 @@ module GHC.SourceGen.Overloaded
 import GHC.Hs.Type
     ( HsType(..)
     , HsTyVarBndr(..)
+#if MIN_VERSION_ghc(9,12,0)
     , HsBndrVar(HsBndrVar)
     , HsBndrKind(HsBndrNoKind)
+#endif
 #if MIN_VERSION_ghc(9,8,0)
     , HsBndrVis (HsBndrRequired)
+    , mkHsOpTy
 #endif
     )
-import GHC.Hs (IE(..), IEWrappedName(..)
-#if MIN_VERSION_ghc(9,6,0)
-    , noExtField
-#endif
-    )
+import GHC.Hs (IE(..), IEWrappedName(..))
 #if !MIN_VERSION_ghc(8,6,0)
 import PlaceHolder(PlaceHolder(..))
 #endif
@@ -164,8 +163,11 @@ infixl 2 @@
 
 instance App HsExpr' where
 #if MIN_VERSION_ghc(9,10,0)
-    op x o y
-        = noExt OpApp
+#  if MIN_VERSION_ghc(9,12,0)
+    op x o y = noExt OpApp
+#  else
+    op x o y = OpApp []
+#  endif
             (parenthesizeExprForOp $ mkLocated x)
             (mkLocated $ var o)
             (parenthesizeExprForOp $ mkLocated y)
@@ -190,7 +192,7 @@ instance App HsExpr' where
 instance App HsType' where
     op x o y
 #if MIN_VERSION_ghc(9,10,0)
-        = noExt HsOpTy notPromoted (parenthesizeTypeForOp $ mkLocated x)
+        = mkHsOpTy notPromoted (parenthesizeTypeForOp $ mkLocated x)
                 (typeRdrName o)
                 (parenthesizeTypeForOp $ mkLocated y)
 #elif MIN_VERSION_ghc(9,4,0)
@@ -341,13 +343,16 @@ instance Var HsType' where
 instance BVar HsType' where
     bvar = var . UnqualStr
 
-#if MIN_VERSION_ghc(9,10,0)
+#if MIN_VERSION_ghc(9,12,0)
 instance BVar HsTyVarBndr' where
     bvar n = HsTvb noAnn (noExt HsBndrRequired) (noExt HsBndrVar $ typeRdrName $ UnqualStr n) (noExt HsBndrNoKind)
-    --bvar = UserTyVar noAnn (noExt HsBndrRequired) . typeRdrName . UnqualStr
 instance BVar HsTyVarBndrS' where
     bvar n = HsTvb noAnn SpecifiedSpec (noExt HsBndrVar $ typeRdrName $ UnqualStr n) (noExt HsBndrNoKind)
-    --bvar = UserTyVar noAnn SpecifiedSpec . typeRdrName . UnqualStr
+#elif MIN_VERSION_ghc(9,10,0)
+instance BVar HsTyVarBndr' where
+    bvar = UserTyVar noAnn (noExt HsBndrRequired) . typeRdrName . UnqualStr
+instance BVar HsTyVarBndrS' where
+    bvar = UserTyVar noAnn SpecifiedSpec . typeRdrName . UnqualStr
 #elif MIN_VERSION_ghc(9,8,0)
 instance BVar HsTyVarBndr' where
     bvar = withEpAnnNotUsed UserTyVar HsBndrRequired . typeRdrName . UnqualStr

@@ -82,8 +82,10 @@ import GHC.SourceGen.Type.Internal
 overLabel :: String -> HsExpr'
 overLabel = hsOverLabel . fromString
   where
-#if MIN_VERSION_ghc(9,10,0)
+#if MIN_VERSION_ghc(9,12,0)
     hsOverLabel = HsOverLabel NoSourceText
+#elif MIN_VERSION_ghc(9,10,0)
+    hsOverLabel = noExt HsOverLabel NoSourceText
 #elif MIN_VERSION_ghc(9,6,0)
     hsOverLabel = withEpAnnNotUsed HsOverLabel NoSourceText
 #elif MIN_VERSION_ghc(9,2,0)
@@ -112,7 +114,11 @@ case' :: HsExpr' -> [RawMatch] -> HsExpr'
 case' e matches = HsCase ann (mkLocated e)
                     $ matchGroup CaseAlt matches
   where
+#  if MIN_VERSION_ghc(9,12,0)
     ann = EpAnnHsCase noAnn noAnn
+#  elif MIN_VERSION_ghc(9,10,0)
+    ann = EpAnnHsCase noAnn noAnn []
+#  endif
 #else
 case' e matches = withEpAnnNotUsed HsCase (mkLocated e)
                     $ matchGroup CaseAlt matches
@@ -158,8 +164,10 @@ if' x y z = mkHsIf
 -- >     , guardedStmt (var "otherwise") $ rhs (string "h")
 -- >     ]
 multiIf :: [GuardedExpr] -> HsExpr'
-#if MIN_VERSION_ghc(9,10,0)
+#if MIN_VERSION_ghc(9,12,0)
 multiIf = withPlaceHolder (HsMultiIf (NoEpTok, NoEpTok, NoEpTok)) . map mkLocated
+#elif MIN_VERSION_ghc(9,10,0)
+multiIf = withPlaceHolder (HsMultiIf []) . map mkLocated
 -- GHC913 multiIf = withPlaceHolder (HsMultiIf (NoEpTok, NoEpTok, NoEpTok)) . NonEmpty.fromList . map mkLocated
 #elif MIN_VERSION_ghc(9,4,0)
 multiIf = withPlaceHolder (withEpAnnNotUsed HsMultiIf) . map mkLocated
@@ -278,7 +286,12 @@ recordConE c fs = (withPlaceHolder $ withEpAnnNotUsed RecordCon (valueRdrName c)
 #if !MIN_VERSION_ghc(8,6,0)
                     noPostTcExpr
 #endif
-                    $ noExt HsRecFields (map recField fs)
+#if MIN_VERSION_ghc(9,12,0)
+                    $ noExt HsRecFields
+#else
+                    $ HsRecFields
+#endif
+                        (map recField fs)
                         Nothing -- No ".."
   where
     recField :: (RdrNameStr, HsExpr') -> LHsRecField' LHsExpr'
@@ -339,7 +352,11 @@ recordUpd e fs =
 #if MIN_VERSION_ghc(9,10,0)
         mkLocated HsFieldBind
             { hfbLHS =
+#  if MIN_VERSION_ghc(9,12,0)
                 mkLocated $ withPlaceHolder $ noExt FieldOcc $ valueRdrName f
+#  else
+                mkLocated $ withPlaceHolder $ noExt Ambiguous $ valueRdrName f
+#  endif
             , hfbRHS = mkLocated e'
             , hfbPun = False
             , hfbAnn = mzero

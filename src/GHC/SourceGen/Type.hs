@@ -29,9 +29,11 @@ import GHC.Parser.Annotation
 import GHC.Hs.Type
 #endif
 
-import Language.Haskell.Syntax.Type
 #if MIN_VERSION_ghc(9,4,0)
 import Language.Haskell.Syntax.Extension
+#endif
+#if MIN_VERSION_ghc(9,12,0)
+import Language.Haskell.Syntax.Type
 #endif
 
 import GHC.SourceGen.Syntax.Internal
@@ -70,8 +72,10 @@ listPromotedTy = withPlaceHolder (withEpAnnNotUsed HsExplicitListTy promoted) . 
 #endif
 
 tuplePromotedTy :: [HsType'] -> HsType'
-#if MIN_VERSION_ghc(9,10,0)
+#if MIN_VERSION_ghc(9,12,0)
 tuplePromotedTy = withPlaceHolders (HsExplicitTupleTy noAnn IsPromoted) . map mkLocated
+#elif MIN_VERSION_ghc(9,10,0)
+tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed (HsExplicitTupleTy [])) . map mkLocated
 #else
 tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed HsExplicitTupleTy) . map mkLocated
 #endif
@@ -158,12 +162,13 @@ infixr 0 ==>
 -- > kindedVar "x" (var "A")
 kindedVar :: OccNameStr -> HsType' -> HsTyVarBndr'
 kindedVar v t =
-#if MIN_VERSION_ghc(9,10,0)
+#if MIN_VERSION_ghc(9,12,0)
             HsTvb noAnn (noExt HsBndrRequired) (noExt HsBndrVar $ typeRdrName $ UnqualStr v) (noExt HsBndrKind $ mkLocated t)
-            -- KindedTyVar
-            --     []
-            --     (noExt HsBndrRequired)
-            --     (typeRdrName $ UnqualStr v) (mkLocated t)
+#elif MIN_VERSION_ghc(9,10,0)
+            KindedTyVar
+                []
+                (noExt HsBndrRequired)
+                (typeRdrName $ UnqualStr v) (mkLocated t)
 #elif MIN_VERSION_ghc(9,8,0)
             withEpAnnNotUsed KindedTyVar
                 HsBndrRequired
