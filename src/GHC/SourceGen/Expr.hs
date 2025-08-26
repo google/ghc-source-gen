@@ -62,7 +62,6 @@ import SrcLoc (unLoc, GenLocated(..))
 import GHC.Parser.Annotation (EpAnn(..))
 #endif
 
--- GHC913 import qualified Data.List.NonEmpty as NonEmpty
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Binds
 import GHC.SourceGen.Expr.Internal
@@ -168,7 +167,6 @@ multiIf :: [GuardedExpr] -> HsExpr'
 multiIf = withPlaceHolder (HsMultiIf (NoEpTok, NoEpTok, NoEpTok)) . map mkLocated
 #elif MIN_VERSION_ghc(9,10,0)
 multiIf = withPlaceHolder (HsMultiIf []) . map mkLocated
--- GHC913 multiIf = withPlaceHolder (HsMultiIf (NoEpTok, NoEpTok, NoEpTok)) . NonEmpty.fromList . map mkLocated
 #elif MIN_VERSION_ghc(9,4,0)
 multiIf = withPlaceHolder (withEpAnnNotUsed HsMultiIf) . map mkLocated
 #else

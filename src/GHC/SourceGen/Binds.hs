@@ -211,7 +211,6 @@ patBindGRHSs p g =
         $ withPlaceHolder
             (withPlaceHolder
                 (noExt PatBind (builtPat p) (noExt HsNoMultAnn) (mkGRHSs g)))
--- GHC913                (noExt PatBind (builtPat p) (HsUnannotated EpPatBind) (mkGRHSs g)))
 #elif MIN_VERSION_ghc(9,6,0)
     bindB
         $ withPlaceHolder

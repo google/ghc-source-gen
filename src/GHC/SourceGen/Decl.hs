@@ -483,12 +483,10 @@ data' = newOrDataType DataType
 -- > prefixCon "Foo" [field (var "a"), field (var "Int")]
 prefixCon :: OccNameStr -> [Field] -> ConDecl'
 prefixCon name fields = renderCon98Decl name
--- GHC913    $ prefixCon' $ map renderField fields
     $ prefixCon' $ map (hsUnrestricted . renderField) fields
   where
 #if MIN_VERSION_ghc(9,2,0)
     prefixCon' = PrefixCon []
--- GHC913    prefixCon' = PrefixCon
 #else
     prefixCon' = PrefixCon
 #endif
@@ -502,7 +500,6 @@ prefixCon name fields = renderCon98Decl name
 infixCon :: Field -> OccNameStr -> Field -> ConDecl'
 infixCon f name f' = renderCon98Decl name
     $ InfixCon (hsUnrestricted $ renderField f) (hsUnrestricted $ renderField f')
--- GHC913    $ InfixCon (renderField f) (renderField f')
 
 -- | Declares Haskell-98-style record constructor for a data or type
 -- declaration.
@@ -516,7 +513,6 @@ recordCon name fields = renderCon98Decl name
   where
     mkLConDeclField (n, f) =
 #if MIN_VERSION_ghc(9,10,0)
--- GHC913     mkLocated $ noExt HsConDeclRecField
         mkLocated $ ConDeclField noAnn
                         [mkLocated $ withPlaceHolder $ noExt FieldOcc $ valueRdrName $ unqual n]
 #elif MIN_VERSION_ghc(9,4,0)
@@ -528,7 +524,6 @@ recordCon name fields = renderCon98Decl name
 #endif
                         (renderField f)
                         Nothing
--- GHC913               --Nothing
 
 -- | An individual argument of a data constructor.  Contains a type for the field,
 -- and whether the field is strict or lazy.
@@ -569,11 +564,9 @@ hsUnrestricted :: a -> a
 hsUnrestricted = id
 #endif
 
---GHC913 renderField :: Field -> HsConDeclField GhcPs
 renderField :: Field -> LHsType GhcPs
 -- TODO: parenthesizeTypeForApp is an overestimate in the case of
 -- rendering an infix or record type.
---GHC913 renderField f = hsPlainTypeField $ wrap $ parenthesizeTypeForApp $ mkLocated $ fieldType f
 renderField f = wrap $ parenthesizeTypeForApp $ mkLocated $ fieldType f
   where
     wrap = case strictness f of
@@ -758,7 +751,6 @@ patSynBind :: OccNameStr -> [OccNameStr] -> Pat' -> HsDecl'
 patSynBind n ns p = bindB $ noExt PatSynBind
                     $ withPlaceHolder (PSB noAnn (valueRdrName $ unqual n))
                         (PrefixCon [] (map (valueRdrName . unqual) ns))
--- GHC913                        (PrefixCon (map (valueRdrName . unqual) ns))
                         (builtPat p)
                         ImplicitBidirectional
 #else
