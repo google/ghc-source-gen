@@ -29,6 +29,7 @@ import GHC.Parser.Annotation
 import GHC.Hs.Type
 #endif
 
+import Language.Haskell.Syntax.Type
 #if MIN_VERSION_ghc(9,4,0)
 import Language.Haskell.Syntax.Extension
 #endif
@@ -41,7 +42,7 @@ import GHC.SourceGen.Type.Internal
 -- | A promoted name, for example from the @DataKinds@ extension.
 tyPromotedVar :: RdrNameStr -> HsType'
 #if MIN_VERSION_ghc(9,10,0)
-tyPromotedVar = HsTyVar [] promoted . typeRdrName
+tyPromotedVar = HsTyVar noAnn promoted . typeRdrName
 #else
 tyPromotedVar = withEpAnnNotUsed HsTyVar promoted . typeRdrName
 #endif
@@ -54,7 +55,7 @@ numTy = noExt HsTyLit . noSourceText HsNumTy
 
 listTy :: HsType' -> HsType'
 #if MIN_VERSION_ghc(9,10,0)
-listTy = HsListTy (AnnParen AnnParens noSpanAnchor noSpanAnchor) . mkLocated
+listTy = HsListTy noAnn . mkLocated
 #else
 listTy = withEpAnnNotUsed HsListTy . mkLocated
 #endif
@@ -63,14 +64,14 @@ listPromotedTy :: [HsType'] -> HsType'
 -- Lists of two or more elements don't need the explicit tick (`'`).
 -- But for consistency, just always add it.
 #if MIN_VERSION_ghc(9,10,0)
-listPromotedTy = withPlaceHolder (HsExplicitListTy [] promoted) . map mkLocated
+listPromotedTy = withPlaceHolder (HsExplicitListTy noAnn promoted) . map mkLocated
 #else
 listPromotedTy = withPlaceHolder (withEpAnnNotUsed HsExplicitListTy promoted) . map mkLocated
 #endif
 
 tuplePromotedTy :: [HsType'] -> HsType'
 #if MIN_VERSION_ghc(9,10,0)
-tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed (HsExplicitTupleTy [])) . map mkLocated
+tuplePromotedTy = withPlaceHolders (HsExplicitTupleTy noAnn IsPromoted) . map mkLocated
 #else
 tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed HsExplicitTupleTy) . map mkLocated
 #endif
@@ -84,6 +85,7 @@ tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed HsExplicitTupleTy) . map mk
 a --> b =
 #if MIN_VERSION_ghc(9,10,0)
      (noExt HsFunTy)
+         --(HsUnannotated (EpArrow (EpUniTok noSpanAnchor NormalSyntax)))
          (HsUnrestrictedArrow (EpUniTok noSpanAnchor NormalSyntax))
          (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
 #elif MIN_VERSION_ghc(9,4,0)
@@ -157,10 +159,11 @@ infixr 0 ==>
 kindedVar :: OccNameStr -> HsType' -> HsTyVarBndr'
 kindedVar v t =
 #if MIN_VERSION_ghc(9,10,0)
-            KindedTyVar
-                []
-                (noExt HsBndrRequired)
-                (typeRdrName $ UnqualStr v) (mkLocated t)
+            HsTvb noAnn (noExt HsBndrRequired) (noExt HsBndrVar $ typeRdrName $ UnqualStr v) (noExt HsBndrKind $ mkLocated t)
+            -- KindedTyVar
+            --     []
+            --     (noExt HsBndrRequired)
+            --     (typeRdrName $ UnqualStr v) (mkLocated t)
 #elif MIN_VERSION_ghc(9,8,0)
             withEpAnnNotUsed KindedTyVar
                 HsBndrRequired

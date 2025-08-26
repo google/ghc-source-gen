@@ -32,7 +32,9 @@ needsPar (NPat _ l _ _) = overLitNeedsParen $ unLoc l
 needsPar (LitPat l) = litNeedsParen l
 needsPar (NPat l _ _ _) = overLitNeedsParen $ unLoc l
 #endif
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,14,0)
+needsPar (ConPat _ _ (PrefixCon xs)) = not $ null xs
+#elif MIN_VERSION_ghc(9,2,0)
 needsPar (ConPat _ _ (PrefixCon _ xs)) = not $ null xs
 #elif MIN_VERSION_ghc(9,0,0)
 needsPar (ConPat _ _ (PrefixCon xs)) = not $ null xs

@@ -31,6 +31,7 @@ import GHC.Hs.Lit
 import GHC.Hs.Expr (noExpr, noSyntaxExpr, HsExpr(..))
 import GHC.Hs.Pat (Pat(..))
 
+import GHC.Parser.Annotation (EpLayout (..), noAnn)
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal
 
@@ -51,7 +52,7 @@ instance HasLit Pat' where
     lit = noExt LitPat
 #if MIN_VERSION_ghc(9,10,0)
     overLit l = withPlaceHolder
-                    $ NPat [] (mkLocated l) Nothing noSyntaxExpr
+                    $ NPat noAnn (mkLocated l) Nothing noSyntaxExpr
 #elif MIN_VERSION_ghc(9,4,0)
     overLit l = withPlaceHolder
                     $ withEpAnnNotUsed NPat (mkLocated l) Nothing noSyntaxExpr

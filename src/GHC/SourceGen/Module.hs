@@ -47,7 +47,7 @@ import GHC.Hs
     , LayoutInfo (NoLayoutInfo)
 #endif
 #if MIN_VERSION_ghc(9,6,0)
-    , hsmodDeprecMessage, hsmodHaddockModHeader, hsmodAnn, AnnKeywordId, XModulePs (XModulePs, hsmodLayout), noAnn, GhcPs, XImportDeclPass (XImportDeclPass, ideclAnn), SrcSpanAnnA, noExtField
+    , hsmodDeprecMessage, hsmodHaddockModHeader, hsmodAnn, XModulePs (XModulePs, hsmodLayout), noAnn, GhcPs, XImportDeclPass (XImportDeclPass, ideclAnn), SrcSpanAnnA, noExtField
 #endif
     )
 #if MIN_VERSION_ghc(9,0,0) && !MIN_VERSION_ghc(9,6,0)
@@ -195,7 +195,7 @@ source d = d { ideclSource =
 -- > thingAll "A"
 thingAll :: RdrNameStr -> IE'
 #if MIN_VERSION_ghc(9,10,0)
-thingAll n = IEThingAll (Nothing, []) (wrappedName n) Nothing
+thingAll n = IEThingAll noAnn (wrappedName n) Nothing
 #else
 thingAll = withEpAnnNotUsed' IEThingAll . wrappedName
 #endif
@@ -207,7 +207,7 @@ thingAll = withEpAnnNotUsed' IEThingAll . wrappedName
 -- > thingWith "A" ["b", "C"]
 thingWith :: RdrNameStr -> [OccNameStr] -> IE'
 #if MIN_VERSION_ghc(9,10,0)
-thingWith n cs = IEThingWith (Nothing, []) (wrappedName n) NoIEWildcard (map (wrappedName . unqual) cs) Nothing
+thingWith n cs = IEThingWith noAnn (wrappedName n) NoIEWildcard (map (wrappedName . unqual) cs) Nothing
 #else
 thingWith n cs = withEpAnnNotUsed' IEThingWith (wrappedName n) NoIEWildcard
                     (map (wrappedName . unqual) cs)
@@ -237,7 +237,7 @@ wrappedName = mkLocated . IEName . exportRdrName
 -- > moduleContents "M"
 moduleContents :: ModuleNameStr -> IE'
 #if MIN_VERSION_ghc(9,10,0)
-moduleContents n = IEModuleContents (Nothing, []) (mkLocated (unModuleNameStr n))
+moduleContents n = IEModuleContents noAnn (mkLocated (unModuleNameStr n))
 #else
 moduleContents = withEpAnnNotUsed' IEModuleContents . mkLocated . unModuleNameStr
 #endif
