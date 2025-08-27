@@ -87,9 +87,11 @@ tuplePromotedTy = withPlaceHolders (withEpAnnNotUsed HsExplicitTupleTy) . map mk
 -- > var "a" --> var "b"
 (-->) :: HsType' -> HsType' -> HsType'
 a --> b =
-#if MIN_VERSION_ghc(9,10,0)
+#if MIN_VERSION_ghc(9,14,0)
      (noExt HsFunTy)
-         --(HsUnannotated (EpArrow (EpUniTok noSpanAnchor NormalSyntax)))
+         (HsUnannotated (EpArrow (EpUniTok noSpanAnchor NormalSyntax)))
+#elif MIN_VERSION_ghc(9,10,0)
+     (noExt HsFunTy)
          (HsUnrestrictedArrow (EpUniTok noSpanAnchor NormalSyntax))
 #elif MIN_VERSION_ghc(9,4,0)
      withEpAnnNotUsed HsFunTy

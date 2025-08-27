@@ -206,20 +206,16 @@ valBind name = valBindGRHSs name . rhs
 -- >       ]
 patBindGRHSs :: HasPatBind t => Pat' -> RawGRHSs -> t
 patBindGRHSs p g =
-#if MIN_VERSION_ghc(9,10,0)
     bindB
         $ withPlaceHolder
             (withPlaceHolder
+#if MIN_VERSION_ghc(9,14,0)
+                (noExt PatBind (builtPat p) (HsUnannotated EpPatBind) (mkGRHSs g)))
+#elif MIN_VERSION_ghc(9,10,0)
                 (noExt PatBind (builtPat p) (noExt HsNoMultAnn) (mkGRHSs g)))
 #elif MIN_VERSION_ghc(9,6,0)
-    bindB
-        $ withPlaceHolder
-            (withPlaceHolder
                 (withEpAnnNotUsed PatBind (builtPat p) (mkGRHSs g)))
 #else
-    bindB
-        $ withPlaceHolder
-            (withPlaceHolder
                 (withEpAnnNotUsed PatBind (builtPat p) (mkGRHSs g)))
         $ ([],[])
 #endif
