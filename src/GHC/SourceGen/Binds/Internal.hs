@@ -27,13 +27,10 @@ import GHC.Hs.Binds
 import GHC.Hs.Decls
 import GHC.Hs.Expr (MatchGroup(..), Match(..), GRHSs(..))
 
-import qualified Data.List.NonEmpty as NonEmpty
-
 #if MIN_VERSION_ghc(9,12,0)
 import Language.Haskell.Syntax.Extension (wrapXRec, noExtField)
 #endif
 
-import GHC.Types.SrcLoc (unLoc)
 #if !MIN_VERSION_ghc(8,6,0)
 import PlaceHolder (PlaceHolder(..))
 #endif
@@ -150,9 +147,7 @@ matchGroup context matches =
 mkGRHSs :: RawGRHSs -> GRHSs' LHsExpr'
 mkGRHSs g = withEmptyEpAnnComments GRHSs
 --mkGRHSs g = GRHSs emptyComments
-#if MIN_VERSION_ghc(9,14,0)
-                (NonEmpty.fromList $ map mkLocated $ rawGRHSs g)
-#elif MIN_VERSION_ghc(9,4,0)
+#if MIN_VERSION_ghc(9,4,0)
                 (map mkLocated $ rawGRHSs g)
 #else
                 (map builtLoc $ rawGRHSs g)

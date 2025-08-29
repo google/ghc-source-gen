@@ -54,9 +54,11 @@ module GHC.SourceGen.Decl
 #if MIN_VERSION_ghc(9,0,0)
 import GHC (LexicalFixity(Prefix))
 import GHC.Data.Bag (listToBag)
+import GHC.Hs
 
 #if MIN_VERSION_ghc(9,10,0)
 import GHC (GhcPs)
+import GHC.Parser.PostProcess (mkBangTy)
 #elif MIN_VERSION_ghc(9,6,0)
 import GHC (GhcPs, LayoutInfo (NoLayoutInfo))
 #else
@@ -66,13 +68,13 @@ import GHC.Types.SrcLoc (LayoutInfo(NoLayoutInfo))
 #else
 import BasicTypes (LexicalFixity(Prefix))
 import Bag (listToBag)
+import GHC.Hs.Extension (GhcPs)
 #endif
 #if !MIN_VERSION_ghc(8,6,0)
 import BasicTypes (DerivStrategy(..))
 #endif
 import GHC.Hs.Binds
 import GHC.Hs.Decls
-import GHC.Parser.PostProcess (mkBangTy)
 
 import GHC.Hs.Type
     (
@@ -89,14 +91,13 @@ import GHC.Hs.Type
     , LHsType
 #if MIN_VERSION_ghc(8,6,0)
     , HsWildCardBndrs (..)
+    , ConDeclField (..)
 #endif
 #if MIN_VERSION_ghc(8,8,0)
     , HsArg(..)
 #endif
     , SrcStrictness(..)
     , SrcUnpackedness(..)
-#if MIN_VERSION_ghc(9,0,0)
-#endif
     )
 
 #if MIN_VERSION_ghc(9,10,0)
@@ -117,7 +118,6 @@ import GHC.SourceGen.Name
 import GHC.SourceGen.Name.Internal
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Type.Internal
-import GHC.Hs
 
 -- | A definition that can appear in the body of a @class@ declaration.
 --
