@@ -91,16 +91,16 @@ a --> b =
      (noExt HsFunTy)
          --(HsUnannotated (EpArrow (EpUniTok noSpanAnchor NormalSyntax)))
          (HsUnrestrictedArrow (EpUniTok noSpanAnchor NormalSyntax))
-         (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
 #elif MIN_VERSION_ghc(9,4,0)
      withEpAnnNotUsed HsFunTy
          (HsUnrestrictedArrow mkUniToken)
-         (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
 #elif MIN_VERSION_ghc(9,0,0)
      withEpAnnNotUsed HsFunTy
          (HsUnrestrictedArrow NormalSyntax)
-         (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
+#else
+     withEpAnnNotUsed HsFunTy
 #endif
+         (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
 
 infixr 0 -->
 
@@ -176,5 +176,8 @@ kindedVar v t =
 #elif MIN_VERSION_ghc(9,0,0)
             withEpAnnNotUsed KindedTyVar
                 ()
+                (typeRdrName $ UnqualStr v) (mkLocated t)
+#else
+            withEpAnnNotUsed KindedTyVar
                 (typeRdrName $ UnqualStr v) (mkLocated t)
 #endif
