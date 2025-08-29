@@ -18,7 +18,7 @@ import SrcLoc (unLoc)
 #endif
 
 #if MIN_VERSION_ghc(9,10,0)
-import GHC.Parser.Annotation (AnnParen (AnnParen), ParenType (AnnParens), noAnn, noSpanAnchor)
+import GHC.Parser.Annotation (AnnParen, noAnn, noSpanAnchor)
 #endif
 
 import GHC.SourceGen.Syntax.Internal
@@ -68,7 +68,7 @@ needsParenForApp t = case t of
 
 parTy :: LHsType GhcPs -> LHsType GhcPs
 #if MIN_VERSION_ghc(9,10,0)
-parTy = mkLocated . HsParTy (AnnParen AnnParens noSpanAnchor noSpanAnchor)
+parTy = mkLocated . HsParTy noAnn
 #else
 parTy = mkLocated . withEpAnnNotUsed HsParTy
 #endif

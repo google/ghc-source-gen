@@ -20,6 +20,7 @@ module GHC.SourceGen.Lit
 #if MIN_VERSION_ghc(9,2,0)
 import GHC.Types.SourceText (mkTHFractionalLit, mkIntegralLit)
 import GHC.Data.FastString (fsLit)
+import GHC.Parser.Annotation (noAnn)
 #elif MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic (mkFractionalLit, mkIntegralLit)
 import GHC.Data.FastString (fsLit)
@@ -51,7 +52,7 @@ instance HasLit Pat' where
     lit = noExt LitPat
 #if MIN_VERSION_ghc(9,10,0)
     overLit l = withPlaceHolder
-                    $ NPat [] (mkLocated l) Nothing noSyntaxExpr
+                    $ NPat noAnn (mkLocated l) Nothing noSyntaxExpr
 #elif MIN_VERSION_ghc(9,4,0)
     overLit l = withPlaceHolder
                     $ withEpAnnNotUsed NPat (mkLocated l) Nothing noSyntaxExpr

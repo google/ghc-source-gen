@@ -1,6 +1,6 @@
 cabal-version: 1.12
 
--- This file has been generated from package.yaml by hpack version 0.36.0.
+-- This file has been generated from package.yaml by hpack version 0.38.0.
 --
 -- see: https://github.com/sol/hpack
 
@@ -61,7 +61,7 @@ library
       TypeSynonymInstances
   build-depends:
       base >=4.7 && <5
-    , ghc >=8.4 && <9.11
+    , ghc >=8.4 && <9.13
   default-language: Haskell2010
   if impl(ghc<8.10)
     other-modules:
@@ -102,13 +102,13 @@ test-suite name_test
       FlexibleInstances
       TypeSynonymInstances
   build-depends:
-      QuickCheck >=2.10 && <2.15
+      QuickCheck >=2.10 && <2.17
     , base >=4.7 && <5
-    , ghc >=8.4 && <9.11
+    , ghc >=8.4 && <9.13
     , ghc-source-gen
     , tasty >=1.0 && <1.6
     , tasty-hunit ==0.10.*
-    , tasty-quickcheck >=0.9 && <0.11
+    , tasty-quickcheck >=0.9 && <0.12
   default-language: Haskell2010
 
 test-suite pprint_examples
@@ -125,7 +125,7 @@ test-suite pprint_examples
       TypeSynonymInstances
   build-depends:
       base >=4.7 && <5
-    , ghc >=8.4 && <9.11
+    , ghc >=8.4 && <9.13
     , ghc-paths ==0.1.*
     , ghc-source-gen
     , tasty >=1.0 && <1.6
@@ -151,7 +151,7 @@ test-suite pprint_test
       TypeSynonymInstances
   build-depends:
       base >=4.7 && <5
-    , ghc >=8.4 && <9.11
+    , ghc >=8.4 && <9.13
     , ghc-paths ==0.1.*
     , ghc-source-gen
     , tasty >=1.0 && <1.6

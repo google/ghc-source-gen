@@ -81,7 +81,11 @@ typeSigs names t =
     sigB $ TypeSig ann (map (typeRdrName . unqual) names)
         $ sigWcType t
   where
+#  if MIN_VERSION_ghc(9,12,0)
+    ann = AnnSig noAnn Nothing Nothing
+#  else
     ann = AnnSig noAnn []
+#  endif
 #else
     sigB $ withEpAnnNotUsed TypeSig (map (typeRdrName . unqual) names)
         $ sigWcType t
@@ -124,7 +128,11 @@ funBindsWithFixity fixity name matches = bindB $ withPlaceHolder
     name' = valueRdrName $ unqual name
     occ = valueOccName name
     fixity' = fromMaybe (bool Prefix Infix $ isSymOcc occ) fixity
+#if MIN_VERSION_ghc(9,12,0)
+    context = FunRhs name' fixity' NoSrcStrict noAnn
+#else
     context = FunRhs name' fixity' NoSrcStrict
+#endif
 
 -- | Defines a function or value.
 --
@@ -328,7 +336,7 @@ stmt e =
 -- > bvar "x" <-- var "act"
 (<--) :: Pat' -> HsExpr' -> Stmt'
 #if MIN_VERSION_ghc(9,10,0)
-p <-- e = withPlaceHolder $ BindStmt [] (builtPat p) (mkLocated e)
+p <-- e = withPlaceHolder $ BindStmt noAnn (builtPat p) (mkLocated e)
 #elif MIN_VERSION_ghc(9,0,0)
 p <-- e = withPlaceHolder $ withEpAnnNotUsed BindStmt (builtPat p) (mkLocated e)
 #else

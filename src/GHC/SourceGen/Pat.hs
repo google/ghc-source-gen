@@ -64,16 +64,16 @@ v `asP` p =
 -- > =====
 -- > conP "A" [bvar "b", bvar "c"]
 conP :: RdrNameStr -> [Pat'] -> Pat'
-conP c = conPat (valueRdrName c) . prefixCon . map (builtPat . parenthesize)
+conP c pats = conPat (valueRdrName c) (prefixCon (map (builtPat . parenthesize) pats))
   where
 #if MIN_VERSION_ghc(9,10,0)
-    conPat = ConPat []
+    conPat = ConPat noAnn
 #elif MIN_VERSION_ghc(9,0,0)
     conPat = withEpAnnNotUsed ConPat
 #else
     conPat = ConPatIn
 #endif
-#if MIN_VERSION_ghc(9,2,0)
+#if !MIN_VERSION_ghc(9,13,0) && MIN_VERSION_ghc(9,2,0)
     prefixCon = PrefixCon []
 #else
     prefixCon = PrefixCon
@@ -90,14 +90,18 @@ conP_ c = conP c []
 recordConP :: RdrNameStr -> [(RdrNameStr, Pat')] -> Pat'
 recordConP c fs =
 #if MIN_VERSION_ghc(9,10,0)
-  ConPat []
+  ConPat noAnn
 #elif MIN_VERSION_ghc(9,0,0)
   withEpAnnNotUsed ConPat
 #else
   ConPatIn
 #endif
   (valueRdrName c)
+#if MIN_VERSION_ghc(9,12,0)
+        $ RecCon $ noExt HsRecFields (map mkRecField fs) Nothing -- No ".."
+#else
         $ RecCon $ HsRecFields (map mkRecField fs) Nothing -- No ".."
+#endif
   where
     mkRecField :: (RdrNameStr, Pat') -> LHsRecField' LPat'
     mkRecField (f, p) =
@@ -132,7 +136,7 @@ recordConP c fs =
 -- > strictP (bvar x)
 strictP :: Pat' -> Pat'
 #if MIN_VERSION_ghc(9,10,0)
-strictP = BangPat [] . builtPat . parenthesize
+strictP = BangPat noAnn . builtPat . parenthesize
 #else
 strictP = withEpAnnNotUsed BangPat . builtPat . parenthesize
 #endif
@@ -144,7 +148,7 @@ strictP = withEpAnnNotUsed BangPat . builtPat . parenthesize
 -- > lazyP (conP "A" [bvar x])
 lazyP :: Pat' -> Pat'
 #if MIN_VERSION_ghc(9,10,0)
-lazyP = LazyPat [] . builtPat . parenthesize
+lazyP = LazyPat noAnn . builtPat . parenthesize
 #else
 lazyP = withEpAnnNotUsed LazyPat . builtPat . parenthesize
 #endif
@@ -156,7 +160,7 @@ lazyP = withEpAnnNotUsed LazyPat . builtPat . parenthesize
 -- > sigPat (bvar "x") (var "y")
 sigP :: Pat' -> HsType' -> Pat'
 #if MIN_VERSION_ghc(9,10,0)
-sigP p t = SigPat [] (builtPat p) (patSigType t)
+sigP p t = SigPat noAnn (builtPat p) (patSigType t)
 #elif MIN_VERSION_ghc(8,8,0)
 sigP p t = withEpAnnNotUsed SigPat (builtPat p) (patSigType t)
 #elif MIN_VERSION_ghc(8,6,0)

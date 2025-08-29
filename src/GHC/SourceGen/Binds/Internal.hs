@@ -5,6 +5,7 @@
 -- https://developers.google.com/open-source/licenses/bsd
 
 {-# LANGUAGE CPP #-}
+{-# LANGUAGE TypeApplications #-}
 module GHC.SourceGen.Binds.Internal where
 
 #if MIN_VERSION_ghc(9,0,0)
@@ -17,6 +18,7 @@ import GHC.Types.Basic ( Origin(Generated)
 #endif
                        )
 import GHC.Data.Bag (listToBag)
+import GHC.Hs.Extension (GhcPs)
 #else
 import BasicTypes (Origin(Generated))
 import Bag (listToBag)
@@ -25,12 +27,16 @@ import GHC.Hs.Binds
 import GHC.Hs.Decls
 import GHC.Hs.Expr (MatchGroup(..), Match(..), GRHSs(..))
 
+#if MIN_VERSION_ghc(9,12,0)
+import Language.Haskell.Syntax.Extension (wrapXRec, noExtField)
+#endif
+
 #if !MIN_VERSION_ghc(8,6,0)
 import PlaceHolder (PlaceHolder(..))
 #endif
 
 #if MIN_VERSION_ghc(9,10,0)
-import GHC.Parser.Annotation (noAnn)
+import GHC.Parser.Annotation (noAnn, emptyComments)
 #endif
 
 import GHC.SourceGen.Pat.Internal (parenthesize)
@@ -52,7 +58,11 @@ valBinds vbs =
 #if MIN_VERSION_ghc(9,10,0)
     HsValBinds noAnn
         $ withNoAnnSortKey ValBinds
+#  if MIN_VERSION_ghc(9,12,0)
+            (map mkLocated binds)
+#  else
             (listToBag $ map mkLocated binds)
+#  endif
             (map mkLocated sigs)
 #elif MIN_VERSION_ghc(8,6,0)
     withEpAnnNotUsed HsValBinds
@@ -121,17 +131,22 @@ matchGroup context matches =
     matches' = mkLocated $ map (mkLocated . mkMatch) matches
     mkMatch :: RawMatch -> Match' LHsExpr'
 #if MIN_VERSION_ghc(9,10,0)
-    mkMatch r = Match [] context
+#  if MIN_VERSION_ghc(9,12,0)
+    mkMatch r = Match noExtField context
+                    (wrapXRec @GhcPs $ map builtPat $ map parenthesize $ rawMatchPats r)
+#  else
+    mkMatch r = Match noAnn context
                     (map builtPat $ map parenthesize $ rawMatchPats r)
-                    (mkGRHSs $ rawMatchGRHSs r)
+#  endif
 #else
     mkMatch r = withEpAnnNotUsed Match context
                     (map builtPat $ map parenthesize $ rawMatchPats r)
-                    (mkGRHSs $ rawMatchGRHSs r)
 #endif
+                    (mkGRHSs $ rawMatchGRHSs r)
 
 mkGRHSs :: RawGRHSs -> GRHSs' LHsExpr'
 mkGRHSs g = withEmptyEpAnnComments GRHSs
+--mkGRHSs g = GRHSs emptyComments
 #if MIN_VERSION_ghc(9,4,0)
                 (map mkLocated $ rawGRHSs g)
 #else
@@ -166,7 +181,6 @@ type GuardedExpr = GRHS' LHsExpr'
 class HasValBind t where
     sigB :: Sig' -> t
     bindB :: HsBind' -> t
-
 instance HasValBind HsDecl' where
     sigB = noExt SigD
     bindB = noExt ValD
