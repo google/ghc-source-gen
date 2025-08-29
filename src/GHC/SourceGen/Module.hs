@@ -29,14 +29,13 @@ module GHC.SourceGen.Module
 import GHC.Hs.ImpExp
     ( IEWildcard(..), IEWrappedName(..), IE(..)
 #if MIN_VERSION_ghc(9,6,0)
-    , ImportListInterpretation (EverythingBut, Exactly), XImportDeclPass (ideclSourceText, ideclImplicit)
-#else
-    , LIEWrappedName
+    , ImportListInterpretation (EverythingBut, Exactly)
 #endif
     )
 import GHC.Hs
     ( HsModule(..)
     , ImportDecl(..)
+    , simpleImportDecl
 #if MIN_VERSION_ghc(8,10,0)
     , ImportDeclQualifiedStyle(..)
 #endif
@@ -48,6 +47,8 @@ import GHC.Hs
 #endif
 #if MIN_VERSION_ghc(9,6,0)
     , hsmodDeprecMessage, hsmodHaddockModHeader, hsmodAnn, XModulePs (XModulePs, hsmodLayout), noAnn, GhcPs, XImportDeclPass (XImportDeclPass, ideclAnn), SrcSpanAnnA, noExtField
+#else
+    , LIEWrappedName
 #endif
     )
 #if MIN_VERSION_ghc(9,0,0) && !MIN_VERSION_ghc(9,6,0)
@@ -69,7 +70,6 @@ import GHC.Parser.Annotation (EpLayout (..), noAnn)
 
 import GHC.SourceGen.Syntax.Internal
 import GHC.SourceGen.Name.Internal
-import GHC.SourceGen.Lit.Internal (noSourceText)
 import GHC.SourceGen.Name (unqual)
 #if MIN_VERSION_ghc(9,4,0)
 import GHC.SourceGen.Name (RdrNameStr, ModuleNameStr(unModuleNameStr), OccNameStr)
@@ -123,44 +123,7 @@ as' :: ImportDecl' -> ModuleNameStr -> ImportDecl'
 as' d m = d { ideclAs = Just (mkLocated $ unModuleNameStr m) }
 
 import' :: ModuleNameStr -> ImportDecl'
-import' m = importDecl
-            (mkLocated $ unModuleNameStr m)
-#if MIN_VERSION_ghc(9,4,0)
-            NoRawPkgQual
-#else
-            Nothing
-#endif
-#if MIN_VERSION_ghc(9,0,0)
-            NotBoot
-#else
-            False
-#endif
-            False
-#if MIN_VERSION_ghc(8,10,0)
-            NotQualified
-#else
-            False
-#endif
-#if !MIN_VERSION_ghc(9,6,0)
-            False
-#endif
-            Nothing Nothing
-  where
-#if MIN_VERSION_ghc(9,10,0)
-    importDecl = ImportDecl
-            (XImportDeclPass{ ideclAnn = noAnn
-            , ideclSourceText = NoSourceText
-            , ideclImplicit = False
-             })
-#elif MIN_VERSION_ghc(9,6,0)
-    importDecl = ImportDecl
-            (XImportDeclPass{ ideclAnn = EpAnnNotUsed
-            , ideclSourceText = NoSourceText
-            , ideclImplicit = False
-             })
-#else
-    importDecl = noSourceText (withEpAnnNotUsed ImportDecl)
-#endif
+import' m = simpleImportDecl (unModuleNameStr m)
 
 exposing :: ImportDecl' -> [IE'] -> ImportDecl'
 exposing d ies = d
