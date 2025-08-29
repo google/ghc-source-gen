@@ -20,6 +20,7 @@ module GHC.SourceGen.Lit
 #if MIN_VERSION_ghc(9,2,0)
 import GHC.Types.SourceText (mkTHFractionalLit, mkIntegralLit)
 import GHC.Data.FastString (fsLit)
+import GHC.Parser.Annotation (noAnn)
 #elif MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic (mkFractionalLit, mkIntegralLit)
 import GHC.Data.FastString (fsLit)
@@ -31,7 +32,6 @@ import GHC.Hs.Lit
 import GHC.Hs.Expr (noExpr, noSyntaxExpr, HsExpr(..))
 import GHC.Hs.Pat (Pat(..))
 
-import GHC.Parser.Annotation (EpLayout (..), noAnn)
 import GHC.SourceGen.Lit.Internal
 import GHC.SourceGen.Syntax.Internal
 

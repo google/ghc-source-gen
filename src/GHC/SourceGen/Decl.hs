@@ -757,7 +757,6 @@ patSynBind n ns p = bindB $ noExt PatSynBind
 patSynBind n ns p = bindB $ noExt PatSynBind
                     $ withPlaceHolder (withEpAnnNotUsed PSB (valueRdrName $ unqual n))
                         (prefixCon' (map (valueRdrName . unqual) ns))
-                        (prefixCon' (map (valueRdrName . unqual) ns))
                         (builtPat p)
                         ImplicitBidirectional
   where

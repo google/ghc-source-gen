@@ -29,7 +29,9 @@ import GHC.Hs.Expr (MatchGroup(..), Match(..), GRHSs(..))
 
 import qualified Data.List.NonEmpty as NonEmpty
 
-import Language.Haskell.Syntax.Extension (XRec, wrapXRec, noExtField)
+#if MIN_VERSION_ghc(9,12,0)
+import Language.Haskell.Syntax.Extension (wrapXRec, noExtField)
+#endif
 
 import GHC.Types.SrcLoc (unLoc)
 #if !MIN_VERSION_ghc(8,6,0)
