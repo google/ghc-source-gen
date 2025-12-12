@@ -4,24 +4,24 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-snapshot: nightly-2025-10-31 # 👻 GHC 9.12.2 👻
-compiler: ghc-9.14.0.20251104
+snapshot: nightly-2025-12-02 # 👻 GHC 9.12.2 👻
+compiler: ghc-9.14.0.20251128
 compiler-check: match-exact # Anticipate future alpha/rc releases
 
 # Only required before the GHC version has been installed:
 setup-info:
   ghc:
     linux64:
-      9.14.0.20251104:
-        url: https://downloads.haskell.org/ghc/9.14.1-rc2/ghc-9.14.0.20251104-x86_64-ubuntu24_04-linux.tar.xz
+      9.14.0.20251128:
+        url: https://downloads.haskell.org/ghc/9.14.1-rc3/ghc-9.14.0.20251128-x86_64-ubuntu24_04-linux.tar.xz
         # Can be extended with SHA protections etc: see https://docs.haskellstack.org/en/stable/configure/yaml/non-project/#setup-info
     windows64:
-      9.14.0.20251104:
-        url: https://downloads.haskell.org/ghc/9.14.1-rc2/ghc-9.14.0.20251104-x86_64-unknown-mingw32.tar.xz
+      9.14.0.20251128:
+        url: https://downloads.haskell.org/ghc/9.14.1-rc3/ghc-9.14.0.20251128-x86_64-unknown-mingw32.tar.xz
         # Can be extended with SHA protections etc: see https://docs.haskellstack.org/en/stable/configure/yaml/non-project/#setup-info
     macosx-aarch64:
-      9.14.0.20251104:
-        url: https://downloads.haskell.org/ghc/9.14.1-rc2/ghc-9.14.0.20251104-aarch64-apple-darwin.tar.bz2
+      9.14.0.20251128:
+        url: https://downloads.haskell.org/ghc/9.14.1-rc3/ghc-9.14.0.20251128-aarch64-apple-darwin.tar.bz2
         # Can be extended with SHA protections etc: see https://docs.haskellstack.org/en/stable/configure/yaml/non-project/#setup-info
 
 compiler-check: match-exact
