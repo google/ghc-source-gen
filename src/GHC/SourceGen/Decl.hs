@@ -91,8 +91,8 @@ import GHC.Hs.Type
     , LHsType
 #if MIN_VERSION_ghc(8,6,0)
     , HsWildCardBndrs (..)
-    , ConDeclField (..)
 #endif
+--, ConDeclField (..)
 #if MIN_VERSION_ghc(8,8,0)
     , HsArg(..)
 #endif
@@ -483,9 +483,13 @@ data' = newOrDataType DataType
 -- > prefixCon "Foo" [field (var "a"), field (var "Int")]
 prefixCon :: OccNameStr -> [Field] -> ConDecl'
 prefixCon name fields = renderCon98Decl name
+#if MIN_VERSION_ghc(9,14,0)
+    $ prefixCon' $ map renderField fields
+#else
     $ prefixCon' $ map (hsUnrestricted . renderField) fields
+#endif
   where
-#if MIN_VERSION_ghc(9,2,0)
+#if MIN_VERSION_ghc(9,2,0) && !MIN_VERSION_ghc(9,14,0)
     prefixCon' = PrefixCon []
 #else
     prefixCon' = PrefixCon
@@ -499,7 +503,11 @@ prefixCon name fields = renderCon98Decl name
 -- > infixCon (field (var "A" @@ var "b")) ":+:" (field (Var "C" @@ var "d"))
 infixCon :: Field -> OccNameStr -> Field -> ConDecl'
 infixCon f name f' = renderCon98Decl name
+#if MIN_VERSION_ghc(9,14,0)
+    $ InfixCon (renderField f) (renderField f')
+#else
     $ InfixCon (hsUnrestricted $ renderField f) (hsUnrestricted $ renderField f')
+#endif
 
 -- | Declares Haskell-98-style record constructor for a data or type
 -- declaration.
@@ -512,7 +520,10 @@ recordCon name fields = renderCon98Decl name
     $ RecCon $ mkLocated $ map mkLConDeclField fields
   where
     mkLConDeclField (n, f) =
-#if MIN_VERSION_ghc(9,10,0)
+#if MIN_VERSION_ghc(9,14,0)
+        mkLocated $ noExt HsConDeclRecField
+                        [mkLocated $ withPlaceHolder $ noExt FieldOcc $ valueRdrName $ unqual n]
+#elif MIN_VERSION_ghc(9,10,0)
         mkLocated $ ConDeclField noAnn
                         [mkLocated $ withPlaceHolder $ noExt FieldOcc $ valueRdrName $ unqual n]
 #elif MIN_VERSION_ghc(9,4,0)
@@ -523,7 +534,9 @@ recordCon name fields = renderCon98Decl name
                         [builtLoc $ withPlaceHolder $ noExt FieldOcc $ valueRdrName $ unqual n]
 #endif
                         (renderField f)
+#if !MIN_VERSION_ghc(9,14,0)
                         Nothing
+#endif
 
 -- | An individual argument of a data constructor.  Contains a type for the field,
 -- and whether the field is strict or lazy.
@@ -564,10 +577,18 @@ hsUnrestricted :: a -> a
 hsUnrestricted = id
 #endif
 
+#if MIN_VERSION_ghc(9,14,0)
+renderField :: Field -> HsConDeclField GhcPs
+#else
 renderField :: Field -> LHsType GhcPs
+#endif
 -- TODO: parenthesizeTypeForApp is an overestimate in the case of
 -- rendering an infix or record type.
+#if MIN_VERSION_ghc(9,14,0)
+renderField f = hsPlainTypeField $ wrap $ parenthesizeTypeForApp $ mkLocated $ fieldType f
+#else
 renderField f = wrap $ parenthesizeTypeForApp $ mkLocated $ fieldType f
+#endif
   where
     wrap = case strictness f of
         NoSrcStrict -> id
@@ -750,7 +771,11 @@ patSynBind :: OccNameStr -> [OccNameStr] -> Pat' -> HsDecl'
 #if MIN_VERSION_ghc(9,10,0)
 patSynBind n ns p = bindB $ noExt PatSynBind
                     $ withPlaceHolder (PSB noAnn (valueRdrName $ unqual n))
+#  if MIN_VERSION_ghc(9,14,0)
+                        (PrefixCon (map (valueRdrName . unqual) ns))
+#  else
                         (PrefixCon [] (map (valueRdrName . unqual) ns))
+#  endif
                         (builtPat p)
                         ImplicitBidirectional
 #else

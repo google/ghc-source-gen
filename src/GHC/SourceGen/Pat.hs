@@ -73,7 +73,7 @@ conP c pats = conPat (valueRdrName c) (prefixCon (map (builtPat . parenthesize) 
 #else
     conPat = ConPatIn
 #endif
-#if !MIN_VERSION_ghc(9,13,0) && MIN_VERSION_ghc(9,2,0)
+#if !MIN_VERSION_ghc(9,14,0) && MIN_VERSION_ghc(9,2,0)
     prefixCon = PrefixCon []
 #else
     prefixCon = PrefixCon

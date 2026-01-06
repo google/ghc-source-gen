@@ -13,6 +13,9 @@ import Data.Typeable (cast)
 import System.Environment (getArgs)
 import Text.PrettyPrint
 
+#if MIN_VERSION_ghc(9,14,0)
+import qualified GHC.Driver.Config.Parser as GHC (supportedLanguagePragmas)
+#endif
 #if MIN_VERSION_ghc(9,4,0)
 import GHC.Driver.Config.Diagnostic (initDiagOpts)
 import GHC.Driver.Config.Parser (initParserOpts)
@@ -119,11 +122,20 @@ parseModule f = GHC.runGhc (Just libdir) $ do
     dflags <- GHC.getDynFlags
     contents <- GHC.liftIO $ GHC.stringToStringBuffer <$> readFile f
 #if MIN_VERSION_ghc(9,4,0)
+    logger <- GHC.getLogger
+#endif
+#if MIN_VERSION_ghc(9,14,0)
+    let (_, options) = GHC.getOptions (initParserOpts dflags) (GHC.supportedLanguagePragmas dflags) contents f
+#elif MIN_VERSION_ghc(9,4,0)
     let (_, options) = GHC.getOptions (initParserOpts dflags) contents f
 #else
     let options = GHC.getOptions dflags contents f
 #endif
+#if MIN_VERSION_ghc(9,14,0)
+    (dflags', _, _) <- GHC.parseDynamicFilePragma logger dflags options
+#else
     (dflags', _, _) <- GHC.parseDynamicFilePragma dflags options
+#endif
 
 #if MIN_VERSION_ghc(9,4,0)
     let diagOpts = initDiagOpts dflags'
@@ -132,7 +144,9 @@ parseModule f = GHC.runGhc (Just libdir) $ do
                 ( GHC.mkParserOpts
                     (GHC.extensionFlags dflags')
                     diagOpts
+#  if !MIN_VERSION_ghc(9,14,0)
                     []
+#  endif
                     (GHC.safeImportsOn dflags')
                     (GHC.gopt GHC.Opt_Haddock dflags')
                     (GHC.gopt GHC.Opt_KeepRawTokenStream dflags')
@@ -161,7 +175,6 @@ parseModule f = GHC.runGhc (Just libdir) $ do
         GHC.POk _state m -> return $ GHC.unLoc m
 #if MIN_VERSION_ghc(9,4,0)
         GHC.PFailed s -> do
-            logger <- GHC.getLogger
             liftIO $ do
                 let errors = GHC.getPsErrorMessages s
 #  if MIN_VERSION_ghc(9,6,0)
