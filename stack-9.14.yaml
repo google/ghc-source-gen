@@ -4,7 +4,7 @@
 # license that can be found in the LICENSE file or at
 # https://developers.google.com/open-source/licenses/bsd
 
-snapshot: nightly-2026-01-06 # 👻 GHC 9.12.3 👻
+resolver: nightly-2026-02-05
 compiler: ghc-9.14.1
 
 packages:
