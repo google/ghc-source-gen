@@ -62,7 +62,6 @@ import SrcLoc (unLoc, GenLocated(..))
 import GHC.Parser.Annotation (EpAnn(..))
 #endif
 
---import GHC.Parser.Annotation (EpAnn(..))
 import GHC.SourceGen.Binds.Internal
 import GHC.SourceGen.Binds
 import GHC.SourceGen.Expr.Internal

@@ -92,7 +92,6 @@ import GHC.Hs.Type
 #if MIN_VERSION_ghc(8,6,0)
     , HsWildCardBndrs (..)
 #endif
---, ConDeclField (..)
 #if MIN_VERSION_ghc(8,8,0)
     , HsArg(..)
 #endif
