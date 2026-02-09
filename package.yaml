@@ -29,8 +29,8 @@ description: |
     For more information, please see the <https://github.com/google/ghc-source-gen README>.
 
 dependencies:
-- base >= 4.7 && < 5
-- ghc >= 8.4 && < 9.15
+- base >= 4.15 && < 5
+- ghc >= 9.0 && < 9.15
 
 default-extensions:
 - DataKinds
