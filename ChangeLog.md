@@ -4,6 +4,7 @@
 # 0.4.7.0
 - Support GHC 9.12.
 - Support GHC 9.14.
+- Remove support for GHC < 9.0.
 
 # 0.4.6.0
 - Support GHC 9.10.

@@ -30,10 +30,11 @@ import GHC.Hs.Type
     , mkHsOpTy
 #endif
     )
-import GHC.Hs (IE(..), IEWrappedName(..))
-#if !MIN_VERSION_ghc(8,6,0)
-import PlaceHolder(PlaceHolder(..))
+import GHC.Hs (IE(..), IEWrappedName(..)
+#if MIN_VERSION_ghc(9,6,0)
+    , noExtField
 #endif
+    )
 
 import GHC.Hs
     ( HsExpr(..)
@@ -48,18 +49,11 @@ import GHC.Hs
 #if MIN_VERSION_ghc(9,10,0)
 import GHC.Parser.Annotation (AnnList (..), noAnn)
 #endif
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.Types.Basic (Boxity(..))
 import GHC.Core.DataCon (dataConName)
 import GHC.Types.Name.Reader (nameRdrName)
 import GHC.Builtin.Types (consDataCon_RDR, nilDataCon, unitDataCon)
 import GHC.Types.Var (Specificity(..))
-#else
-import BasicTypes (Boxity(..))
-import DataCon (dataConName)
-import RdrName (nameRdrName)
-import TysWiredIn (consDataCon_RDR, nilDataCon, unitDataCon)
-#endif
 
 import GHC.SourceGen.Expr.Internal
 import GHC.SourceGen.Name.Internal
@@ -176,9 +170,6 @@ instance App HsExpr' where
         = withEpAnnNotUsed OpApp
             (parenthesizeExprForOp $ mkLocated x)
             (mkLocated $ var o)
-#if !MIN_VERSION_ghc(8,6,0)
-            PlaceHolder
-#endif
             (parenthesizeExprForOp $ mkLocated y)
 #endif
 #if MIN_VERSION_ghc(9,10,0)
@@ -256,10 +247,8 @@ instance HasTuple Pat' where
     tupleOf b ps =
 #if MIN_VERSION_ghc(9,10,0)
         TuplePat noAnn (map builtPat ps) b
-#elif MIN_VERSION_ghc(8,6,0)
-        withEpAnnNotUsed TuplePat (map builtPat ps) b
 #else
-        withEpAnnNotUsed TuplePat (map builtPat ps) b []
+        withEpAnnNotUsed TuplePat (map builtPat ps) b
 #endif
     unit = noExt VarPat unitDataConName
 
@@ -300,10 +289,8 @@ instance HasList HsExpr' where
 instance HasList Pat' where
 #if MIN_VERSION_ghc(9,10,0)
     list = ListPat noAnn . map builtPat
-#elif MIN_VERSION_ghc(8,6,0)
-    list = withEpAnnNotUsed ListPat . map builtPat
 #else
-    list ps = ListPat (map builtPat ps) PlaceHolder Nothing
+    list = withEpAnnNotUsed ListPat . map builtPat
 #endif
     nil = noExt VarPat nilDataConName
     cons = noExt VarPat $ mkLocated $ consDataCon_RDR
@@ -358,14 +345,11 @@ instance BVar HsTyVarBndr' where
     bvar = withEpAnnNotUsed UserTyVar HsBndrRequired . typeRdrName . UnqualStr
 instance BVar HsTyVarBndrS' where
     bvar = withEpAnnNotUsed UserTyVar SpecifiedSpec . typeRdrName . UnqualStr
-#elif MIN_VERSION_ghc(9,0,0)
+#else
 instance BVar HsTyVarBndr' where
   bvar = withEpAnnNotUsed UserTyVar () . typeRdrName . UnqualStr
 instance BVar HsTyVarBndrS' where
     bvar = withEpAnnNotUsed UserTyVar SpecifiedSpec . typeRdrName . UnqualStr
-#else
-instance BVar HsTyVarBndr' where
-    bvar = withEpAnnNotUsed UserTyVar . typeRdrName . UnqualStr
 #endif
 
 instance Var IE' where

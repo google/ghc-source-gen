@@ -9,10 +9,8 @@ module GHC.SourceGen.Lit.Internal where
 
 #if MIN_VERSION_ghc(9,2,0)
 import GHC.Types.SourceText (SourceText(NoSourceText), FractionalLit(..), IntegralLit(..))
-#elif MIN_VERSION_ghc(9,0,0)
-import GHC.Types.Basic (SourceText(NoSourceText), FractionalLit(..), IntegralLit(..))
 #else
-import BasicTypes (SourceText(NoSourceText), FractionalLit(..), IntegralLit(..))
+import GHC.Types.Basic (SourceText(NoSourceText), FractionalLit(..), IntegralLit(..))
 #endif
 import GHC.Hs.Lit
 import GHC.SourceGen.Syntax.Internal
