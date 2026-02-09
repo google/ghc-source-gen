@@ -25,10 +25,7 @@ hPutPpr :: Outputable a => Handle -> a -> Ghc ()
 hPutPpr h x = do
     dflags <- getDynFlags
     liftIO $ printForUser dflags h neverQualify
-#if MIN_VERSION_ghc(9,0,1)
-        AllTheWay
-#endif
-            $ ppr x
+        AllTheWay $ ppr x
 
 putPpr :: Outputable a => a -> Ghc ()
 putPpr = hPutPpr stdout

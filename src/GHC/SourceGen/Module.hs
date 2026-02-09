@@ -36,9 +36,7 @@ import GHC.Hs
     ( HsModule(..)
     , ImportDecl(..)
     , simpleImportDecl
-#if MIN_VERSION_ghc(8,10,0)
     , ImportDeclQualifiedStyle(..)
-#endif
 #if MIN_VERSION_ghc(9,2,0)
     , EpAnn(..)
 #endif
@@ -51,15 +49,11 @@ import GHC.Hs
     , LIEWrappedName
 #endif
     )
-#if MIN_VERSION_ghc(9,0,0) && !MIN_VERSION_ghc(9,6,0)
+#if !MIN_VERSION_ghc(9,6,0)
 import GHC.Types.SrcLoc (LayoutInfo(..))
 #endif
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.Unit.Module (IsBootInterface(..))
 import GHC.Types.Name.Reader (RdrName)
-#else
-import RdrName (RdrName)
-#endif
 #if MIN_VERSION_ghc(9,4,0)
 import GHC.Types.PkgQual (RawPkgQual(..))
 #endif
@@ -101,9 +95,7 @@ module' name exports imports decls = HsModule
 #else
     , hsmodDeprecMessage = Nothing
     , hsmodHaddockModHeader = Nothing
-#  if MIN_VERSION_ghc(9,0,0)
     , hsmodLayout = NoLayoutInfo
-#  endif
 #  if MIN_VERSION_ghc(9,2,0)
     , hsmodAnn = EpAnnNotUsed
 #  endif
@@ -112,11 +104,7 @@ module' name exports imports decls = HsModule
 
 qualified' :: ImportDecl' -> ImportDecl'
 qualified' d = d { ideclQualified =
-#if MIN_VERSION_ghc(8,10,0)
     QualifiedPre
-#else
-    True
-#endif
 }
 
 as' :: ImportDecl' -> ModuleNameStr -> ImportDecl'
@@ -143,13 +131,7 @@ hiding d ies = d
 
 -- | Adds the @{-# SOURCE #-}@ pragma to an import.
 source :: ImportDecl' -> ImportDecl'
-source d = d { ideclSource =
-#if MIN_VERSION_ghc(9,0,0)
-    IsBoot
-#else
-    True
-#endif
-}
+source d = d { ideclSource = IsBoot }
 
 -- | Exports all methods and/or constructors.
 --
@@ -213,10 +195,7 @@ withEpAnnNotUsed' = ($ (Nothing, EpAnnNotUsed))
 #elif MIN_VERSION_ghc(9,2,0)
 withEpAnnNotUsed' :: (EpAnn ann -> a) -> a
 withEpAnnNotUsed' = withEpAnnNotUsed
-#elif MIN_VERSION_ghc(8,6,0)
-withEpAnnNotUsed' :: (NoExtField -> a) -> a
-withEpAnnNotUsed' = withEpAnnNotUsed
 #else
-withEpAnnNotUsed' :: a -> a
+withEpAnnNotUsed' :: (NoExtField -> a) -> a
 withEpAnnNotUsed' = withEpAnnNotUsed
 #endif

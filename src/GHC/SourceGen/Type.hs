@@ -22,12 +22,8 @@ module GHC.SourceGen.Type
     ) where
 
 import Data.String (fromString)
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.Hs.Type
 import GHC.Parser.Annotation
-#else
-import GHC.Hs.Type
-#endif
 
 #if MIN_VERSION_ghc(9,4,0)
 import Language.Haskell.Syntax.Extension
@@ -96,11 +92,9 @@ a --> b =
 #elif MIN_VERSION_ghc(9,4,0)
      withEpAnnNotUsed HsFunTy
          (HsUnrestrictedArrow mkUniToken)
-#elif MIN_VERSION_ghc(9,0,0)
-     withEpAnnNotUsed HsFunTy
-         (HsUnrestrictedArrow NormalSyntax)
 #else
      withEpAnnNotUsed HsFunTy
+         (HsUnrestrictedArrow NormalSyntax)
 #endif
          (parenthesizeTypeForFun $ mkLocated a) (mkLocated b)
 
@@ -124,19 +118,10 @@ forall' ts t =
 forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
   where
     hsForAllTy x = HsForAllTy x . withEpAnnNotUsed mkHsForAllInvisTele
-#elif MIN_VERSION_ghc(9,0,0)
-forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
-  where
-    hsForAllTy x = HsForAllTy x . mkHsForAllInvisTele
-#elif MIN_VERSION_ghc(8,10,0)
-forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
-  where
-    fvf = ForallInvis -- "Invisible" forall, i.e., with a dot
-    hsForAllTy x = HsForAllTy x fvf
 #else
 forall' ts = noExt hsForAllTy (map mkLocated ts) . mkLocated
   where
-    hsForAllTy = HsForAllTy
+    hsForAllTy x = HsForAllTy x . mkHsForAllInvisTele
 #endif
 
 -- | Qualify a type with constraints.
@@ -175,11 +160,8 @@ kindedVar v t =
             withEpAnnNotUsed KindedTyVar
                 HsBndrRequired
                 (typeRdrName $ UnqualStr v) (mkLocated t)
-#elif MIN_VERSION_ghc(9,0,0)
-            withEpAnnNotUsed KindedTyVar
-                ()
-                (typeRdrName $ UnqualStr v) (mkLocated t)
 #else
             withEpAnnNotUsed KindedTyVar
+                ()
                 (typeRdrName $ UnqualStr v) (mkLocated t)
 #endif

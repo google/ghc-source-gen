@@ -21,12 +21,9 @@ module GHC.SourceGen.Lit
 import GHC.Types.SourceText (mkTHFractionalLit, mkIntegralLit)
 import GHC.Data.FastString (fsLit)
 import GHC.Parser.Annotation (noAnn)
-#elif MIN_VERSION_ghc(9,0,0)
+#else
 import GHC.Types.Basic (mkFractionalLit, mkIntegralLit)
 import GHC.Data.FastString (fsLit)
-#else
-import BasicTypes (mkFractionalLit, mkIntegralLit)
-import FastString (fsLit)
 #endif
 import GHC.Hs.Lit
 import GHC.Hs.Expr (noExpr, noSyntaxExpr, HsExpr(..))

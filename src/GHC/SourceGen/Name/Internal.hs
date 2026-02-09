@@ -11,17 +11,10 @@ import Data.Char (isAlphaNum, isUpper)
 import Data.Function (on)
 import Data.List (intercalate)
 import Data.String (IsString(..))
-#if MIN_VERSION_ghc(9,0,0)
 import GHC.Data.FastString (FastString, fsLit)
 import GHC.Unit.Module (mkModuleNameFS, ModuleName, moduleNameString)
 import GHC.Types.Name.Occurrence
 import GHC.Types.Name.Reader
-#else
-import FastString (FastString, fsLit)
-import Module (mkModuleNameFS, ModuleName, moduleNameString)
-import OccName
-import RdrName
-#endif
 
 #if MIN_VERSION_ghc(9,2,0)
 import GHC.Data.FastString (LexicalFastString(..))
@@ -29,10 +22,8 @@ import GHC.Data.FastString (LexicalFastString(..))
 
 #if MIN_VERSION_ghc(9,2,0)
 import GHC.Parser.Annotation (LocatedN)
-#elif MIN_VERSION_ghc(9,0,0)
-import GHC.Types.SrcLoc (Located)
 #else
-import SrcLoc (Located)
+import GHC.Types.SrcLoc (Located)
 #endif
 
 import GHC.SourceGen.Syntax.Internal (mkLocated)
