@@ -81,7 +81,9 @@ import GHC.Hs.Type
     , HsArg(..)
     , SrcStrictness(..)
     , SrcUnpackedness(..)
+#if !MIN_VERSION_ghc(9,14,0)
     , hsUnrestricted
+#endif
     )
 
 #if MIN_VERSION_ghc(9,10,0)
