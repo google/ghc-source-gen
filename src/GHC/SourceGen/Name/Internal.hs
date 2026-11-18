@@ -124,7 +124,7 @@ instance IsString RdrNameStr where
 collectModuleName :: String -> ([String],String)
 collectModuleName s = case span isVarChar s of
     ("", n) -> ([], n)  -- Symbol
-    (n, "") -> ([], n)  -- Identifier
+    (_, suffix) | all (== '#') suffix -> ([], s)  -- Identifier, possibly with a MagicHash suffix
     (m, '.' : s') -> case collectModuleName s' of
                             (m', s'') -> (m : m', s'')
     _ -> error $ "Unable to parse RdrNameStr: " ++ show s
