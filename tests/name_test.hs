@@ -23,10 +23,16 @@ testRdrName = testGroup "RdrName"
         QualStr "Foo" "abc" @=? "Foo.abc"
     , testCase "hierarchical qual ident" $ do
         QualStr "Foo.Bar" "abc" @=? "Foo.Bar.abc"
+    , testCase "unqual MagicHash constructor" $ do
+        UnqualStr "Jn#" @=? "Jn#"
+    , testCase "qualified MagicHash variable" $ do
+        QualStr "Foo.Bar" "abc##" @=? "Foo.Bar.abc##"
     , testCase "unqual op" $ do
         UnqualStr "+-+" @=? "+-+"
     , testCase "qual op" $ do
         QualStr "Foo" "+-+" @=? "Foo.+-+"
+    , testCase "qualified hash operator" $ do
+        QualStr "Foo" "#." @=? "Foo.#."
     , testCase "hierarchical qual op" $ do
         QualStr "Foo.Bar" "+-+" @=? "Foo.Bar.+-+"
     , testProperty "round tip" $ forAll genRdrName $ \r ->
